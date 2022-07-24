@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    create_table :<%= singularized_table_name %>_versions, id: false, options: 'INHERITS (<%= table_name %>)' do |t|
+      t.jsonb :av_data
+      t.tsrange :av_during, null: false, index: true
+      t.string :av_whodunit
+      t.string :av_note
+      t.bigint :<%= singularized_table_name %>_id, null: false, index: true
+    end
+  end
+end

@@ -1,0 +1,47 @@
+name: Ruby
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Ruby ${{ matrix.ruby }}
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: archiversion
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    strategy:
+      matrix:
+        ruby:
+          - '3.1.0'
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Run the default task
+        env:
+          RAILS_ENV: test
+          POSTGRES_USER: postgres
+          PGPASSWORD: password
+          POSTGRES_PASSWORD: password
+        run: |
+          bundle exec rake
