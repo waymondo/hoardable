@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require_relative 'lib/archiversion/version'
+require_relative 'lib/hoardable/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'Archiversion'
-  spec.version = Archiversion::VERSION
+  spec.name = 'Hoardable'
+  spec.version = Hoardable::VERSION
   spec.authors = ['justin talbott']
   spec.email = ['justin@waymondo.com']
 
   spec.summary = 'An ActiveRecord extension for the archiving versions of records'
   spec.description = 'Archive versions of your Rails models with the power of temporal tables and table inheritance'
-  spec.homepage = 'https://github.com/waymondo/archiversion'
+  spec.homepage = 'https://github.com/waymondo/hoardable'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 2.6.0'
 

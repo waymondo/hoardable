@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-module Archiversion
+module Hoardable
   class Error < StandardError; end
 end

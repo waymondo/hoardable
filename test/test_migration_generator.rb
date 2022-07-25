@@ -3,7 +3,7 @@
 require 'test_helper'
 
 class MigrationGeneratorTest < Rails::Generators::TestCase
-  tests Archiversion::MigrationGenerator
+  tests Hoardable::MigrationGenerator
   destination File.expand_path('../tmp', __dir__)
   setup :prepare_destination
 

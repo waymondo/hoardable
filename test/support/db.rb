@@ -2,7 +2,7 @@
 
 ActiveRecord::Base.establish_connection(
   adapter: 'postgresql',
-  database: 'archiversion',
+  database: 'hoardable',
   host: 'localhost',
   port: nil,
   username: ENV.fetch('POSTGRES_USER', nil),
@@ -11,8 +11,8 @@ ActiveRecord::Base.establish_connection(
 
 def generate_versions_table(table_name)
   destination_root = File.expand_path('../../tmp', __dir__)
-  Rails::Generators.invoke('archiversion:migration', [table_name], destination_root: destination_root)
-  Dir[File.join(File.join(destination_root, 'db/migrate'), '/*.rb')].sort.each { |file| require file }
+  Rails::Generators.invoke('hoardable:migration', [table_name], destination_root: destination_root)
+  Dir[File.join(destination_root, 'db/migrate/*.rb')].sort.each { |file| require file }
   "Create#{table_name.classify.singularize}Versions".constantize.migrate(:up)
 end
 

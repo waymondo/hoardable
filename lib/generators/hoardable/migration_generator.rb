@@ -3,8 +3,8 @@
 require 'rails/generators'
 require 'rails/generators/active_record/migration/migration_generator'
 
-module Archiversion
-  # Generates a migration for an inherited temporal table of a model including {Archiversion::Model}
+module Hoardable
+  # Generates a migration for an inherited temporal table of a model including {Hoardable::Model}
   class MigrationGenerator < ActiveRecord::Generators::Base
     source_root File.expand_path('templates', __dir__)
     include Rails::Generators::Migration

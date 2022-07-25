@@ -3,7 +3,7 @@
 require 'test_helper'
 
 class Post < ActiveRecord::Base
-  include Archiversion::Model
+  include Hoardable::Model
   enum :status, { draft: 0, live: 1 }
 end
 
@@ -28,19 +28,23 @@ class TestModel < Minitest::Test
 
   let(:post) { Post.create!(title: 'Headline') }
 
-  def test_that_versions_are_created
-    assert_equal post.versions.size, 0
+  def update_post
     post.versioned_update!(title: 'New Headline', status: :live)
     assert_equal post.status, 'live'
     assert_equal post.title, 'New Headline'
+  end
+
+  it 'creates a version with previous state' do
+    assert_equal post.versions.size, 0
+    update_post
     assert_equal post.versions.size, 1
     version = post.versions.first
     assert_equal version.status, 'draft'
     assert_equal version.title, 'Headline'
   end
 
-  def test_versions_are_read_only_and_do_not_have_versions
-    post.versioned_update!(title: 'New Headline', status: :live)
+  it 'creates read-only versions that do not themselves have versions' do
+    update_post
     version = post.versions.first
     assert_raises(ActiveRecord::ReadOnlyRecord) { version.update!(title: 'Rewriting History') }
     assert_raises(ActiveRecord::AssociationNotFoundError) { version.destroy! }

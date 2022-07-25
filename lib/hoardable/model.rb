@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-module Archiversion
-  # This concern includes the Archiversion API methods on ActiveRecord instances and dynamically
+module Hoardable
+  # This concern includes the Hoardable API methods on ActiveRecord instances and dynamically
   # generates the Version variant of the class
   module Model
     extend ActiveSupport::Concern
@@ -32,8 +32,8 @@ module Archiversion
         @_version = versions.new(dup.attributes)
         run_callbacks :versioned do
           assign_attributes(attributes)
-          _version.av_data = { attributes: attributes }
-          _version.av_during = (updated_at..Time.now)
+          _version.hoardable_data = { attributes: attributes }
+          _version.hoardable_during = (updated_at..Time.now)
           _version.save!
           save!
         end

@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-module Archiversion
+module Hoardable
   # This concern is included into the dynamically generated Version models.
   module VersionModel
     extend ActiveSupport::Concern
 
     included do
       # TODO: cast to / from ruby class
-      # attribute :av_data
+      # attribute :hoardable_data
       belongs_to superclass.model_name.i18n_key, inverse_of: :versions
       self.table_name = "#{table_name.singularize}_versions"
       alias_method :readonly?, :persisted?
