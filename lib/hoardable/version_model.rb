@@ -6,8 +6,6 @@ module Hoardable
     extend ActiveSupport::Concern
 
     included do
-      # TODO: cast to / from ruby class
-      # attribute :hoardable_data
       hoardable_source_key = superclass.model_name.i18n_key
       belongs_to hoardable_source_key, inverse_of: :versions
       alias_method :hoardable_source, hoardable_source_key
@@ -24,6 +22,14 @@ module Hoardable
           hoardable_source_attributes.merge('id' => public_send(hoardable_source_foreign_key), 'updated_at' => Time.now)
         )
       end
+    end
+
+    def changes
+      hoardable_data&.dig('changes')
+    end
+
+    def hoardable_meta
+      hoardable_data&.dig('meta')&.symbolize_keys
     end
 
     private

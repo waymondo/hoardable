@@ -41,7 +41,7 @@ module Hoardable
         attributes_before_type_cast.without('id')
           .merge(changes.transform_values { |h| h[0] })
           .merge(
-            hoardable_data: { changes: changes },
+            hoardable_data: { changes: changes, meta: assign_hoardable_context(:meta) },
             hoardable_whodunit: assign_hoardable_context(:whodunit),
             hoardable_note: assign_hoardable_context(:note)
           )
@@ -51,7 +51,14 @@ module Hoardable
     def assign_hoardable_context(key)
       return nil if (value = Hoardable[key]).nil?
 
-      value.is_a?(Proc) ? value.call : value.to_s
+      case value
+      when Proc
+        value.call
+      when Hash
+        value
+      else
+        value.to_s
+      end
     end
 
     def save_version

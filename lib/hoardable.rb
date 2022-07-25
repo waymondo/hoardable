@@ -11,6 +11,7 @@ module Hoardable
   @config = {
     enabled: true,
     note: nil,
+    meta: nil,
     whodunit: nil
   }
 
