@@ -20,6 +20,7 @@ ActiveRecord::Base.establish_connection(
 )
 
 ActiveRecord::Schema.verbose = false
+# ActiveRecord::Base.logger = Logger.new($stdout)
 
 def generate_versions_table(table_name)
   destination_root = File.expand_path('../../tmp', __dir__)

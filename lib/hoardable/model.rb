@@ -8,8 +8,11 @@ module Hoardable
 
     included do
       default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
-      define_model_callbacks :versioned
-      attr_reader :_version
+      before_update :initialize_version
+      before_destroy :initialize_version
+      after_update :save_version
+      after_destroy :save_version
+      attr_reader :hoardable_version
 
       TracePoint.new(:end) do |trace|
         next unless self == trace.self
@@ -29,17 +32,19 @@ module Hoardable
       versions.find_by('hoardable_during @> ?::timestamp', datetime) || self
     end
 
-    def versioned_update!(attributes)
-      ActiveRecord::Base.transaction do
-        @_version = versions.new(attributes_before_type_cast.without('id'))
-        run_callbacks :versioned do
-          assign_attributes(attributes)
-          _version.hoardable_data = { attributes: attributes }
-          _version.send(:assign_temporal_tsrange)
-          _version.save!(validate: false, touch: false)
-          save!
-        end
-      end
+    private
+
+    def initialize_version
+      @hoardable_version = versions.new(
+        attributes_before_type_cast.without('id')
+          .merge(changes.transform_values { |h| h[0] })
+          .merge(hoardable_data: { changes: changes })
+      )
+    end
+
+    def save_version
+      hoardable_version.save!(validate: false, touch: false)
+      @hoardable_version = nil
     end
   end
 end

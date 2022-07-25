@@ -16,7 +16,6 @@ class TestModel < Minitest::Test
   extend Minitest::Spec::DSL
 
   before do
-    empty_tmp_dir
     ActiveRecord::Schema.define do
       create_table :posts do |t|
         t.text :body
@@ -34,20 +33,14 @@ class TestModel < Minitest::Test
     generate_versions_table('posts')
   end
 
-  after do
-    teardown_db
-  end
+  after { teardown_db && empty_tmp_dir }
 
-  let(:user) do
-    User.create!(name: 'Justin')
-  end
+  let(:user) { User.create!(name: 'Justin') }
 
-  let(:post) do
-    Post.create!(title: 'Headline', user: user)
-  end
+  let(:post) { Post.create!(title: 'Headline', user: user) }
 
   def update_post(attributes = { title: 'New Headline', status: :live })
-    post.versioned_update!(attributes)
+    post.update!(attributes)
     assert_equal post.status.to_sym, attributes[:status]
     assert_equal post.title, attributes[:title]
   end
@@ -92,5 +85,46 @@ class TestModel < Minitest::Test
     update_post
     version = post.versions.first
     assert_equal version.user, post.user
+  end
+
+  it 'tests callback' do
+    Post.class_eval do
+      attr_reader :version_title_changed_in_callback
+
+      before_update do
+        @version_title_changed_in_callback = true if hoardable_version.title && hoardable_version.title != title
+      end
+    end
+    assert_nil post.version_title_changed_in_callback
+    update_post
+    assert_equal post.version_title_changed_in_callback, true
+  end
+
+  it 'can be restored from previous version' do
+    attributes = post.attributes.without('updated_at')
+    update_post
+    version = post.versions.first
+    version.restore!
+    assert_equal post.attributes.without('updated_at'), attributes
+    refute_equal post.updated_at, attributes['updated_at']
+  end
+
+  it 'creates a version on deletion and can be restored' do
+    post_id = post.id
+    attributes = post.attributes.without('updated_at')
+    post.destroy!
+    assert_raises(ActiveRecord::RecordNotFound) { post.reload }
+    version = PostVersion.last
+    assert_equal version.post_id, post_id
+    version.restore!
+    restored_post = Post.find(post_id)
+    assert_equal restored_post.attributes.without('updated_at'), attributes
+    refute_equal restored_post.updated_at, post.updated_at
+  end
+
+  it 'does not create version on raised error' do
+    assert_raises(ActiveModel::UnknownAttributeError) { update_post(non_existent_attribute: 'wat') }
+    assert_equal post.versions.size, 0
+    assert_nil post.hoardable_version
   end
 end
