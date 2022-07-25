@@ -10,10 +10,10 @@ module Hoardable
 
     included do
       default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
-      before_update :initialize_version, if: HOARDABLE_ENABLED
-      before_destroy :initialize_version, if: HOARDABLE_ENABLED
-      after_update :save_version, if: HOARDABLE_ENABLED
-      after_destroy :save_version, if: HOARDABLE_ENABLED
+      before_update :initialize_hoardable_version, if: HOARDABLE_ENABLED
+      before_destroy :initialize_hoardable_version, if: HOARDABLE_ENABLED
+      after_update :save_hoardable_version, if: HOARDABLE_ENABLED
+      after_destroy :save_hoardable_version, if: HOARDABLE_ENABLED
       attr_reader :hoardable_version
 
       TracePoint.new(:end) do |trace|
@@ -24,44 +24,45 @@ module Hoardable
 
         Object.const_set(version_class_name, Class.new(self) { include VersionModel })
         class_eval do
-          has_many(:versions, dependent: :destroy, class_name: version_class_name, inverse_of: model_name.i18n_key)
+          has_many(
+            :versions, -> { order(:_during) },
+            dependent: :destroy, class_name: version_class_name, inverse_of: model_name.i18n_key
+          )
         end
         trace.disable
       end.enable
     end
 
     def at(datetime)
-      versions.find_by('hoardable_during @> ?::timestamp', datetime) || self
+      versions.find_by('_during @> ?::timestamp', datetime) || self
     end
 
     private
 
-    def initialize_version
-      @hoardable_version = versions.new(
-        attributes_before_type_cast.without('id')
-          .merge(changes.transform_values { |h| h[0] })
-          .merge(
-            hoardable_data: { changes: changes, meta: assign_hoardable_context(:meta) },
-            hoardable_whodunit: assign_hoardable_context(:whodunit),
-            hoardable_note: assign_hoardable_context(:note)
-          )
-      )
+    def initialize_hoardable_version
+      Hoardable.with(changes: changes) do
+        @hoardable_version = versions.new(
+          attributes_before_type_cast
+            .without('id')
+            .merge(changes.transform_values { |h| h[0] })
+            .merge(_data: initialize_hoardable_data)
+        )
+      end
+    end
+
+    def initialize_hoardable_data
+      Hoardable::VersionModel::DATA_KEYS.to_h do |key|
+        [key, assign_hoardable_context(key)]
+      end
     end
 
     def assign_hoardable_context(key)
       return nil if (value = Hoardable[key]).nil?
 
-      case value
-      when Proc
-        value.call
-      when Hash
-        value
-      else
-        value.to_s
-      end
+      value.is_a?(Proc) ? value.call : value
     end
 
-    def save_version
+    def save_hoardable_version
       hoardable_version.save!(validate: false, touch: false)
       @hoardable_version = nil
     end

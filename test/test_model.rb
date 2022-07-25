@@ -70,7 +70,7 @@ class TestModel < Minitest::Test
     update_post
     version = post.versions.first
     assert_equal post.created_at, version.created_at
-    assert version.hoardable_during
+    assert version._during
   end
 
   it 'can create multiple versions, and knows how to query "at"' do
@@ -168,7 +168,7 @@ class TestModel < Minitest::Test
 
   it 'tracks note and meta' do
     note = 'Oopsie'
-    meta = { foo: 'bar' }
+    meta = { 'foo' => 'bar' }
     Hoardable.with(note: note, meta: meta) do
       update_post
       version = post.versions.first

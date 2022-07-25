@@ -3,12 +3,10 @@
 class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
     create_table :<%= singularized_table_name %>_versions, id: false, options: 'INHERITS (<%= table_name %>)' do |t|
-      t.jsonb :hoardable_data
-      t.tsrange :hoardable_during, null: false
-      t.string :hoardable_whodunit
-      t.string :hoardable_note
+      t.jsonb :_data
+      t.tsrange :_during, null: false
       t.bigint :<%= singularized_table_name %>_id, null: false, index: true
     end
-    add_index :<%= singularized_table_name %>_versions, %i[hoardable_during <%= singularized_table_name %>_id]
+    add_index :<%= singularized_table_name %>_versions, %i[_during <%= singularized_table_name %>_id]
   end
 end

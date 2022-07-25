@@ -5,6 +5,8 @@ module Hoardable
   module VersionModel
     extend ActiveSupport::Concern
 
+    DATA_KEYS = %i[changes meta whodunit note].freeze
+
     included do
       hoardable_source_key = superclass.model_name.i18n_key
       belongs_to hoardable_source_key, inverse_of: :versions
@@ -24,20 +26,21 @@ module Hoardable
       end
     end
 
-    def changes
-      hoardable_data&.dig('changes')
+    DATA_KEYS.each do |key|
+      define_method("hoardable_#{key}") do
+        _data&.dig(key.to_s)
+      end
     end
 
-    def hoardable_meta
-      hoardable_data&.dig('meta')&.symbolize_keys
-    end
+    alias changes hoardable_changes
 
     private
 
     def hoardable_source_attributes
-      @hoardable_source_attributes ||= attributes_before_type_cast
-                                       .without(hoardable_source_foreign_key)
-                                       .reject { |k, _v| k.start_with?('hoardable_') }
+      @hoardable_source_attributes ||=
+        attributes_before_type_cast
+        .without(hoardable_source_foreign_key)
+        .reject { |k, _v| k.start_with?('_') }
     end
 
     def hoardable_source_foreign_key
@@ -45,11 +48,11 @@ module Hoardable
     end
 
     def previous_temporal_tsrange_end
-      hoardable_source.versions.limit(1).order(hoardable_during: :desc).pluck('hoardable_during').first&.end
+      hoardable_source.versions.limit(1).order(_during: :desc).pluck('_during').first&.end
     end
 
     def assign_temporal_tsrange
-      self.hoardable_during = ((previous_temporal_tsrange_end || hoardable_source.created_at)..Time.now)
+      self._during = ((previous_temporal_tsrange_end || hoardable_source.created_at)..Time.now)
     end
   end
 end

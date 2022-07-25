@@ -9,10 +9,7 @@ require_relative 'generators/hoardable/migration_generator'
 # An ActiveRecord extension for keeping versions of records in temporal inherited tables
 module Hoardable
   @config = {
-    enabled: true,
-    note: nil,
-    meta: nil,
-    whodunit: nil
+    enabled: true
   }
 
   def self.[](key)
