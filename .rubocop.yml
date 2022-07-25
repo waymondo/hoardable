@@ -4,3 +4,7 @@ AllCops:
 
 Layout/LineLength:
   Max: 120
+
+Metrics/ClassLength:
+  Exclude:
+    - 'test/**/*.rb'

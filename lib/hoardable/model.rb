@@ -6,12 +6,14 @@ module Hoardable
   module Model
     extend ActiveSupport::Concern
 
+    HOARDABLE_ENABLED = -> { Hoardable[:enabled] }.freeze
+
     included do
       default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
-      before_update :initialize_version
-      before_destroy :initialize_version
-      after_update :save_version
-      after_destroy :save_version
+      before_update :initialize_version, if: HOARDABLE_ENABLED
+      before_destroy :initialize_version, if: HOARDABLE_ENABLED
+      after_update :save_version, if: HOARDABLE_ENABLED
+      after_destroy :save_version, if: HOARDABLE_ENABLED
       attr_reader :hoardable_version
 
       TracePoint.new(:end) do |trace|
@@ -38,8 +40,18 @@ module Hoardable
       @hoardable_version = versions.new(
         attributes_before_type_cast.without('id')
           .merge(changes.transform_values { |h| h[0] })
-          .merge(hoardable_data: { changes: changes })
+          .merge(
+            hoardable_data: { changes: changes },
+            hoardable_whodunit: assign_hoardable_context(:whodunit),
+            hoardable_note: assign_hoardable_context(:note)
+          )
       )
+    end
+
+    def assign_hoardable_context(key)
+      return nil if (value = Hoardable[key]).nil?
+
+      value.is_a?(Proc) ? value.call : value.to_s
     end
 
     def save_version

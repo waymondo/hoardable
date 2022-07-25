@@ -12,6 +12,10 @@ class User < ActiveRecord::Base
   has_many :posts
 end
 
+class Current < ActiveSupport::CurrentAttributes
+  attribute :user
+end
+
 class TestModel < Minitest::Test
   extend Minitest::Spec::DSL
 
@@ -92,7 +96,7 @@ class TestModel < Minitest::Test
       attr_reader :version_title_changed_in_callback
 
       before_update do
-        @version_title_changed_in_callback = true if hoardable_version.title && hoardable_version.title != title
+        @version_title_changed_in_callback = true if hoardable_version&.title && hoardable_version.title != title
       end
     end
     assert_nil post.version_title_changed_in_callback
@@ -126,5 +130,48 @@ class TestModel < Minitest::Test
     assert_raises(ActiveModel::UnknownAttributeError) { update_post(non_existent_attribute: 'wat') }
     assert_equal post.versions.size, 0
     assert_nil post.hoardable_version
+  end
+
+  it 'does not create version when disabled' do
+    Hoardable[:enabled] = false
+    update_post
+    assert_equal post.versions.size, 0
+    Hoardable[:enabled] = true
+  end
+
+  it 'does not create version when disabled within block' do
+    Hoardable.with(enabled: false) do
+      update_post
+      assert_equal post.versions.size, 0
+    end
+  end
+
+  def expect_whodunit
+    update_post
+    version = post.versions.first
+    assert_equal version.hoardable_whodunit, user.name
+  end
+
+  it 'tracks whodunit as a string' do
+    Hoardable.with(whodunit: user.name) do
+      expect_whodunit
+    end
+  end
+
+  it 'tracks whodunit with a proc' do
+    Hoardable[:whodunit] = -> { Current.user&.name }
+    Current.user = user
+    expect_whodunit
+    Hoardable[:whodunit] = nil
+    Current.user = nil
+  end
+
+  it 'tracks note' do
+    note = 'Oopsie'
+    Hoardable.with(note: note) do
+      update_post
+      version = post.versions.first
+      assert_equal version.hoardable_note, note
+    end
   end
 end
