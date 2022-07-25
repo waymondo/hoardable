@@ -8,4 +8,5 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'archiversion'
 
 require 'minitest/autorun'
+require 'minitest/spec'
 Dir[File.join(__dir__, 'support/**/*.rb')].sort.each { |file| require file }
