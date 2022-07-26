@@ -5,7 +5,6 @@ require 'test_helper'
 class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
-  enum :status, { draft: 0, live: 1 }
   attr_reader :version_title_changed_in_callback, :reverted
 
   before_update do
@@ -33,7 +32,7 @@ class TestModel < Minitest::Test
       create_table :posts do |t|
         t.text :body
         t.string :title, null: false
-        t.integer :status, default: 0
+        t.string :status, default: 'draft'
         t.bigint :user_id, null: false
         t.timestamps
       end

@@ -45,7 +45,7 @@ module Hoardable
     def initialize_hoardable_version
       Hoardable.with(changes: changes) do
         @hoardable_version = versions.new(
-          attributes_for_database
+          attributes_before_type_cast
             .without('id')
             .merge(changes.transform_values { |h| h[0] })
             .merge(_data: initialize_hoardable_data)

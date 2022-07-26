@@ -52,7 +52,7 @@ module Hoardable
 
     def hoardable_source_attributes
       @hoardable_source_attributes ||=
-        attributes_for_database
+        attributes_before_type_cast
         .without(hoardable_source_foreign_key)
         .reject { |k, _v| k.start_with?('_') }
     end
