@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = spec.homepage
+  spec.metadata['rubygems_mfa_required'] = 'true'
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
@@ -28,9 +29,9 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'activerecord', '>= 6.1', '< 8'
-  spec.add_dependency 'activesupport', '>= 6.1', '< 8'
-  spec.add_dependency 'pg', '>= 1.0', '< 2'
-  spec.add_dependency 'railties', '>= 6.1', '< 8'
-  spec.metadata['rubygems_mfa_required'] = 'true'
+  spec.add_dependency 'activerecord', '>= 7', '< 8'
+  spec.add_dependency 'activesupport', '>= 7', '< 8'
+  spec.add_dependency 'railties', '>= 7', '< 8'
+
+  spec.add_dependency 'pg', '>= 1', '< 2'
 end

@@ -1,6 +1,6 @@
 # Hoardable
 
-Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for
+Hoardable is an ActiveRecord extension for Ruby 2.7+, Rails 7+, and PostgreSQL that allows for
 versioning and soft-deletion of records through the use of **uni-temporal inherited tables**.
 
 ### Huh?

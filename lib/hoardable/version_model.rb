@@ -19,7 +19,7 @@ module Hoardable
       scope :trashed, lambda {
         left_outer_joins(hoardable_source_key)
           .where(superclass.table_name => { id: nil })
-          .where("_data ->> 'operation' = 'delete'")
+          .where(_operation: 'delete')
       }
     end
 
@@ -40,7 +40,9 @@ module Hoardable
       end
     end
 
-    alias changes hoardable_changes
+    def changes
+      _data&.dig('changes')
+    end
 
     private
 

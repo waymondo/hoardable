@@ -43,14 +43,12 @@ module Hoardable
     private
 
     def initialize_hoardable_version
-      Hoardable.with(changes: changes) do
-        @hoardable_version = versions.new(
-          attributes_before_type_cast
-            .without('id')
-            .merge(changes.transform_values { |h| h[0] })
-            .merge(_data: initialize_hoardable_data)
-        )
-      end
+      @hoardable_version = versions.new(
+        attributes_before_type_cast
+          .without('id')
+          .merge(changes.transform_values { |h| h[0] })
+          .merge(_data: initialize_hoardable_data.merge(changes: changes))
+      )
     end
 
     def initialize_hoardable_data
@@ -66,7 +64,7 @@ module Hoardable
     end
 
     def save_hoardable_version
-      hoardable_version._data['operation'] = persisted? ? 'update' : 'delete'
+      hoardable_version._operation = persisted? ? 'update' : 'delete'
       hoardable_version.save!(validate: false, touch: false)
       @hoardable_version = nil
     end
