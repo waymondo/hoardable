@@ -7,19 +7,19 @@ module Hoardable
     extend ActiveSupport::Concern
 
     VERSION_CLASS_SUFFIX = 'Version'
+    SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
 
     included do
       default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
 
-      before_update :initialize_hoardable_version, if: :hoardable_callbacks_enabled
-      before_destroy :initialize_hoardable_version, if: [:hoardable_callbacks_enabled, -> { Hoardable.save_trash }]
-      after_update :save_hoardable_version, if: :hoardable_callbacks_enabled
-      before_destroy :delete_hoardable_versions, if: [:hoardable_callbacks_enabled, -> { !Hoardable.save_trash }]
-      after_destroy :save_hoardable_version, if: [:hoardable_callbacks_enabled, -> { Hoardable.save_trash }]
+      before_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
+      before_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
+      before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
       after_commit :unset_hoardable_version
 
       attr_reader :hoardable_version
 
+      define_model_callbacks :versioned
       define_model_callbacks :reverted, only: :after
 
       TracePoint.new(:end) do |trace|
@@ -50,13 +50,24 @@ module Hoardable
       Hoardable.enabled && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
     end
 
-    def initialize_hoardable_version
+    def insert_hoardable_version_on_update
+      insert_hoardable_version('update')
+    end
+
+    def insert_hoardable_version_on_destroy
+      insert_hoardable_version('delete')
+    end
+
+    def insert_hoardable_version(operation)
       @hoardable_version = versions.new(
         attributes_before_type_cast
-          .without('id')
-          .merge(changes.transform_values { |h| h[0] })
-          .merge(_data: initialize_hoardable_data.merge(changes: changes))
+          .without('id').merge(changes.transform_values { |h| h[0] })
+          .merge(
+            _operation: operation,
+            _data: initialize_hoardable_data.merge(changes: changes)
+          )
       )
+      run_callbacks(:versioned) { @hoardable_version.save!(validate: false, touch: false) }
     end
 
     def initialize_hoardable_data
@@ -69,11 +80,6 @@ module Hoardable
       return nil if (value = Hoardable.public_send(key)).nil?
 
       value.is_a?(Proc) ? value.call : value
-    end
-
-    def save_hoardable_version
-      hoardable_version._operation = persisted? ? 'update' : 'delete'
-      hoardable_version.save!(validate: false, touch: false)
     end
 
     def delete_hoardable_versions

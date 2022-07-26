@@ -37,6 +37,7 @@ First, include `Hoardable::Model` into a model you would like to hoard versions 
 class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
+  ...
 end
 ```
 
@@ -134,7 +135,7 @@ Hoardable.note = nil
 post.versions.last.hoardable_note # => "reverting due to accidental deletion"
 ```
 
-Another useful pattern is to use `Hoardable.with` to set the context around a block. A good example
+A more useful pattern is to use `Hoardable.with` to set the context around a block. A good example
 of this would be in `ApplicationController`:
 
 ```ruby
@@ -147,19 +148,25 @@ class ApplicationController < ActionController::Base
     Hoardable.with(whodunit: current_user.id, meta: { request_uuid: request.uuid }) do
       yield
     end
+    # `Hoardable.whodunit` is back to nil or the previously set value
   end
 end
 ```
 
 ### Model Callbacks
 
-Sometimes you might want to do something with a version before it gets saved. You can access it in a
-`before_save` callback as `hoardable_version`. There is also an `after_reverted` callback available
-as well.
+Sometimes you might want to do something with a version before or after it gets inserted to the
+database. You can access it in `before/after/around_versioned` callbacks on the source record as
+`hoardable_version`. These happen within `before_update` and `before_delete`, which are enclosed in
+an ActiveRecord save transaction.
+
+There is also an `after_reverted` callback available, which is called on the source record after a
+version is reverted, which includes becoming untrashed.
 
 ``` ruby
 class User
-  before_save :sanitize_version
+  include Hoardable::Model
+  before_versioned :sanitize_version
   after_reverted :track_reverted_event
 
   private
