@@ -6,14 +6,16 @@ module Hoardable
   module Model
     extend ActiveSupport::Concern
 
+    VERSION_CLASS_SUFFIX = 'Version'
+
     included do
       default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
 
-      before_update :initialize_hoardable_version, if: -> { Hoardable.enabled }
-      before_destroy :initialize_hoardable_version, if: -> { Hoardable.enabled && Hoardable.save_trash }
-      after_update :save_hoardable_version, if: -> { Hoardable.enabled }
-      before_destroy :delete_hoardable_versions, if: -> { Hoardable.enabled && !Hoardable.save_trash }
-      after_destroy :save_hoardable_version, if: -> { Hoardable.enabled && Hoardable.save_trash }
+      before_update :initialize_hoardable_version, if: :hoardable_callbacks_enabled
+      before_destroy :initialize_hoardable_version, if: [:hoardable_callbacks_enabled, -> { Hoardable.save_trash }]
+      after_update :save_hoardable_version, if: :hoardable_callbacks_enabled
+      before_destroy :delete_hoardable_versions, if: [:hoardable_callbacks_enabled, -> { !Hoardable.save_trash }]
+      after_destroy :save_hoardable_version, if: [:hoardable_callbacks_enabled, -> { Hoardable.save_trash }]
       after_commit :unset_hoardable_version
 
       attr_reader :hoardable_version
@@ -23,10 +25,11 @@ module Hoardable
       TracePoint.new(:end) do |trace|
         next unless self == trace.self
 
-        version_class_name = "#{name}Version"
+        version_class_name = "#{name}#{VERSION_CLASS_SUFFIX}"
         next if Object.const_defined?(version_class_name)
 
         Object.const_set(version_class_name, Class.new(self) { include VersionModel })
+
         has_many(
           :versions, -> { order(:_during) },
           dependent: nil,
@@ -42,6 +45,10 @@ module Hoardable
     end
 
     private
+
+    def hoardable_callbacks_enabled
+      Hoardable.enabled && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
+    end
 
     def initialize_hoardable_version
       @hoardable_version = versions.new(

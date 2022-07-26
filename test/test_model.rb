@@ -82,7 +82,7 @@ class TestModel < Minitest::Test
     update_post
     version = post.versions.first
     assert_raises(ActiveRecord::ReadOnlyRecord) { version.update!(title: 'Rewriting History') }
-    assert_raises(ActiveRecord::AssociationNotFoundError) { version.destroy! }
+    assert_raises(ActiveRecord::ReadOnlyRecord) { version.destroy! }
     assert_raises(ActiveRecord::AssociationNotFoundError) { version.versions }
   end
 
@@ -117,6 +117,12 @@ class TestModel < Minitest::Test
     assert_equal post.version_title_changed_in_callback, true
     assert post.hoardable_version_id
     assert_nil post.hoardable_version
+  end
+
+  it 'tests callbacks not available in version' do
+    update_post
+    version = post.versions.first
+    assert_equal version.send(:hoardable_callbacks_enabled), false
   end
 
   it 'can be reverted from previous version' do
