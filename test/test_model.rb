@@ -91,7 +91,7 @@ class TestModel < Minitest::Test
     assert_equal version.user, post.user
   end
 
-  it 'tests callback' do
+  it 'tests version is available in callback' do
     Post.class_eval do
       attr_reader :version_title_changed_in_callback
 
@@ -126,6 +126,19 @@ class TestModel < Minitest::Test
     refute_equal restored_post.updated_at, post.updated_at
   end
 
+  it 'can query for trashed versions' do
+    update_post
+    assert_equal PostVersion.count, 1
+    assert_equal PostVersion.trashed.size, 0
+    post.destroy!
+    assert_equal PostVersion.count, 2
+    assert_equal PostVersion.trashed.size, 1
+    version = PostVersion.last
+    version.restore!
+    assert_equal PostVersion.count, 2
+    assert_equal PostVersion.trashed.size, 0
+  end
+
   it 'does not create version on raised error' do
     assert_raises(ActiveModel::UnknownAttributeError) { update_post(non_existent_attribute: 'wat') }
     assert_equal post.versions.size, 0
@@ -133,16 +146,25 @@ class TestModel < Minitest::Test
   end
 
   it 'does not create version when disabled' do
-    Hoardable[:enabled] = false
+    Hoardable.enabled = false
     update_post
     assert_equal post.versions.size, 0
-    Hoardable[:enabled] = true
+    Hoardable.enabled = true
   end
 
   it 'does not create version when disabled within block' do
     Hoardable.with(enabled: false) do
       update_post
       assert_equal post.versions.size, 0
+    end
+  end
+
+  it 'can opt-out of versioning on deletion' do
+    Hoardable.with(save_trash: false) do
+      update_post
+      assert_equal post.versions.size, 1
+      post.destroy!
+      assert_equal PostVersion.count, 0
     end
   end
 

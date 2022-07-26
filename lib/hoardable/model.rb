@@ -6,14 +6,15 @@ module Hoardable
   module Model
     extend ActiveSupport::Concern
 
-    HOARDABLE_ENABLED = -> { Hoardable[:enabled] }.freeze
-
     included do
       default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
-      before_update :initialize_hoardable_version, if: HOARDABLE_ENABLED
-      before_destroy :initialize_hoardable_version, if: HOARDABLE_ENABLED
-      after_update :save_hoardable_version, if: HOARDABLE_ENABLED
-      after_destroy :save_hoardable_version, if: HOARDABLE_ENABLED
+
+      before_update :initialize_hoardable_version, if: -> { Hoardable.enabled }
+      before_destroy :initialize_hoardable_version, if: -> { Hoardable.enabled && Hoardable.save_trash }
+      after_update :save_hoardable_version, if: -> { Hoardable.enabled }
+      before_destroy :delete_hoardable_versions, if: -> { Hoardable.enabled && !Hoardable.save_trash }
+      after_destroy :save_hoardable_version, if: -> { Hoardable.enabled && Hoardable.save_trash }
+
       attr_reader :hoardable_version
 
       TracePoint.new(:end) do |trace|
@@ -23,12 +24,12 @@ module Hoardable
         next if Object.const_defined?(version_class_name)
 
         Object.const_set(version_class_name, Class.new(self) { include VersionModel })
-        class_eval do
-          has_many(
-            :versions, -> { order(:_during) },
-            dependent: :destroy, class_name: version_class_name, inverse_of: model_name.i18n_key
-          )
-        end
+        has_many(
+          :versions, -> { order(:_during) },
+          dependent: nil,
+          class_name: version_class_name,
+          inverse_of: model_name.i18n_key
+        )
         trace.disable
       end.enable
     end
@@ -51,7 +52,7 @@ module Hoardable
     end
 
     def initialize_hoardable_data
-      Hoardable::VersionModel::DATA_KEYS.to_h do |key|
+      DATA_KEYS.to_h do |key|
         [key, assign_hoardable_context(key)]
       end
     end
@@ -63,8 +64,13 @@ module Hoardable
     end
 
     def save_hoardable_version
+      hoardable_version._data['operation'] = persisted? ? 'update' : 'delete'
       hoardable_version.save!(validate: false, touch: false)
       @hoardable_version = nil
+    end
+
+    def delete_hoardable_versions
+      versions.delete_all(:delete_all)
     end
   end
 end

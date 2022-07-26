@@ -5,15 +5,22 @@ module Hoardable
   module VersionModel
     extend ActiveSupport::Concern
 
-    DATA_KEYS = %i[changes meta whodunit note].freeze
-
     included do
       hoardable_source_key = superclass.model_name.i18n_key
       belongs_to hoardable_source_key, inverse_of: :versions
       alias_method :hoardable_source, hoardable_source_key
+
       self.table_name = "#{table_name.singularize}_versions"
+
       alias_method :readonly?, :persisted?
+
       before_create :assign_temporal_tsrange
+
+      scope :trashed, lambda {
+        left_outer_joins(hoardable_source_key)
+          .where(superclass.table_name => { id: nil })
+          .where("_data ->> 'operation' = 'delete'")
+      }
     end
 
     def restore!
