@@ -17,6 +17,8 @@ module Hoardable
 
       attr_reader :hoardable_version
 
+      define_model_callbacks :reverted, only: :after
+
       TracePoint.new(:end) do |trace|
         next unless self == trace.self
 
@@ -43,7 +45,7 @@ module Hoardable
     def initialize_hoardable_version
       Hoardable.with(changes: changes) do
         @hoardable_version = versions.new(
-          attributes_before_type_cast
+          attributes_for_database
             .without('id')
             .merge(changes.transform_values { |h| h[0] })
             .merge(_data: initialize_hoardable_data)

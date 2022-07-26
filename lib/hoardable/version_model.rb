@@ -23,13 +23,14 @@ module Hoardable
       }
     end
 
-    def restore!
-      if hoardable_source
-        hoardable_source.update!(hoardable_source_attributes.without('id'))
-      else
-        self.class.superclass.insert(
-          hoardable_source_attributes.merge('id' => public_send(hoardable_source_foreign_key), 'updated_at' => Time.now)
-        )
+    def revert!
+      transaction do
+        (
+          hoardable_source&.tap { |tapped| tapped.update!(hoardable_source_attributes.without('id')) } ||
+          untrash
+        ).tap do |tapped|
+          tapped.run_callbacks(:reverted)
+        end
       end
     end
 
@@ -43,9 +44,15 @@ module Hoardable
 
     private
 
+    def untrash
+      foreign_id = public_send(hoardable_source_foreign_key)
+      self.class.superclass.insert(hoardable_source_attributes.merge('id' => foreign_id, 'updated_at' => Time.now))
+      self.class.superclass.find(foreign_id)
+    end
+
     def hoardable_source_attributes
       @hoardable_source_attributes ||=
-        attributes_before_type_cast
+        attributes_for_database
         .without(hoardable_source_foreign_key)
         .reject { |k, _v| k.start_with?('_') }
     end

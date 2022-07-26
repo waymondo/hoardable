@@ -6,6 +6,15 @@ class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
   enum :status, { draft: 0, live: 1 }
+  attr_reader :version_title_changed_in_callback, :reverted
+
+  before_update do
+    @version_title_changed_in_callback = true if hoardable_version&.title && hoardable_version.title != title
+  end
+
+  after_reverted do
+    @reverted = true
+  end
 end
 
 class User < ActiveRecord::Base
@@ -58,6 +67,14 @@ class TestModel < Minitest::Test
     assert_equal version.title, 'Headline'
   end
 
+  it 'uses current db version and not the current ruby attribute value for version' do
+    post.title = 'Draft Headline'
+    update_post
+    assert_equal post.versions.size, 1
+    version = post.versions.first
+    assert_equal version.title, 'Headline'
+  end
+
   it 'creates read-only versions that do not themselves have versions' do
     update_post
     version = post.versions.first
@@ -92,38 +109,37 @@ class TestModel < Minitest::Test
   end
 
   it 'tests version is available in callback' do
-    Post.class_eval do
-      attr_reader :version_title_changed_in_callback
-
-      before_update do
-        @version_title_changed_in_callback = true if hoardable_version&.title && hoardable_version.title != title
-      end
-    end
     assert_nil post.version_title_changed_in_callback
     update_post
     assert_equal post.version_title_changed_in_callback, true
   end
 
-  it 'can be restored from previous version' do
+  it 'can be reverted from previous version' do
     attributes = post.attributes.without('updated_at')
     update_post
     version = post.versions.first
-    version.restore!
+    version.revert!
     assert_equal post.attributes.without('updated_at'), attributes
     refute_equal post.updated_at, attributes['updated_at']
   end
 
-  it 'creates a version on deletion and can be restored' do
+  it 'creates a version on deletion and can be reverted' do
     post_id = post.id
     attributes = post.attributes.without('updated_at')
     post.destroy!
     assert_raises(ActiveRecord::RecordNotFound) { post.reload }
     version = PostVersion.last
     assert_equal version.post_id, post_id
-    version.restore!
-    restored_post = Post.find(post_id)
-    assert_equal restored_post.attributes.without('updated_at'), attributes
-    refute_equal restored_post.updated_at, post.updated_at
+    reverted_post = version.revert!
+    assert_equal reverted_post.attributes.without('updated_at'), attributes
+    refute_equal reverted_post.updated_at, post.updated_at
+  end
+
+  it 'can hook into revert callback' do
+    assert_nil post.reverted
+    post.destroy!
+    reverted_post = PostVersion.last.revert!
+    refute_nil reverted_post.reverted
   end
 
   it 'can query for trashed versions' do
@@ -134,7 +150,7 @@ class TestModel < Minitest::Test
     assert_equal PostVersion.count, 2
     assert_equal PostVersion.trashed.size, 1
     version = PostVersion.last
-    version.restore!
+    version.revert!
     assert_equal PostVersion.count, 2
     assert_equal PostVersion.trashed.size, 0
   end
