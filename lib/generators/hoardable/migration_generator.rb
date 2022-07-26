@@ -13,8 +13,10 @@ module Hoardable
       migration_template 'migration.rb.erb', "db/migrate/create_#{singularized_table_name}_versions.rb"
     end
 
-    def singularized_table_name
-      @singularized_table_name ||= table_name.singularize
+    no_tasks do
+      def singularized_table_name
+        @singularized_table_name ||= table_name.singularize
+      end
     end
   end
 end
