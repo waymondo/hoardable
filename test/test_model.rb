@@ -5,10 +5,14 @@ require 'test_helper'
 class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
-  attr_reader :version_title_changed_in_callback, :reverted
+  attr_reader :version_title_changed_in_callback, :reverted, :hoardable_version_id
 
   before_update do
     @version_title_changed_in_callback = true if hoardable_version&.title && hoardable_version.title != title
+  end
+
+  after_update do
+    @hoardable_version_id = hoardable_version&.id
   end
 
   after_reverted do
@@ -107,10 +111,12 @@ class TestModel < Minitest::Test
     assert_equal version.user, post.user
   end
 
-  it 'tests version is available in callback' do
+  it 'tests version is available in callbacks' do
     assert_nil post.version_title_changed_in_callback
     update_post
     assert_equal post.version_title_changed_in_callback, true
+    assert post.hoardable_version_id
+    assert_nil post.hoardable_version
   end
 
   it 'can be reverted from previous version' do

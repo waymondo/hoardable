@@ -14,6 +14,7 @@ module Hoardable
       after_update :save_hoardable_version, if: -> { Hoardable.enabled }
       before_destroy :delete_hoardable_versions, if: -> { Hoardable.enabled && !Hoardable.save_trash }
       after_destroy :save_hoardable_version, if: -> { Hoardable.enabled && Hoardable.save_trash }
+      after_commit :unset_hoardable_version
 
       attr_reader :hoardable_version
 
@@ -66,11 +67,14 @@ module Hoardable
     def save_hoardable_version
       hoardable_version._operation = persisted? ? 'update' : 'delete'
       hoardable_version.save!(validate: false, touch: false)
-      @hoardable_version = nil
     end
 
     def delete_hoardable_versions
       versions.delete_all(:delete_all)
+    end
+
+    def unset_hoardable_version
+      @hoardable_version = nil
     end
   end
 end
