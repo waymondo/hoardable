@@ -22,12 +22,14 @@ module Hoardable
       end
     end
 
-    def [](key)
-      @context[key]
-    end
+    DATA_KEYS.each do |key|
+      define_method(key) do
+        @context[key]
+      end
 
-    def []=(key, value)
-      @context[key] = value
+      define_method("#{key}=") do |value|
+        @context[key] = value
+      end
     end
 
     def with(hash)

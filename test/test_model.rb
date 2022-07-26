@@ -196,10 +196,10 @@ class TestModel < Minitest::Test
   end
 
   it 'tracks whodunit with a proc' do
-    Hoardable[:whodunit] = -> { Current.user&.name }
+    Hoardable.whodunit = -> { Current.user&.name }
     Current.user = user
     expect_whodunit
-    Hoardable[:whodunit] = nil
+    Hoardable.whodunit = nil
     Current.user = nil
   end
 

@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ['justin talbott']
   spec.email = ['justin@waymondo.com']
 
-  spec.summary = 'An ActiveRecord extension for the archiving versions of records'
-  spec.description = 'Archive versions of your Rails models with the power of temporal tables and table inheritance'
+  spec.summary = 'An ActiveRecord extension for versioning and soft-deletion of records in Postgres'
+  spec.description = 'Rails model versioning with the power of uni-temporal inherited tables'
   spec.homepage = 'https://github.com/waymondo/hoardable'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 2.6.0'

@@ -60,7 +60,7 @@ module Hoardable
     end
 
     def assign_hoardable_context(key)
-      return nil if (value = Hoardable[key]).nil?
+      return nil if (value = Hoardable.public_send(key)).nil?
 
       value.is_a?(Proc) ? value.call : value
     end
