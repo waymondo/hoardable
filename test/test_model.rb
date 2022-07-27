@@ -124,9 +124,10 @@ class TestModel < Minitest::Test
     post_id = post.id
     attributes = post.attributes.without('updated_at')
     post.destroy!
-    assert_raises(ActiveRecord::RecordNotFound) { post.reload }
+    assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
     version = PostVersion.last
     assert_equal version.post_id, post_id
+    assert_equal version.id, post_id
     reverted_post = version.revert!
     assert_equal reverted_post.attributes.without('updated_at'), attributes
     refute_equal reverted_post.updated_at, post.updated_at

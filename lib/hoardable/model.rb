@@ -7,10 +7,8 @@ module Hoardable
     extend ActiveSupport::Concern
 
     included do
-      include Tableoid
-
-      before_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
-      before_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
+      around_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
+      around_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
       before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
       after_commit :unset_hoardable_version
 
@@ -27,6 +25,7 @@ module Hoardable
 
         Object.const_set(version_class_name, Class.new(self) { include VersionModel })
 
+        include Tableoid
         has_many(
           :versions, -> { order(:_during) },
           dependent: nil,
@@ -47,24 +46,32 @@ module Hoardable
       Hoardable.enabled && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
     end
 
-    def insert_hoardable_version_on_update
-      insert_hoardable_version('update')
+    def insert_hoardable_version_on_update(&block)
+      insert_hoardable_version('update', attributes_before_type_cast.without('id'), &block)
     end
 
-    def insert_hoardable_version_on_destroy
-      insert_hoardable_version('delete')
+    def insert_hoardable_version_on_destroy(&block)
+      insert_hoardable_version('delete', attributes_before_type_cast, &block)
     end
 
-    def insert_hoardable_version(operation)
-      @hoardable_version = versions.new(
-        attributes_before_type_cast
-          .without('id').merge(changes.transform_values { |h| h[0] })
-          .merge(
+    def insert_hoardable_version(operation, attrs)
+      @hoardable_version = initialize_hoardable_version(operation, attrs)
+      run_callbacks(:versioned) do
+        yield
+        hoardable_version.save(validate: false, touch: false)
+      end
+    end
+
+    def initialize_hoardable_version(operation, attrs)
+      versions.new(
+        attrs.merge(
+          changes.transform_values { |h| h[0] },
+          {
             _operation: operation,
             _data: initialize_hoardable_data.merge(changes: changes)
-          )
+          }
+        )
       )
-      run_callbacks(:versioned) { @hoardable_version.save!(validate: false, touch: false) }
     end
 
     def initialize_hoardable_data
