@@ -36,25 +36,7 @@ end
 class TestModel < Minitest::Test
   extend Minitest::Spec::DSL
 
-  before do
-    ActiveRecord::Schema.define do
-      create_table :posts do |t|
-        t.text :body
-        t.string :title, null: false
-        t.string :status, default: 'draft'
-        t.bigint :user_id, null: false
-        t.timestamps
-      end
-
-      create_table :users do |t|
-        t.string :name, null: false
-        t.timestamps
-      end
-    end
-    generate_versions_table('posts')
-  end
-
-  after { teardown_db && empty_tmp_dir }
+  before { truncate_db }
 
   let(:user) { User.create!(name: 'Justin') }
 

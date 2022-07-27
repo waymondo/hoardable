@@ -5,7 +5,7 @@ require 'test_helper'
 class MigrationGeneratorTest < Rails::Generators::TestCase
   extend Minitest::Spec::DSL
   tests Hoardable::MigrationGenerator
-  destination File.expand_path('../tmp', __dir__)
+  destination tmp_dir
   setup :prepare_destination
 
   def shared_assertions

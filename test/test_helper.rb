@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'bundler/setup'
 require 'debug'
 require 'active_support/concern'
 require 'active_record'
@@ -22,24 +23,43 @@ ActiveRecord::Base.establish_connection(
 ActiveRecord::Schema.verbose = false
 # ActiveRecord::Base.logger = Logger.new($stdout)
 
-def generate_versions_table(table_name)
-  destination_root = File.expand_path('../../tmp', __dir__)
-  Rails::Generators.invoke('hoardable:migration', [table_name, '--quiet'], destination_root: destination_root)
-  Dir[File.join(destination_root, 'db/migrate/*.rb')].sort.each { |file| require file }
-  "Create#{table_name.classify.singularize}Versions".constantize.migrate(:up)
+def tmp_dir
+  File.expand_path('../tmp', __dir__)
 end
 
-def teardown_db
-  ActiveRecord::Base.connection.tables.each do |table|
-    next unless ActiveRecord::Base.connection.table_exists?(table)
+FileUtils.rm_f Dir.glob("#{tmp_dir}/**/*")
 
-    ActiveRecord::Base.connection.drop_table(table, force: :cascade)
+def truncate_db
+  ActiveRecord::Base.connection.tables.each do |table|
+    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY")
   end
 end
 
-def empty_tmp_dir
-  FileUtils.rm_f Dir.glob('../tmp/**/*')
+ActiveRecord::Base.connection.tables.each do |table|
+  next unless ActiveRecord::Base.connection.table_exists?(table)
+
+  ActiveRecord::Base.connection.drop_table(table, force: :cascade)
 end
 
-empty_tmp_dir
-teardown_db
+ActiveRecord::Schema.define do
+  create_table :posts do |t|
+    t.text :body
+    t.string :title, null: false
+    t.string :status, default: 'draft'
+    t.bigint :user_id, null: false
+    t.timestamps
+  end
+
+  create_table :users do |t|
+    t.string :name, null: false
+    t.timestamps
+  end
+end
+
+def generate_versions_table(table_name)
+  Rails::Generators.invoke('hoardable:migration', [table_name, '--quiet'], destination_root: tmp_dir)
+  Dir[File.join(tmp_dir, 'db/migrate/*.rb')].sort.each { |file| require file }
+  "Create#{table_name.classify.singularize}Versions".constantize.migrate(:up)
+end
+
+generate_versions_table('posts')

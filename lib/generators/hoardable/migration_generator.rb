@@ -10,10 +10,18 @@ module Hoardable
     include Rails::Generators::Migration
 
     def create_versions_table
-      migration_template 'migration.rb.erb', "db/migrate/create_#{singularized_table_name}_versions.rb"
+      migration_template migration_template_name, "db/migrate/create_#{singularized_table_name}_versions.rb"
     end
 
     no_tasks do
+      def migration_template_name
+        if Gem::Version.new(ActiveRecord::Migration.current_version.to_s) < Gem::Version.new('7')
+          'migration_6.rb.erb'
+        else
+          'migration.rb.erb'
+        end
+      end
+
       def singularized_table_name
         @singularized_table_name ||= table_name.singularize
       end

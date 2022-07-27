@@ -1,7 +1,7 @@
 # Hoardable
 
-Hoardable is an ActiveRecord extension for Ruby 2.7+, Rails 7+, and PostgreSQL that allows for
-versioning and soft-deletion of records through the use of **uni-temporal inherited tables**.
+Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for
+versioning and soft-deletion of records through the use of *uni-temporal inherited tables*.
 
 ### Huh?
 
@@ -47,6 +47,10 @@ Then, run the generator command to create a database migration and migrate it:
 bin/rails g hoardable:migration posts
 bin/rails db:migrate
 ```
+
+_Note:_ If you are on Rails 6.1, you might want to set `config.active_record.schema_format = :sql`
+in `application.rb`, so that the enum type is captured in your schema dump. This is not required in
+Rails 7.
 
 ## Usage
 
