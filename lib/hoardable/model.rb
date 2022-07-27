@@ -36,6 +36,10 @@ module Hoardable
       end.enable
     end
 
+    def trashed?
+      versions.limit(1).order(_during: :desc).first&.send(:hoardable_source_attributes) == attributes
+    end
+
     def at(datetime)
       versions.find_by('_during @> ?::timestamp', datetime) || self
     end

@@ -130,6 +130,7 @@ class TestModel < Minitest::Test
     post_id = post.id
     attributes = post.attributes.without('updated_at')
     post.destroy!
+    assert post.trashed?
     assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
     version = PostVersion.last
     assert_equal version.post_id, post_id
@@ -137,6 +138,7 @@ class TestModel < Minitest::Test
     reverted_post = version.revert!
     assert_equal reverted_post.attributes.without('updated_at'), attributes
     refute_equal reverted_post.updated_at, post.updated_at
+    refute post.reload.trashed?
   end
 
   it 'can hook into revert callback' do
