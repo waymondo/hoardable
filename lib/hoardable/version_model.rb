@@ -10,7 +10,7 @@ module Hoardable
       belongs_to hoardable_source_key, inverse_of: :versions
       alias_method :hoardable_source, hoardable_source_key
 
-      self.table_name = "#{table_name.singularize}_versions"
+      self.table_name = "#{table_name.singularize}#{Hoardable::VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
 
@@ -29,6 +29,7 @@ module Hoardable
           hoardable_source&.tap { |tapped| tapped.update!(hoardable_source_attributes.without('id')) } ||
           untrash
         ).tap do |tapped|
+          tapped.instance_variable_set(:@hoardable_version, self)
           tapped.run_callbacks(:reverted)
         end
       end

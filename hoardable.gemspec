@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'lib/hoardable/hoardable'
+require_relative 'lib/hoardable/version'
 
 Gem::Specification.new do |spec|
   spec.name = 'hoardable'

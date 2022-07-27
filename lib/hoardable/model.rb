@@ -6,9 +6,6 @@ module Hoardable
   module Model
     extend ActiveSupport::Concern
 
-    VERSION_CLASS_SUFFIX = 'Version'
-    SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
-
     included do
       include Tableoid
 

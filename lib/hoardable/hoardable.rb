@@ -2,9 +2,12 @@
 
 # An ActiveRecord extension for keeping versions of records in temporal inherited tables
 module Hoardable
-  VERSION = '0.1.0'
   DATA_KEYS = %i[meta whodunit note].freeze
   CONFIG_KEYS = %i[enabled save_trash].freeze
+
+  VERSION_CLASS_SUFFIX = 'Version'
+  VERSION_TABLE_SUFFIX = "_#{VERSION_CLASS_SUFFIX.tableize}"
+  SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
 
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
