@@ -5,16 +5,19 @@ module Hoardable
   module Tableoid
     extend ActiveSupport::Concern
 
+    TABLEOID_AREL_CONDITIONS = lambda do |arel_table, condition|
+      arel_table[:tableoid].send(
+        condition,
+        Arel::Nodes::NamedFunction.new('CAST', [Arel::Nodes::Quoted.new(arel_table.name).as('regclass')])
+      )
+    end.freeze
+
     included do
       attr_writer :tableoid
 
-      default_scope do
-        where(
-          arel_table[:tableoid].eq(
-            Arel::Nodes::NamedFunction.new('CAST', [Arel::Nodes::Quoted.new(arel_table.name).as('regclass')])
-          )
-        )
-      end
+      default_scope { where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq)) }
+      scope :with_versions, -> { unscope(where: [:tableoid]) }
+      scope :versions, -> { with_versions.where(TABLEOID_AREL_CONDITIONS.call(arel_table, :not_eq)) }
     end
 
     def tableoid

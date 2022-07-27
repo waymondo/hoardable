@@ -226,4 +226,16 @@ class TestModel < Minitest::Test
     user_with_trashed_posts = UserWithTrashedPosts.find(user.id)
     assert user_with_trashed_posts.posts.exists?
   end
+
+  it 'can search for versions of resource on parent model' do
+    Post.create!(title: 'Another Headline', user: user)
+    update_post
+    assert_equal Post.count, 2
+    assert_equal Post.with_versions.count, 3
+    assert_equal Post.versions.count, 1
+    post.destroy!
+    assert_equal Post.count, 1
+    assert_equal Post.with_versions.count, 3
+    assert_equal Post.versions.count, 2
+  end
 end
