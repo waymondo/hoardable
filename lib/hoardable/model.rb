@@ -10,7 +10,7 @@ module Hoardable
     SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
 
     included do
-      default_scope { where("#{table_name}.tableoid = '#{table_name}'::regclass") }
+      include Tableoid
 
       before_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
       before_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]

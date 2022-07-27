@@ -48,8 +48,9 @@ module Hoardable
 
     def untrash
       foreign_id = public_send(hoardable_source_foreign_key)
-      self.class.superclass.insert(hoardable_source_attributes.merge('id' => foreign_id, 'updated_at' => Time.now))
-      self.class.superclass.find(foreign_id)
+      superscope = self.class.superclass.unscoped
+      superscope.insert(hoardable_source_attributes.merge('id' => foreign_id, 'updated_at' => Time.now))
+      superscope.find(foreign_id)
     end
 
     def hoardable_source_attributes

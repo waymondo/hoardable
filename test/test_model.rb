@@ -24,6 +24,11 @@ class User < ActiveRecord::Base
   has_many :posts
 end
 
+class UserWithTrashedPosts < ActiveRecord::Base
+  self.table_name = 'users'
+  has_many :posts, -> { unscope(where: [:tableoid]) }, foreign_key: 'user_id'
+end
+
 class Current < ActiveSupport::CurrentAttributes
   attribute :user
 end
@@ -229,5 +234,14 @@ class TestModel < Minitest::Test
     update_post
     version = post.versions.first
     assert_equal version.changes.keys, %w[title status updated_at]
+  end
+
+  it 'can unscope the tableoid clause in default scope to included versions of trashed sources' do
+    post
+    assert user.posts.exists?
+    post.destroy!
+    assert user.posts.size.zero?
+    user_with_trashed_posts = UserWithTrashedPosts.find(user.id)
+    assert user_with_trashed_posts.posts.exists?
   end
 end
