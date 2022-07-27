@@ -2,7 +2,7 @@
 
 # An ActiveRecord extension for keeping versions of records in temporal inherited tables
 module Hoardable
-  DATA_KEYS = %i[meta whodunit note].freeze
+  DATA_KEYS = %i[meta whodunit note event_id].freeze
   CONFIG_KEYS = %i[enabled save_trash].freeze
 
   VERSION_CLASS_SUFFIX = 'Version'

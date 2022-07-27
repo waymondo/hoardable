@@ -10,7 +10,7 @@ module Hoardable
       around_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
       around_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
       before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
-      after_commit :unset_hoardable_version
+      after_commit :unset_hoardable_version_and_event_id
 
       attr_reader :hoardable_version
 
@@ -55,11 +55,18 @@ module Hoardable
     end
 
     def insert_hoardable_version(operation, attrs)
-      @hoardable_version = initialize_hoardable_version(operation, attrs)
-      run_callbacks(:versioned) do
-        yield
-        hoardable_version.save(validate: false, touch: false)
+      event_id = find_or_initialize_hoardable_event_id
+      Hoardable.with(event_id: event_id) do
+        @hoardable_version = initialize_hoardable_version(operation, attrs)
+        run_callbacks(:versioned) do
+          yield
+          hoardable_version.save(validate: false, touch: false)
+        end
       end
+    end
+
+    def find_or_initialize_hoardable_event_id
+      Thread.current[:hoardable_event_id] ||= SecureRandom.hex
     end
 
     def initialize_hoardable_version(operation, attrs)
@@ -90,8 +97,11 @@ module Hoardable
       versions.delete_all(:delete_all)
     end
 
-    def unset_hoardable_version
+    def unset_hoardable_version_and_event_id
       @hoardable_version = nil
+      return if ActiveRecord::Base.connection.transaction_open?
+
+      Thread.current[:hoardable_event_id] = nil
     end
   end
 end

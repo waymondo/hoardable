@@ -46,7 +46,13 @@ ActiveRecord::Schema.define do
     t.text :body
     t.string :title, null: false
     t.string :status, default: 'draft'
-    t.bigint :user_id, null: false
+    t.bigint :user_id, null: false, index: true
+    t.timestamps
+  end
+
+  create_table :comments do |t|
+    t.text :body
+    t.bigint :post_id, null: false, index: true
     t.timestamps
   end
 
@@ -63,3 +69,4 @@ def generate_versions_table(table_name)
 end
 
 generate_versions_table('posts')
+generate_versions_table('comments')

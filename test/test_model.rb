@@ -5,6 +5,7 @@ require 'test_helper'
 class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
+  has_many :comments, dependent: :destroy
   attr_reader :hoardable_operation, :reverted, :hoardable_version_id
 
   before_versioned do
@@ -22,6 +23,11 @@ end
 
 class User < ActiveRecord::Base
   has_many :posts
+end
+
+class Comment < ActiveRecord::Base
+  include Hoardable::Model
+  belongs_to :post
 end
 
 class UserWithTrashedPosts < ActiveRecord::Base
@@ -238,5 +244,20 @@ class TestModel < Minitest::Test
     assert_equal Post.count, 1
     assert_equal Post.with_versions.count, 3
     assert_equal Post.versions.count, 2
+  end
+
+  it 'recursively creates trashed versions with shared event_id' do
+    update_post
+    post.comments.create!(body: 'Comment 1')
+    post.comments.create!(body: 'Comment 2')
+    post.destroy!
+    trashed_post = PostVersion.trashed.find(post.id)
+    trashed_comments = CommentVersion.trashed.where(post_id: post.id)
+    refute_equal post.versions.first.hoardable_event_id, trashed_post.hoardable_event_id
+    assert_equal(
+      trashed_post.hoardable_event_id,
+      trashed_comments.first.hoardable_event_id,
+      trashed_comments.second.hoardable_event_id
+    )
   end
 end
