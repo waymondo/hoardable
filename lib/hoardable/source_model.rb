@@ -5,7 +5,15 @@ module Hoardable
   module SourceModel
     extend ActiveSupport::Concern
 
+    class_methods do
+      def version_class
+        "#{name}#{VERSION_CLASS_SUFFIX}".constantize
+      end
+    end
+
     included do
+      include Tableoid
+
       around_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
       around_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
       before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
@@ -13,12 +21,10 @@ module Hoardable
 
       attr_reader :hoardable_version
 
-      include Tableoid
-
       has_many(
         :versions, -> { order(:_during) },
         dependent: nil,
-        class_name: "#{name}#{VERSION_CLASS_SUFFIX}",
+        class_name: version_class.to_s,
         inverse_of: model_name.i18n_key
       )
     end
