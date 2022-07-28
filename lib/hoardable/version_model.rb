@@ -87,7 +87,15 @@ module Hoardable
     end
 
     def assign_temporal_tsrange
-      self._during = ((previous_temporal_tsrange_end || hoardable_source.created_at)..Time.now)
+      range_start = (
+        previous_temporal_tsrange_end ||
+        if hoardable_source.class.column_names.include?('created_at')
+          hoardable_source.created_at
+        else
+          Time.at(0)
+        end
+      )
+      self._during = (range_start..Time.now)
     end
   end
 end

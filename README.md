@@ -16,7 +16,7 @@ stay in sync with its parent. If a new column is added to or removed from the pa
 change is reflected on its descendants.
 
 With these concepts combined, `hoardable` offers a simple and effective model versioning system for
-Rails. Versions of records are stored in separate, inherited tables along with there valid time
+Rails. Versions of records are stored in separate, inherited tables along with their valid time
 ranges and contextual data. Compared to other Rails-oriented versioning systems, this gem strives to
 be more explicit and obvious on the lower RDBS level while still familiar and convenient within Ruby
 on Rails.
