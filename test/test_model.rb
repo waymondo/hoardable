@@ -31,12 +31,12 @@ end
 
 class Comment < ActiveRecord::Base
   include Hoardable::Model
-  belongs_to :post
+  belongs_to :post, -> { include_versions }
 end
 
 class UserWithTrashedPosts < ActiveRecord::Base
   self.table_name = 'users'
-  has_many :posts, -> { unscope(where: [:tableoid]) }, foreign_key: 'user_id'
+  has_many :posts, -> { include_versions }, foreign_key: 'user_id'
 end
 
 class Current < ActiveSupport::CurrentAttributes
@@ -272,12 +272,18 @@ class TestModel < Minitest::Test
     Post.create!(title: 'Another Headline', user: user)
     update_post
     assert_equal Post.count, 2
-    assert_equal Post.with_versions.count, 3
+    assert_equal Post.include_versions.count, 3
     assert_equal Post.versions.count, 1
     post.destroy!
     assert_equal Post.count, 1
-    assert_equal Post.with_versions.count, 3
+    assert_equal Post.include_versions.count, 3
     assert_equal Post.versions.count, 2
+  end
+
+  it 'a comment can still point to a trashed post' do
+    comment = post.comments.create!(body: 'Comment 1')
+    post.destroy!
+    assert comment.reload.post
   end
 
   it 'recursively creates trashed versions with shared event_id' do

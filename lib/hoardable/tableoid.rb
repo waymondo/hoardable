@@ -16,8 +16,8 @@ module Hoardable
       attr_writer :tableoid
 
       default_scope { where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq)) }
-      scope :with_versions, -> { unscope(where: [:tableoid]) }
-      scope :versions, -> { with_versions.where(TABLEOID_AREL_CONDITIONS.call(arel_table, :not_eq)) }
+      scope :include_versions, -> { unscope(where: [:tableoid]) }
+      scope :versions, -> { include_versions.where(TABLEOID_AREL_CONDITIONS.call(arel_table, :not_eq)) }
     end
 
     def tableoid
