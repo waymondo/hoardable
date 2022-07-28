@@ -6,7 +6,7 @@ class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
   has_many :comments, dependent: :destroy
-  attr_reader :hoardable_operation, :reverted, :hoardable_version_id
+  attr_reader :hoardable_operation, :reverted, :untrashed, :hoardable_version_id
 
   before_versioned do
     @hoardable_operation = hoardable_version&._operation
@@ -14,6 +14,10 @@ class Post < ActiveRecord::Base
 
   after_versioned do
     @hoardable_version_id = hoardable_version&.id
+  end
+
+  after_untrashed do
+    @untrashed = true
   end
 
   after_reverted do
@@ -139,7 +143,7 @@ class TestModel < Minitest::Test
     refute_equal post.updated_at, attributes['updated_at']
   end
 
-  it 'creates a version on deletion and can be reverted' do
+  it 'creates a version on deletion and can be untrashed' do
     post_id = post.id
     attributes = post.attributes.without('updated_at')
     post.destroy!
@@ -148,17 +152,32 @@ class TestModel < Minitest::Test
     version = PostVersion.last
     assert_equal version.post_id, post_id
     assert_equal version.id, post_id
-    reverted_post = version.revert!
-    assert_equal reverted_post.attributes.without('updated_at'), attributes
-    refute_equal reverted_post.updated_at, post.updated_at
+    untrashed_post = version.untrash!
+    assert_equal untrashed_post.attributes.without('updated_at'), attributes
+    refute_equal untrashed_post.updated_at, post.updated_at
     refute post.reload.trashed?
   end
 
-  it 'can hook into revert callback' do
+  it 'can hook into after_reverted and after_untrashed callbacks' do
     assert_nil post.reverted
-    post.destroy!
-    reverted_post = PostVersion.last.revert!
+    assert_nil post.untrashed
+    update_post
+    version = post.versions.last
+    reverted_post = version.revert!
     refute_nil reverted_post.reverted
+    post.destroy!
+    version = post.versions.trashed.last
+    untrashed_post = version.untrash!
+    refute_nil untrashed_post.untrashed
+  end
+
+  it 'raises errors when trying to revert! or untrash! when not allowed' do
+    update_post
+    version = post.versions.last
+    assert_raises(Hoardable::Error) { version.untrash! }
+    post.destroy!
+    version = post.versions.trashed.last
+    assert_raises(Hoardable::Error) { version.revert! }
   end
 
   it 'can query for trashed versions' do
@@ -168,8 +187,8 @@ class TestModel < Minitest::Test
     post.destroy!
     assert_equal PostVersion.count, 2
     assert_equal PostVersion.trashed.size, 1
-    version = PostVersion.last
-    version.revert!
+    version = PostVersion.trashed.last
+    version.untrash!
     assert_equal PostVersion.count, 2
     assert_equal PostVersion.trashed.size, 0
   end

@@ -25,13 +25,26 @@ module Hoardable
     end
 
     def revert!
+      raise(Error, 'Version is trashed, cannot revert') unless _operation == 'update'
+
       transaction do
-        (
-          hoardable_source&.tap { |tapped| tapped.update!(hoardable_source_attributes.without('id')) } ||
-          untrash
-        ).tap do |tapped|
-          tapped.instance_variable_set(:@hoardable_version, self)
-          tapped.run_callbacks(:reverted)
+        hoardable_source.tap do |reverted|
+          reverted.update!(hoardable_source_attributes.without('id'))
+          reverted.instance_variable_set(:@hoardable_version, self)
+          reverted.run_callbacks(:reverted)
+        end
+      end
+    end
+
+    def untrash!
+      raise(Error, 'Version is not trashed, cannot untrash') unless _operation == 'delete'
+
+      transaction do
+        superscope = self.class.superclass.unscoped
+        superscope.insert(untrashable_hoardable_source_attributes)
+        superscope.find(hoardable_source_foreign_id).tap do |untrashed|
+          untrashed.instance_variable_set(:@hoardable_version, self)
+          untrashed.run_callbacks(:untrashed)
         end
       end
     end
@@ -48,13 +61,10 @@ module Hoardable
 
     private
 
-    def untrash
-      foreign_id = public_send(hoardable_source_foreign_key)
-      attrs = hoardable_source_attributes.merge('id' => foreign_id)
-      attrs['updated_at'] = Time.now if self.class.column_names.include?('updated_at')
-      superscope = self.class.superclass.unscoped
-      superscope.insert(attrs)
-      superscope.find(foreign_id)
+    def untrashable_hoardable_source_attributes
+      hoardable_source_attributes.merge('id' => hoardable_source_foreign_id).tap do |hash|
+        hash['updated_at'] = Time.now if self.class.column_names.include?('updated_at')
+      end
     end
 
     def hoardable_source_attributes
@@ -66,6 +76,10 @@ module Hoardable
 
     def hoardable_source_foreign_key
       @hoardable_source_foreign_key ||= "#{self.class.superclass.model_name.i18n_key}_id"
+    end
+
+    def hoardable_source_foreign_id
+      @hoardable_source_foreign_id ||= public_send(hoardable_source_foreign_key)
     end
 
     def previous_temporal_tsrange_end

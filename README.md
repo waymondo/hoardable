@@ -1,9 +1,9 @@
 # Hoardable
 
 Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for
-versioning and soft-deletion of records through the use of *uni-temporal inherited tables*.
+versioning and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
-##### nice... huh?
+#### nice... huh?
 
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern
 where each row of a table contains data along with one or more time ranges. In the case of this gem,
@@ -88,9 +88,9 @@ Post.find(post.id) # raises ActiveRecord::RecordNotFound
 Each `PostVersion` has access to the same attributes, relationships, and other model behavior that
 `Post` has, but as a read-only record.
 
-If you ever need to revert to a specific version, you can call `version.revert!` on it. If the
-source record had been deleted, this will untrash it which brings the record back to life with it’s
-original primary key.
+If you ever need to revert to a specific version, you can call `version.revert!` on it. If you would
+like to untrash a specific version, you can call `version.untrash!` on it. This will re-insert the
+model in the parent class’ table with it’s original primary key.
 
 ### Querying and Temporal Lookup
 
@@ -117,7 +117,7 @@ PostVersion.trashed
 
 _Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
 need to query versions often, you should add appropriate indexes to the `_versions` tables.
- 
+
 ### Tracking contextual data
 
 You’ll often want to track contextual data about the creation of a version. `hoardable` will
@@ -177,23 +177,28 @@ Sometimes you might want to do something with a version before or after it gets 
 database. You can access it in `before/after/around_versioned` callbacks on the source record as
 `hoardable_version`. These happen around `.save`, which is enclosed in an ActiveRecord transaction.
 
-There is also an `after_reverted` callback available, which is called on the source record after a
-version is reverted, which includes becoming untrashed.
+There are also `after_reverted` and `after_untrashed` callbacks available as well, which are called
+on the source record after a version is reverted or untrashed.
 
-``` ruby
+```ruby
 class User
   include Hoardable::Model
   before_versioned :sanitize_version
   after_reverted :track_reverted_event
+  after_untrashed :track_untrashed_event
 
   private
 
   def sanitize_version
     hoardable_version.sanitize_password
-  end 
+  end
 
   def track_reverted_event
     track_event(:user_reverted, self)
+  end
+
+  def track_untrashed_event
+    track_event(:user_untrashed, self)
   end
 end
 ```
@@ -202,7 +207,7 @@ end
 
 There are two configurable options currently:
 
-``` ruby
+```ruby
 Hoardable.enabled # => default true
 Hoardable.save_trash # => default true
 ```

@@ -9,6 +9,7 @@ module Hoardable
     included do
       define_model_callbacks :versioned
       define_model_callbacks :reverted, only: :after
+      define_model_callbacks :untrashed, only: :after
 
       TracePoint.new(:end) do |trace|
         next unless self == trace.self
