@@ -75,10 +75,11 @@ A `Post` now `has_many :versions`. Whenever an update and deletion of a `Post` o
 created (by default):
 
 ```ruby
-post = Post.create!(attributes)
+post = Post.create!(title: "Title")
 post.versions.size # => 0
-post.update!(title: "Title")
+post.update!(title: "Revised Title")
 post.versions.size # => 1
+post.versions.first.title # => "Title"
 post.destroy!
 post.trashed? # true
 post.versions.size # => 2
