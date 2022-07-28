@@ -54,6 +54,16 @@ class TestModel < Minitest::Test
     assert_equal post.title, attributes[:title]
   end
 
+  it 'can do the very first readme example' do
+    assert_equal post.versions.size, 0
+    update_post
+    assert_equal post.versions.size, 1
+    post.destroy!
+    assert post.trashed?
+    assert_equal post.versions.size, 2
+    assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
+  end
+
   it 'creates a version with previous state' do
     assert_equal post.versions.size, 0
     update_post
@@ -94,8 +104,11 @@ class TestModel < Minitest::Test
     update_post(title: 'Revert', status: :draft)
     datetime3 = DateTime.now
     assert_equal post.at(datetime1).title, 'Headline'
+    assert_equal PostVersion.at(datetime1).find_by(post_id: post.id).title, 'Headline'
     assert_equal post.at(datetime2).title, 'New Headline'
+    assert_equal PostVersion.at(datetime2).find_by(post_id: post.id).title, 'New Headline'
     assert_equal post.at(datetime3).title, 'Revert'
+    assert_nil PostVersion.at(datetime3).find_by(post_id: post.id)
   end
 
   it 'creates a version that is aware of relationships on parent model' do
