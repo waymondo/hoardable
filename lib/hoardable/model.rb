@@ -15,9 +15,9 @@ module Hoardable
         next unless self == trace.self
 
         version_class_name = "#{name}#{VERSION_CLASS_SUFFIX}"
-        next if Object.const_defined?(version_class_name)
-
-        Object.const_set(version_class_name, Class.new(self) { include VersionModel })
+        unless Object.const_defined?(version_class_name)
+          Object.const_set(version_class_name, Class.new(self) { include VersionModel })
+        end
 
         include SourceModel
 
