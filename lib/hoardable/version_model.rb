@@ -21,6 +21,7 @@ module Hoardable
           .where(superclass.table_name => { id: nil })
           .where(_operation: 'delete')
       }
+      scope :at, ->(datetime) { where(DURING_QUERY, datetime) }
     end
 
     def revert!
@@ -49,8 +50,10 @@ module Hoardable
 
     def untrash
       foreign_id = public_send(hoardable_source_foreign_key)
+      attrs = hoardable_source_attributes.merge('id' => foreign_id)
+      attrs['updated_at'] = Time.now if self.class.column_names.include?('updated_at')
       superscope = self.class.superclass.unscoped
-      superscope.insert(hoardable_source_attributes.merge('id' => foreign_id, 'updated_at' => Time.now))
+      superscope.insert(attrs)
       superscope.find(foreign_id)
     end
 

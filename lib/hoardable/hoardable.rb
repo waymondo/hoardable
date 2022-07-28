@@ -8,6 +8,7 @@ module Hoardable
   VERSION_CLASS_SUFFIX = 'Version'
   VERSION_TABLE_SUFFIX = "_#{VERSION_CLASS_SUFFIX.tableize}"
   SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
+  DURING_QUERY = '_during @> ?::timestamp'
 
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
