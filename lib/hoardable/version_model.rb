@@ -13,6 +13,7 @@ module Hoardable
       self.table_name = "#{table_name.singularize}#{Hoardable::VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
+      alias_attribute :hoardable_operation, :_operation
 
       before_create :assign_temporal_tsrange
 
@@ -25,7 +26,7 @@ module Hoardable
     end
 
     def revert!
-      raise(Error, 'Version is trashed, cannot revert') unless _operation == 'update'
+      raise(Error, 'Version is trashed, cannot revert') unless hoardable_operation == 'update'
 
       transaction do
         hoardable_source.tap do |reverted|
@@ -37,7 +38,7 @@ module Hoardable
     end
 
     def untrash!
-      raise(Error, 'Version is not trashed, cannot untrash') unless _operation == 'delete'
+      raise(Error, 'Version is not trashed, cannot untrash') unless hoardable_operation == 'delete'
 
       transaction do
         superscope = self.class.superclass.unscoped

@@ -115,6 +115,25 @@ class TestModel < Minitest::Test
     assert_nil PostVersion.at(datetime3).find_by(post_id: post.id)
   end
 
+  it 'can revert to version at a datetime' do
+    post
+    datetime1 = DateTime.now
+    update_post
+    datetime2 = DateTime.now
+    reverted_post = post.revert_to!(datetime1)
+    assert_equal reverted_post.title, 'Headline'
+    reverted_post = post.revert_to!(datetime2)
+    assert_equal reverted_post.title, 'New Headline'
+    assert_equal post.versions.size, 3
+    reverted_post = post.revert_to!(Time.now)
+    assert_equal reverted_post.title, 'New Headline'
+    assert_equal post.versions.size, 3
+  end
+
+  it 'cannot revert to version in the future' do
+    assert_raises(Hoardable::Error) { post.revert_to!(DateTime.now + 1.day) }
+  end
+
   it 'creates a version that is aware of relationships on parent model' do
     update_post
     version = post.versions.first
