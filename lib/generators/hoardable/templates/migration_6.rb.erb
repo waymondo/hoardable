@@ -21,7 +21,8 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
     create_table :<%= singularized_table_name %>_versions, id: false, options: 'INHERITS (<%= table_name %>)' do |t|
       t.jsonb :_data
       t.tsrange :_during, null: false
-      t.column :_operation, :hoardable_operation, null: false
+      t.uuid :_event_uuid, null: false, index: true
+      t.column :_operation, :hoardable_operation, null: false, index: true
       t.bigint :<%= singularized_table_name %>_id, null: false, index: true
     end
     add_index(
@@ -29,6 +30,5 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
       %i[_during <%= singularized_table_name %>_id],
       name: 'idx_<%= singularized_table_name %>_versions_temporally'
     )
-    add_index :<%= singularized_table_name %>_versions, :_operation
   end
 end

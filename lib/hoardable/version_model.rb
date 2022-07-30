@@ -14,6 +14,7 @@ module Hoardable
 
       alias_method :readonly?, :persisted?
       alias_attribute :hoardable_operation, :_operation
+      alias_attribute :hoardable_event_uuid, :_event_uuid
 
       before_create :assign_temporal_tsrange
 

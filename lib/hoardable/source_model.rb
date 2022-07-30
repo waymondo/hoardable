@@ -17,7 +17,7 @@ module Hoardable
       around_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
       around_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
       before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
-      after_commit :unset_hoardable_version_and_event_id
+      after_commit :unset_hoardable_version_and_event_uuid
 
       attr_reader :hoardable_version
 
@@ -60,18 +60,15 @@ module Hoardable
     end
 
     def insert_hoardable_version(operation, attrs)
-      event_id = find_or_initialize_hoardable_event_id
-      Hoardable.with(event_id: event_id) do
-        @hoardable_version = initialize_hoardable_version(operation, attrs)
-        run_callbacks(:versioned) do
-          yield
-          hoardable_version.save(validate: false, touch: false)
-        end
+      @hoardable_version = initialize_hoardable_version(operation, attrs)
+      run_callbacks(:versioned) do
+        yield
+        hoardable_version.save(validate: false, touch: false)
       end
     end
 
-    def find_or_initialize_hoardable_event_id
-      Thread.current[:hoardable_event_id] ||= SecureRandom.hex
+    def find_or_initialize_hoardable_event_uuid
+      Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query('SELECT gen_random_uuid();')[0][0]
     end
 
     def initialize_hoardable_version(operation, attrs)
@@ -79,6 +76,7 @@ module Hoardable
         attrs.merge(
           changes.transform_values { |h| h[0] },
           {
+            _event_uuid: find_or_initialize_hoardable_event_uuid,
             _operation: operation,
             _data: initialize_hoardable_data.merge(changes: changes)
           }
@@ -102,11 +100,11 @@ module Hoardable
       versions.delete_all(:delete_all)
     end
 
-    def unset_hoardable_version_and_event_id
+    def unset_hoardable_version_and_event_uuid
       @hoardable_version = nil
       return if ActiveRecord::Base.connection.transaction_open?
 
-      Thread.current[:hoardable_event_id] = nil
+      Thread.current[:hoardable_event_uuid] = nil
     end
   end
 end

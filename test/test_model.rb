@@ -305,18 +305,18 @@ class TestModel < Minitest::Test
     assert comment.reload.post
   end
 
-  it 'recursively creates trashed versions with shared event_id' do
+  it 'recursively creates trashed versions with shared event_uuid' do
     update_post
     post.comments.create!(body: 'Comment 1')
     post.comments.create!(body: 'Comment 2')
     post.destroy!
     trashed_post = PostVersion.trashed.find(post.id)
     trashed_comments = CommentVersion.trashed.where(post_id: post.id)
-    refute_equal post.versions.first.hoardable_event_id, trashed_post.hoardable_event_id
+    refute_equal post.versions.first.hoardable_event_uuid, trashed_post.hoardable_event_uuid
     assert_equal(
-      trashed_post.hoardable_event_id,
-      trashed_comments.first.hoardable_event_id,
-      trashed_comments.second.hoardable_event_id
+      trashed_post.hoardable_event_uuid,
+      trashed_comments.first.hoardable_event_uuid,
+      trashed_comments.second.hoardable_event_uuid
     )
   end
 end

@@ -121,13 +121,8 @@ need to query versions often, you should add appropriate indexes to the `_versio
 
 ### Tracking contextual data
 
-You’ll often want to track contextual data about the creation of a version. `hoardable` will
-automatically capture the ActiveRecord
-[changes](https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes) hash and the
-`operation` that cause the version (`update` or `delete`). It will also tag all versions created in
-the same database transaction with a shared and unique `event_id`.
-
-There 3 other optional keys that are provided for tracking contextual information:
+You’ll often want to track contextual data about the creation of a version. There 3 optional symbols
+that are provided for tracking contextual information:
 
 - `whodunit` - an identifier for who is responsible for creating the version
 - `note` - a string containing a description regarding the versioning
@@ -171,6 +166,12 @@ class ApplicationController < ActionController::Base
   end
 end
 ```
+
+ `hoardable` will
+automatically capture the ActiveRecord
+[changes](https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes) hash and the
+`operation` that cause the version (`update` or `delete`). It will also tag all versions created in
+the same database transaction with a shared and unique `event_uuid`.
 
 ### Model Callbacks
 
