@@ -3,7 +3,7 @@
 Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for
 versioning and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
-#### nice... huh?
+#### huh?
 
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern
 where each row of a table contains data along with one or more time ranges. In the case of this gem,
@@ -121,12 +121,12 @@ need to query versions often, you should add appropriate indexes to the `_versio
 
 ### Tracking contextual data
 
-You’ll often want to track contextual data about the creation of a version. There 3 optional symbols
-that are provided for tracking contextual information:
+You’ll often want to track contextual data about the creation of a version. There are 3 optional
+symbol keys that are provided for tracking contextual information:
 
-- `whodunit` - an identifier for who is responsible for creating the version
-- `note` - a string containing a description regarding the versioning
-- `meta` - any other contextual information you’d like to store along with the version
+- `:whodunit` - an identifier for who is responsible for creating the version
+- `:note` - a description regarding the versioning
+- `:meta` - any other contextual information you’d like to store along with the version
 
 This information is stored in a `jsonb` column. Each key’s value can be in the format of your
 choosing.
@@ -167,11 +167,16 @@ class ApplicationController < ActionController::Base
 end
 ```
 
- `hoardable` will
-automatically capture the ActiveRecord
-[changes](https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes) hash and the
-`operation` that cause the version (`update` or `delete`). It will also tag all versions created in
-the same database transaction with a shared and unique `event_uuid`.
+`hoardable` will also automatically capture the ActiveRecord
+[changes](https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes) hash, the
+`operation` that cause the version (`update` or `delete`), and it will also tag all versions created
+in the same database transaction with a shared and unique `event_uuid`. These are available as:
+
+```ruby
+version.changes
+version.hoardable_operation
+version.hoardable_event_uuid
+```
 
 ### Model Callbacks
 
@@ -227,7 +232,44 @@ Hoardable.with(enabled: false) do
 end
 ```
 
+### Relationships
+
+As in life, sometimes relationships can be hard. `hoardable` is still working out best practices and
+features in this area, but here are a couple pointers.
+
+Sometimes you’ll have a record that belongs to a record that you’ll trash. Now the child record’s
+foreign key will point to the non-existent trashed version of the parent. If you would like this
+`belongs_to` relationship to always resolve to the parent as if it was not trashed, you can include
+the scope on the relationship definition:
+
+```ruby
+belongs_to :parent, -> { include_versions }
+```
+
+Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and both the parent
+and child model classes include `Hoardable::Model`. Whenever a hoardable version is created in a
+database transaction, it will create or re-use a unique event UUID for that transaction and tag all
+versions created with it. That way, when you `untrash!` a parent object, you can find and `untrash!`
+the children like so:
+
+```ruby
+class Post < ActiveRecord::Base
+  include Hoardable::Model
+  has_many :comments, dependent: :destroy # `Comment` also includes `Hoardable::Model`
+
+  after_untrashed do
+    Comment
+      .version_class
+      .trashed
+      .with_hoardable_event_uuid(hoardable_event_uuid)
+      .find_each(&:untrash!)
+  end
+end
+```
+
 ## Contributing
+
+This gem is currently considered alpha and very open to feedback.
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/waymondo/hoardable.
 

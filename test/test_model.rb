@@ -6,10 +6,10 @@ class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
   has_many :comments, dependent: :destroy
-  attr_reader :hoardable_operation, :reverted, :untrashed, :hoardable_version_id
+  attr_reader :_hoardable_operation, :reverted, :untrashed, :hoardable_version_id
 
   before_versioned do
-    @hoardable_operation = hoardable_version&._operation
+    @_hoardable_operation = hoardable_operation
   end
 
   after_versioned do
@@ -18,6 +18,7 @@ class Post < ActiveRecord::Base
 
   after_untrashed do
     @untrashed = true
+    CommentVersion.trashed.with_hoardable_event_uuid(hoardable_event_uuid).find_each(&:untrash!)
   end
 
   after_reverted do
@@ -142,7 +143,7 @@ class TestModel < Minitest::Test
 
   it 'tests version is available in callbacks' do
     update_post
-    assert_equal post.hoardable_operation, 'update'
+    assert_equal post._hoardable_operation, 'update'
     assert post.hoardable_version_id
     assert_nil post.hoardable_version
   end
@@ -305,12 +306,16 @@ class TestModel < Minitest::Test
     assert comment.reload.post
   end
 
-  it 'recursively creates trashed versions with shared event_uuid' do
-    update_post
+  def create_comments_and_destroy_post
     post.comments.create!(body: 'Comment 1')
     post.comments.create!(body: 'Comment 2')
     post.destroy!
-    trashed_post = PostVersion.trashed.find(post.id)
+    PostVersion.trashed.find(post.id)
+  end
+
+  it 'recursively creates trashed versions with shared event_uuid' do
+    update_post
+    trashed_post = create_comments_and_destroy_post
     trashed_comments = CommentVersion.trashed.where(post_id: post.id)
     refute_equal post.versions.first.hoardable_event_uuid, trashed_post.hoardable_event_uuid
     assert_equal(
@@ -318,5 +323,15 @@ class TestModel < Minitest::Test
       trashed_comments.first.hoardable_event_uuid,
       trashed_comments.second.hoardable_event_uuid
     )
+  end
+
+  it 'can recursively untrash verisons with shared event_uuid' do
+    trashed_post = create_comments_and_destroy_post
+    assert_equal CommentVersion.trashed.where(post_id: post.id).size, 2
+    assert_equal post.comments.size, 0
+    trashed_post.untrash!
+    untrashed_post = Post.find(post.id)
+    assert_equal CommentVersion.trashed.size, 0
+    assert_equal untrashed_post.comments.size, 2
   end
 end

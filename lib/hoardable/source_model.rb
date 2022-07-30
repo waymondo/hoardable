@@ -21,6 +21,8 @@ module Hoardable
 
       attr_reader :hoardable_version
 
+      delegate :hoardable_event_uuid, :hoardable_operation, to: :hoardable_version, allow_nil: true
+
       has_many(
         :versions, -> { order(:_during) },
         dependent: nil,

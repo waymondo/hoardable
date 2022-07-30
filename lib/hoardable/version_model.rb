@@ -24,6 +24,7 @@ module Hoardable
           .where(_operation: 'delete')
       }
       scope :at, ->(datetime) { where(DURING_QUERY, datetime) }
+      scope :with_hoardable_event_uuid, ->(event_uuid) { where(_event_uuid: event_uuid) }
     end
 
     def revert!
