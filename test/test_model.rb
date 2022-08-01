@@ -2,48 +2,6 @@
 
 require 'test_helper'
 
-class Post < ActiveRecord::Base
-  include Hoardable::Model
-  belongs_to :user
-  has_many :comments, dependent: :destroy
-  attr_reader :_hoardable_operation, :reverted, :untrashed, :hoardable_version_id
-
-  before_versioned do
-    @_hoardable_operation = hoardable_operation
-  end
-
-  after_versioned do
-    @hoardable_version_id = hoardable_version&.id
-  end
-
-  after_untrashed do
-    @untrashed = true
-    CommentVersion.trashed.with_hoardable_event_uuid(hoardable_event_uuid).find_each(&:untrash!)
-  end
-
-  after_reverted do
-    @reverted = true
-  end
-end
-
-class User < ActiveRecord::Base
-  has_many :posts
-end
-
-class Comment < ActiveRecord::Base
-  include Hoardable::Model
-  belongs_to :post, -> { include_versions }
-end
-
-class UserWithTrashedPosts < ActiveRecord::Base
-  self.table_name = 'users'
-  has_many :posts, -> { include_versions }, foreign_key: 'user_id'
-end
-
-class Current < ActiveSupport::CurrentAttributes
-  attribute :user
-end
-
 class TestModel < Minitest::Test
   extend Minitest::Spec::DSL
 
@@ -333,5 +291,25 @@ class TestModel < Minitest::Test
     untrashed_post = Post.find(post.id)
     assert_equal CommentVersion.trashed.size, 0
     assert_equal untrashed_post.comments.size, 2
+  end
+
+  it 'creates a version class with a foreign key type that matches the primary key' do
+    assert_equal Post.version_class.columns.find { |col| col.name == 'post_id' }.sql_type, 'bigint'
+    assert_equal Book.version_class.columns.find { |col| col.name == 'book_id' }.sql_type, 'uuid'
+  end
+
+  it 'can make versions of resources with UUID primary keys' do
+    original_title = 'Programming 101'
+    book = Book.create!(title: original_title, library: Library.create!(name: 'Town Center Library'))
+    book_id = book.id
+    datetime = Time.now
+    new_title = 'Programming 201'
+    book.update!(title: new_title)
+    assert_equal book.versions.last.title, original_title
+    assert_equal book.at(datetime).title, original_title
+    book.destroy!
+    untrashed_book = BookVersion.find(book_id).untrash!
+    assert_equal untrashed_book.title, new_title
+    assert_equal untrashed_book.id, book_id
   end
 end

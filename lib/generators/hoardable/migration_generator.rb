@@ -8,12 +8,20 @@ module Hoardable
   class MigrationGenerator < ActiveRecord::Generators::Base
     source_root File.expand_path('templates', __dir__)
     include Rails::Generators::Migration
+    class_option :foreign_key_type, type: :string
 
     def create_versions_table
       migration_template migration_template_name, "db/migrate/create_#{singularized_table_name}_versions.rb"
     end
 
     no_tasks do
+      def foreign_key_type
+        options[:foreign_key_type] ||
+          class_name.singularize.constantize.columns.find { |col| col.name == 'id' }.sql_type
+      rescue StandardError
+        'bigint'
+      end
+
       def migration_template_name
         if Gem::Version.new(ActiveRecord::Migration.current_version.to_s) < Gem::Version.new('7')
           'migration_6.rb.erb'
