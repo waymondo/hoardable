@@ -23,7 +23,7 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
       t.tsrange :_during, null: false
       t.uuid :_event_uuid, null: false, index: true
       t.column :_operation, :hoardable_operation, null: false, index: true
-      t.bigint :<%= singularized_table_name %>_id, null: false, index: true
+      t.<%= foreign_key_type %> :<%= singularized_table_name %>_id, null: false, index: true
     end
     add_index(
       :<%= singularized_table_name %>_versions,

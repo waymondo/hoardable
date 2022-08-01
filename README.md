@@ -48,8 +48,16 @@ end
 Then, run the generator command to create a database migration and migrate it:
 
 ```
-bin/rails g hoardable:migration posts
+bin/rails g hoardable:migration Post
 bin/rails db:migrate
+```
+
+By default, it will try to guess the foreign key type for the `_versions` table based on the primary
+key of the model specified in the migration generator above. If you want/need to specify this
+explicitly, you can do so:
+
+```
+bin/rails g hoardable:migration Post --foreign-key-type uuid
 ```
 
 _Note:_ If you are on Rails 6.1, you might want to set `config.active_record.schema_format = :sql`
