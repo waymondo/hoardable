@@ -4,7 +4,8 @@ require 'rails/generators'
 require 'rails/generators/active_record/migration/migration_generator'
 
 module Hoardable
-  # Generates a migration for an inherited temporal table of a model including {Hoardable::Model}
+  # Generates a migration to create an inherited uni-temporal table of a model including
+  # {Hoardable::Model}, for the storage of +versions+.
   class MigrationGenerator < ActiveRecord::Generators::Base
     source_root File.expand_path('templates', __dir__)
     include Rails::Generators::Migration

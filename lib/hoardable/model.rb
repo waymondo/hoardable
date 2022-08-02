@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module Hoardable
-  # This concern dynamically generates the Version variant of the class module Model and includes
-  # the API methods and relationships on the source model
+  # This concern is the main entrypoint for using {Hoardable}. When included into an +ActiveRecord+
+  # class, it dynamically generates the +Version+ variant of that class (with {VersionModel}) and
+  # includes the {Hoardable} API methods and relationships on the source model class (through
+  # {SourceModel}).
   module Model
     extend ActiveSupport::Concern
 

@@ -1,13 +1,24 @@
 # frozen_string_literal: true
 
-# An ActiveRecord extension for keeping versions of records in temporal inherited tables
+# An +ActiveRecord+ extension for keeping versions of records in uni-temporal inherited tables.
 module Hoardable
+  # Symbols for use with setting contextual data, when creating versions. See
+  # {file:README.md#tracking-contextual-data README} for more.
   DATA_KEYS = %i[meta whodunit note event_uuid].freeze
+  # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
+  # README} for more.
   CONFIG_KEYS = %i[enabled save_trash].freeze
 
+  # @!visibility private
   VERSION_CLASS_SUFFIX = 'Version'
+
+  # @!visibility private
   VERSION_TABLE_SUFFIX = "_#{VERSION_CLASS_SUFFIX.tableize}"
+
+  # @!visibility private
   SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
+
+  # @!visibility private
   DURING_QUERY = '_during @> ?::timestamp'
 
   @context = {}
@@ -36,6 +47,9 @@ module Hoardable
       end
     end
 
+    # This is a general use method for setting {DATA_KEYS} or {CONFIG_KEYS} around a scoped block.
+    #
+    # @param hash [Hash] Options and contextual data to set within a block
     def with(hash)
       current_config = @config
       current_context = @context

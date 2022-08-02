@@ -3,7 +3,9 @@
 Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for
 versioning and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
-#### huh?
+[👉 Documentation](https://www.rubydoc.info/gems/hoardable)
+
+### huh?
 
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern
 where each row of a table contains data along with one or more time ranges. In the case of this gem,
@@ -269,6 +271,7 @@ class Post < ActiveRecord::Base
     Comment
       .version_class
       .trashed
+      .where(post_id: id)
       .with_hoardable_event_uuid(hoardable_event_uuid)
       .find_each(&:untrash!)
   end

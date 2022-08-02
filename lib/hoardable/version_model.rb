@@ -1,12 +1,15 @@
 # frozen_string_literal: true
 
 module Hoardable
-  # This concern is included into the dynamically generated Version models.
+  # This concern is included into the dynamically generated +Version+ kind of the parent
+  # +ActiveRecord+ class.
   module VersionModel
     extend ActiveSupport::Concern
 
     included do
       hoardable_source_key = superclass.model_name.i18n_key
+
+      # A +version+ belongs to it’s parent +ActiveRecord+ source.
       belongs_to hoardable_source_key, inverse_of: :versions
       alias_method :hoardable_source, hoardable_source_key
 
@@ -19,15 +22,35 @@ module Hoardable
 
       before_create :assign_temporal_tsrange
 
+      # @!scope class
+      # @!method trashed
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns only trashed +versions+ that are orphans.
       scope :trashed, lambda {
         left_outer_joins(hoardable_source_key)
           .where(superclass.table_name => { id: nil })
           .where(_operation: 'delete')
       }
+
+      # @!scope class
+      # @!method at
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns +versions+ that were valid at the supplied +datetime+ or +time+.
       scope :at, ->(datetime) { where(DURING_QUERY, datetime) }
+
+      # @!scope class
+      # @!method with_hoardable_event_uuid
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns all +versions+ that were created as part of the same +ActiveRecord+ database
+      # transaction of the supplied +event_uuid+. Useful in +reverted+ and +untrashed+ callbacks.
       scope :with_hoardable_event_uuid, ->(event_uuid) { where(_event_uuid: event_uuid) }
     end
 
+    # Reverts the parent +ActiveRecord+ instance to the saved attributes of this +version+. Raises
+    # an error if the version is trashed.
     def revert!
       raise(Error, 'Version is trashed, cannot revert') unless hoardable_operation == 'update'
 
@@ -40,6 +63,8 @@ module Hoardable
       end
     end
 
+    # Inserts a trashed +version+ back into its parent +ActiveRecord+ table with its original
+    # primary key. Raises an error if the version is not trashed.
     def untrash!
       raise(Error, 'Version is not trashed, cannot untrash') unless hoardable_operation == 'delete'
 
@@ -59,6 +84,9 @@ module Hoardable
       end
     end
 
+    # Returns the +ActiveRecord+
+    # {https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes changes} that
+    # were present during version creation.
     def changes
       _data&.dig('changes')
     end

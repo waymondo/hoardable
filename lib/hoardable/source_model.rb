@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
 module Hoardable
-  # This concern contains the relationships, callbacks, and API methods for a Source model
+  # This concern contains the {Hoardable} relationships, callbacks, and API methods for an
+  # +ActiveRecord+. It is included by {Hoardable::Model} after the dynamic generation of the
+  # +Version+ class variant.
   module SourceModel
     extend ActiveSupport::Concern
 
     class_methods do
+      # The dynamically generated +Version+ class for this model.
       def version_class
         "#{name}#{VERSION_CLASS_SUFFIX}".constantize
       end
@@ -19,10 +22,17 @@ module Hoardable
       before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
       after_commit :unset_hoardable_version_and_event_uuid
 
+      # This will contain the +Version+ class instance for use within +versioned+, +reverted+, and
+      # +untrashed+ callbacks.
       attr_reader :hoardable_version
 
+      # @!attribute [r] hoardable_event_uuid
+      #   @return [String] A postgres UUID that represents the +version+’s +ActiveRecord+ database transaction
+      # @!attribute [r] hoardable_operation
+      #   @return [String] The database operation that created the +version+ - either +update+ or +delete+.
       delegate :hoardable_event_uuid, :hoardable_operation, to: :hoardable_version, allow_nil: true
 
+      # Returns all +versions+ in ascending order of their temporal timeframes.
       has_many(
         :versions, -> { order(:_during) },
         dependent: nil,
@@ -31,16 +41,27 @@ module Hoardable
       )
     end
 
+    # Returns a boolean of whether the record is actually a trashed +version+.
+    #
+    # @return [Boolean]
     def trashed?
       versions.trashed.limit(1).order(_during: :desc).first&.send(:hoardable_source_attributes) == attributes
     end
 
+    # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
+    # none. This will raise an error if you try to find a version in the future.
+    #
+    # @param datetime [DateTime, Time]
     def at(datetime)
       raise(Error, 'Future state cannot be known') if datetime.future?
 
       versions.find_by(DURING_QUERY, datetime) || self
     end
 
+    # If a version is found at the supplied datetime, it will +revert!+ to it and return it. This
+    # will raise an error if you try to revert to a version in the future.
+    #
+    # @param datetime [DateTime, Time]
     def revert_to!(datetime)
       return unless (version = at(datetime))
 
