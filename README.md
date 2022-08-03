@@ -222,25 +222,40 @@ end
 
 ### Configuration
 
-There are two configurable options currently:
+There are three configurable options currently:
 
 ```ruby
 Hoardable.enabled # => default true
+Hoardable.version_updates # => default true
 Hoardable.save_trash # => default true
 ```
 
-`Hoardable.enabled` controls whether versions will be created at all.
+`Hoardable.enabled` controls whether versions will be ever be created.
+
+`Hoardable.version_updates` controls whether versions get created on record updates.
 
 `Hoardable.save_trash` controls whether to create versions upon record deletion. When this is set to
 `false`, all versions of a record will be deleted when the record is destroyed.
 
-If you would like to temporarily set a config setting, you can use `Hoardable.with` as well:
+If you would like to temporarily set a config setting, you can use `Hoardable.with`:
 
 ```ruby
 Hoardable.with(enabled: false) do
   post.update!(title: 'unimportant change to create version for')
 end
 ```
+
+You can also configure these variables per `ActiveRecord` class as well using `hoardable_options`:
+
+```ruby
+class Comment < ActiveRecord::Base
+  include Hoardable::Model
+  hoardable_options version_updates: false
+end
+```
+
+If either the model-level option or global option for a configuration variable is set to `false`,
+that behavior will be disabled.
 
 ### Relationships
 

@@ -191,6 +191,13 @@ class TestModel < Minitest::Test
     end
   end
 
+  it 'does not create version when version_updates is false' do
+    Hoardable.with(version_updates: false) do
+      update_post
+      assert_equal post.versions.size, 0
+    end
+  end
+
   it 'can opt-out of versioning on deletion' do
     Hoardable.with(save_trash: false) do
       update_post
@@ -198,6 +205,13 @@ class TestModel < Minitest::Test
       post.destroy!
       assert_equal PostVersion.count, 0
     end
+  end
+
+  it 'can disallow version_updates with Model configuration' do
+    Post.hoardable_options(version_updates: false)
+    update_post
+    assert_equal post.versions.size, 0
+    Post.hoardable_options(version_updates: true)
   end
 
   def expect_whodunit
@@ -311,5 +325,14 @@ class TestModel < Minitest::Test
     untrashed_book = BookVersion.find(book_id).untrash!
     assert_equal untrashed_book.title, new_title
     assert_equal untrashed_book.id, book_id
+  end
+
+  it 'does not save_trash when model is configured not to' do
+    library = Library.create!(name: 'Lib')
+    library.update!(name: 'Library')
+    assert_equal library.versions.size, 1
+    library.destroy!
+    assert_equal Library.count, 0
+    assert_equal LibraryVersion.count, 0
   end
 end
