@@ -1,4 +1,82 @@
 module Hoardable
   VERSION: String
-  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+  DATA_KEYS: [:meta, :whodunit, :note, :event_uuid]
+  CONFIG_KEYS: [:enabled, :save_trash]
+  VERSION_CLASS_SUFFIX: String
+  VERSION_TABLE_SUFFIX: String
+  SAVE_TRASH_ENABLED: ^-> untyped
+  DURING_QUERY: String
+  self.@context: Hash[untyped, untyped]
+  self.@config: untyped
+
+  def self.with: (untyped hash) -> untyped
+
+  module Tableoid
+    TABLEOID_AREL_CONDITIONS: Proc
+
+    private
+    def tableoid: -> untyped
+
+    public
+    attr_writer tableoid: untyped
+  end
+
+  class Error < StandardError
+  end
+
+  module SourceModel
+    include Tableoid
+
+    def trashed?: -> untyped
+    def at: (untyped datetime) -> SourceModel
+    def revert_to!: (untyped datetime) -> SourceModel?
+
+    private
+    def hoardable_callbacks_enabled: -> untyped
+    def insert_hoardable_version_on_update: -> untyped
+    def insert_hoardable_version_on_destroy: -> untyped
+    def insert_hoardable_version: (String operation, untyped attrs) -> untyped
+    def find_or_initialize_hoardable_event_uuid: -> untyped
+    def initialize_hoardable_version: (String operation, untyped attrs) -> untyped
+    def initialize_hoardable_data: -> untyped
+    def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
+    def delete_hoardable_versions: -> untyped
+    def unset_hoardable_version_and_event_uuid: -> nil
+
+    public
+    def version_class: -> untyped
+    attr_reader hoardable_version: nil
+  end
+
+  module VersionModel
+    @hoardable_source_attributes: untyped
+    @hoardable_source_foreign_key: String
+    @hoardable_source_foreign_id: untyped
+
+    def revert!: -> untyped
+    def untrash!: -> untyped
+    def changes: -> untyped
+
+    private
+    def untrashable_hoardable_source_attributes: -> untyped
+    def hoardable_source_attributes: -> untyped
+    def hoardable_source_foreign_key: -> String
+    def hoardable_source_foreign_id: -> untyped
+    def previous_temporal_tsrange_end: -> untyped
+    def assign_temporal_tsrange: -> Range
+  end
+
+  module Model
+    include VersionModel
+    include SourceModel
+  end
+
+  class MigrationGenerator
+    @singularized_table_name: untyped
+
+    def create_versions_table: -> untyped
+    def foreign_key_type: -> String
+    def migration_template_name: -> String
+    def singularized_table_name: -> untyped
+  end
 end
