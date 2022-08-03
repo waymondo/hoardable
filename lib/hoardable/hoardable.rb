@@ -7,16 +7,13 @@ module Hoardable
   DATA_KEYS = %i[meta whodunit note event_uuid].freeze
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
-  CONFIG_KEYS = %i[enabled save_trash].freeze
+  CONFIG_KEYS = %i[enabled version_updates save_trash].freeze
 
   # @!visibility private
   VERSION_CLASS_SUFFIX = 'Version'
 
   # @!visibility private
   VERSION_TABLE_SUFFIX = "_#{VERSION_CLASS_SUFFIX.tableize}"
-
-  # @!visibility private
-  SAVE_TRASH_ENABLED = -> { Hoardable.save_trash }.freeze
 
   # @!visibility private
   DURING_QUERY = '_during @> ?::timestamp'

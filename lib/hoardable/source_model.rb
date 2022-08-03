@@ -17,9 +17,9 @@ module Hoardable
     included do
       include Tableoid
 
-      around_update :insert_hoardable_version_on_update, if: :hoardable_callbacks_enabled
-      around_destroy :insert_hoardable_version_on_destroy, if: [:hoardable_callbacks_enabled, SAVE_TRASH_ENABLED]
-      before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: SAVE_TRASH_ENABLED
+      around_update :insert_hoardable_version_on_update, if: %i[hoardable_callbacks_enabled hoardable_version_updates]
+      around_destroy :insert_hoardable_version_on_destroy, if: %i[hoardable_callbacks_enabled hoardable_save_trash]
+      before_destroy :delete_hoardable_versions, if: :hoardable_callbacks_enabled, unless: :hoardable_save_trash
       after_commit :unset_hoardable_version_and_event_uuid
 
       # This will contain the +Version+ class instance for use within +versioned+, +reverted+, and
@@ -71,7 +71,15 @@ module Hoardable
     private
 
     def hoardable_callbacks_enabled
-      Hoardable.enabled && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
+      self.class.hoardable_options[:enabled] && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
+    end
+
+    def hoardable_save_trash
+      self.class.hoardable_options[:save_trash]
+    end
+
+    def hoardable_version_updates
+      self.class.hoardable_options[:version_updates]
     end
 
     def insert_hoardable_version_on_update(&block)

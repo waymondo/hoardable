@@ -61,6 +61,7 @@ def generate_versions_table(table_name)
   "Create#{table_name.classify.singularize}Versions".constantize.migrate(:up)
 end
 
-generate_versions_table('post')
-generate_versions_table('comment')
-generate_versions_table('book')
+generate_versions_table('Post')
+generate_versions_table('Comment')
+generate_versions_table('Book')
+generate_versions_table('Library')
