@@ -3,10 +3,6 @@
 Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for
 versioning and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
-[👉 Documentation](https://www.rubydoc.info/gems/hoardable)
-
-### huh?
-
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern
 where each row of a table contains data along with one or more time ranges. In the case of this gem,
 each database row has a time range that represents the row’s valid time range - hence
@@ -20,8 +16,10 @@ change is reflected on its descendants.
 With these concepts combined, `hoardable` offers a simple and effective model versioning system for
 Rails. Versions of records are stored in separate, inherited tables along with their valid time
 ranges and contextual data. Compared to other Rails-oriented versioning systems, this gem strives to
-be more explicit and obvious on the lower RDBS level while still familiar and convenient within Ruby
-on Rails.
+be more explicit and obvious on the lower RDBS level while still familiar and convenient to use
+within Ruby on Rails.
+
+[👉 Documentation](https://www.rubydoc.info/gems/hoardable)
 
 ## Installation
 
@@ -119,6 +117,10 @@ post.at(1.day.ago) # => #<PostVersion:0x000000010d44fa30>
 PostVersion.at(1.day.ago).find_by(post_id: post.id) # => #<PostVersion:0x000000010d44fa30>
 ```
 
+_Note:_ A `Version` is not created upon initial parent model creation. If you would like to
+accurately capture the valid temporal frame of the first version, make sure your model’s table has a
+`created_at` timestamp field.
+
 By default, `hoardable` will keep copies of records you have destroyed. You can query for them as
 well:
 
@@ -129,7 +131,7 @@ PostVersion.trashed
 _Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
 need to query versions often, you should add appropriate indexes to the `_versions` tables.
 
-### Tracking contextual data
+### Tracking Contextual Data
 
 You’ll often want to track contextual data about the creation of a version. There are 3 optional
 symbol keys that are provided for tracking contextual information:
@@ -293,9 +295,49 @@ class Post < ActiveRecord::Base
 end
 ```
 
+## Gem Comparison
+
+###  [`paper_trail`](https://github.com/paper-trail-gem/paper_trail) 
+
+`paper_trail` is maybe the most popular and fully featured gem in this space. It works for other
+  database types than PostgeSQL and (by default) stores all versions of all versioned models in a
+  single `versions` table. It stores changes in a `text`, `json`, or `jsonb` column. In order to
+  efficiently query the `versions` table, a `jsonb` column should be used, which takes up a lot of
+  space to index. Unless you customize your configuration, all `versions` for all models types are
+  in the same table which is inefficient if you are only interested in querying versions of a single
+  model. By contrast, `hoardable` stores versions in smaller, isolated and inherited tables with the
+  same database columns as their parents, which are more efficient for querying as well as auditing
+  for truncating and dropping. The concept of a `temporal` time-frame does not exist for a single
+  version since there is only a `created_at` timestamp.
+
+### [`audited`](https://github.com/collectiveidea/audited)
+
+`audited` works in a similar manner as `paper_trail`. It stores all versions for all model types in
+a single table, you must opt into using `jsonb` as the column type to store "changes", in case you
+want to query them, and there is no concept of a `temporal` time-frame for a single version. It
+makes opinionated decisions about contextual data requirements and stores them as top level data
+types on the `audited` table.
+
+### [`discard`](https://github.com/jhawthorn/discard)
+
+`discard` only covers soft-deletion. The act of "soft deleting" a record is only captured through
+the time-stamping of a `discarded_at` column on the records table; there is no other capturing of
+the event that caused the soft deletion unless you implement it yourself. Once the "discarded"
+record is restored, the previous "discarded" awareness is lost. Since "discarded" records exist in
+the same table as "undiscarded" records, you must explicitly omit the discarded records from queries
+across your app to keep them from leaking in.
+
+### [`paranoia`](https://github.com/rubysherpas/paranoia)
+
+`paranoia` also only covers soft-deletion. In their README, they recommend using `discard` instead
+of `paranoia` because of the fact they override ActiveRecord’s `delete` and `destroy` methods.
+`hoardable` employs callbacks to create trashed versions instead of overriding methods. Otherwise,
+`paranoia` works similarly to `discard` in that it keeps deleted records in the same table and tags
+them with a `deleted_at` timestamp. No other information about the soft-deletion event is stored.
+
 ## Contributing
 
-This gem is currently considered alpha and very open to feedback.
+This gem still quite new and very open to feedback.
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/waymondo/hoardable.
 
