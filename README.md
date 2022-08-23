@@ -233,6 +233,7 @@ There are three configurable options currently:
 Hoardable.enabled # => default true
 Hoardable.version_updates # => default true
 Hoardable.save_trash # => default true
+Hoardable.return_everything # => default false
 ```
 
 `Hoardable.enabled` controls whether versions will be ever be created.
@@ -241,6 +242,10 @@ Hoardable.save_trash # => default true
 
 `Hoardable.save_trash` controls whether to create versions upon record deletion. When this is set to
 `false`, all versions of a record will be deleted when the record is destroyed.
+
+`Hoardable.return_everything` controls whether to include versions when doing queries for source
+models. This is typically only useful to set around a block, as explained below in
+[Relationships](#relationships).
 
 If you would like to temporarily set a config setting, you can use `Hoardable.with`:
 
@@ -262,7 +267,7 @@ end
 If you want to temporarily set the `hoardable_config` for a specific model, you can use
 `with_hoardable_config`:
 
-``` ruby
+```ruby
 Comment.with_hoardable_config(version_updates: true) do
   comment.update!(text: "Edited")
 end
@@ -279,17 +284,20 @@ features in this area, but here are a couple pointers.
 Sometimes you’ll have a record that belongs to a record that you’ll trash. Now the child record’s
 foreign key will point to the non-existent trashed version of the parent. If you would like this
 `belongs_to` relationship to always resolve to the parent as if it was not trashed, you can include
-the scope on the relationship definition:
+the `include_versions` scope on the relationship definition:
 
 ```ruby
-belongs_to :parent, -> { include_versions }
+class Comment
+  include Hoardable::Model
+  belongs_to :post, -> { include_versions } # `Post` also includes `Hoardable::Model`
+end
 ```
 
 Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and both the parent
 and child model classes include `Hoardable::Model`. Whenever a hoardable version is created in a
 database transaction, it will create or re-use a unique event UUID for that transaction and tag all
-versions created with it. That way, when you `untrash!` a parent object, you can find and `untrash!`
-the children like so:
+versions created with it. That way, when you `untrash!` a record, you can find and `untrash!`
+records that were trashed with it:
 
 ```ruby
 class Post < ActiveRecord::Base
@@ -307,20 +315,35 @@ class Post < ActiveRecord::Base
 end
 ```
 
+If there are models that might be related to versions that are trashed or otherwise, and/or might
+trashed themselves, you can bypass the inherited tables query handling altogether by using the
+`return_everything` configuration variable in `Hoardable.with`:
+
+```ruby
+post.destroy!
+
+Hoardable.with(return_everything: true) do
+  post = Post.find(post.id) # returns the trashed post as if it was not
+  post.comments # returns the trashed comments as well
+end
+
+post.reload # raises ActiveRecord::RecordNotFound
+```
+
 ## Gem Comparison
 
-###  [`paper_trail`](https://github.com/paper-trail-gem/paper_trail) 
+### [`paper_trail`](https://github.com/paper-trail-gem/paper_trail)
 
 `paper_trail` is maybe the most popular and fully featured gem in this space. It works for other
-  database types than PostgeSQL and (by default) stores all versions of all versioned models in a
-  single `versions` table. It stores changes in a `text`, `json`, or `jsonb` column. In order to
-  efficiently query the `versions` table, a `jsonb` column should be used, which takes up a lot of
-  space to index. Unless you customize your configuration, all `versions` for all models types are
-  in the same table which is inefficient if you are only interested in querying versions of a single
-  model. By contrast, `hoardable` stores versions in smaller, isolated and inherited tables with the
-  same database columns as their parents, which are more efficient for querying as well as auditing
-  for truncating and dropping. The concept of a `temporal` time-frame does not exist for a single
-  version since there is only a `created_at` timestamp.
+database types than PostgeSQL and (by default) stores all versions of all versioned models in a
+single `versions` table. It stores changes in a `text`, `json`, or `jsonb` column. In order to
+efficiently query the `versions` table, a `jsonb` column should be used, which takes up a lot of
+space to index. Unless you customize your configuration, all `versions` for all models types are
+in the same table which is inefficient if you are only interested in querying versions of a single
+model. By contrast, `hoardable` stores versions in smaller, isolated and inherited tables with the
+same database columns as their parents, which are more efficient for querying as well as auditing
+for truncating and dropping. The concept of a `temporal` time-frame does not exist for a single
+version since there is only a `created_at` timestamp.
 
 ### [`audited`](https://github.com/collectiveidea/audited)
 

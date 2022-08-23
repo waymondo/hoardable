@@ -17,9 +17,16 @@ module Hoardable
       # @!visibility private
       attr_writer :tableoid
 
-      # By default, {Hoardable} only returns instances of the parent table, and not the +versions+
-      # in the inherited table.
-      default_scope { where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq)) }
+      # By default {Hoardable} only returns instances of the parent table, and not the +versions+ in
+      # the inherited table. This can be bypassed by using the {.include_versions} scope or wrapping
+      # the code in a `Hoardable.with(return_everything: true)` block.
+      default_scope do
+        if hoardable_config[:return_everything]
+          where(nil)
+        else
+          where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq))
+        end
+      end
 
       # @!scope class
       # @!method include_versions

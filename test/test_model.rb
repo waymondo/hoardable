@@ -335,4 +335,29 @@ class TestModel < Minitest::Test
     assert_equal Library.count, 0
     assert_equal LibraryVersion.count, 0
   end
+
+  it 'can return all versions and trash through parent class if necessary' do
+    comment = post.comments.create!(body: 'Comment 1')
+    update_post
+    post.destroy!
+    assert_equal Post.all.size, 0
+    assert_equal Comment.all.size, 0
+    Hoardable.with(return_everything: true) do
+      assert_equal Post.all.size, 2
+      assert_equal PostVersion.all.size, 2
+      assert_equal Comment.all.size, 1
+      assert_equal CommentVersion.all.size, 1
+      assert_equal comment.post, post
+    end
+  end
+
+  it 'can still create models, versions and trash when returning everything' do
+    Hoardable.with(return_everything: true) do
+      update_post
+      post.destroy!
+      Post.create!(title: 'Another Headline', user: user)
+      assert_equal Post.all.size, 3
+      assert_equal PostVersion.all.size, 2
+    end
+  end
 end

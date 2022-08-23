@@ -1,7 +1,7 @@
 module Hoardable
   VERSION: String
   DATA_KEYS: [:meta, :whodunit, :note, :event_uuid]
-  CONFIG_KEYS: [:enabled, :version_updates, :save_trash]
+  CONFIG_KEYS: [:enabled, :version_updates, :save_trash, :return_everything]
   VERSION_CLASS_SUFFIX: String
   VERSION_TABLE_SUFFIX: String
   DURING_QUERY: String

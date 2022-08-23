@@ -7,7 +7,7 @@ module Hoardable
   DATA_KEYS = %i[meta whodunit note event_uuid].freeze
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
-  CONFIG_KEYS = %i[enabled version_updates save_trash].freeze
+  CONFIG_KEYS = %i[enabled version_updates save_trash return_everything].freeze
 
   # @!visibility private
   VERSION_CLASS_SUFFIX = 'Version'
@@ -20,7 +20,7 @@ module Hoardable
 
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
-    [key, true]
+    [key, key != :return_everything]
   end
 
   class << self
