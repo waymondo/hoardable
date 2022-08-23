@@ -45,7 +45,7 @@ module Hoardable
     #
     # @return [Boolean]
     def trashed?
-      versions.trashed.limit(1).order(_during: :desc).first&.send(:hoardable_source_attributes) == attributes
+      versions.trashed.limit(1).order(_during: :desc).first&.id == id
     end
 
     # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
