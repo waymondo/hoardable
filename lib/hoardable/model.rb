@@ -10,7 +10,7 @@ module Hoardable
 
     class_methods do
       # @!visibility private
-      attr_reader :_hoardable_options
+      attr_reader :_hoardable_config
 
       # If called with a hash, this will set the model-level +Hoardable+ configuration variables. If
       # called without an argument it will return the computed +Hoardable+ configuration considering
@@ -19,15 +19,28 @@ module Hoardable
       # @param hash [Hash] The +Hoardable+ configuration for the model. Keys must be present in
       #   {CONFIG_KEYS}
       # @return [Hash]
-      def hoardable_options(hash = nil)
+      def hoardable_config(hash = nil)
         if hash
-          @_hoardable_options = hash.slice(*Hoardable::CONFIG_KEYS)
+          @_hoardable_config = hash.slice(*Hoardable::CONFIG_KEYS)
         else
-          @_hoardable_options ||= {}
+          @_hoardable_config ||= {}
           Hoardable::CONFIG_KEYS.to_h do |key|
-            [key, Hoardable.send(key) != false && @_hoardable_options[key] != false]
+            [key, @_hoardable_config.key?(key) ? @_hoardable_config[key] : Hoardable.send(key)]
           end
         end
+      end
+
+      # Set the model-level +Hoardable+ configuration variables around a block. The configuration
+      # will be reset to it’s previous value afterwards.
+      #
+      # @param hash [Hash] The +Hoardable+ configuration for the model. Keys must be present in
+      #   {CONFIG_KEYS}
+      def with_hoardable_config(hash)
+        current_config = @_hoardable_config
+        @_hoardable_config = hash.slice(*Hoardable::CONFIG_KEYS)
+        yield
+      ensure
+        @_hoardable_config = current_config
       end
     end
 

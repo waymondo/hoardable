@@ -71,8 +71,8 @@ module Hoardable
     include VersionModel
     include SourceModel
 
-    attr_reader _hoardable_options: Hash[untyped, untyped]
-    def hoardable_options: (?nil hash) -> untyped
+    def hoardable_config: (?nil hash) -> untyped
+    def with_hoardable_config: (untyped hash) -> untyped
   end
 
   class MigrationGenerator

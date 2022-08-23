@@ -71,15 +71,15 @@ module Hoardable
     private
 
     def hoardable_callbacks_enabled
-      self.class.hoardable_options[:enabled] && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
+      self.class.hoardable_config[:enabled] && !self.class.name.end_with?(VERSION_CLASS_SUFFIX)
     end
 
     def hoardable_save_trash
-      self.class.hoardable_options[:save_trash]
+      self.class.hoardable_config[:save_trash]
     end
 
     def hoardable_version_updates
-      self.class.hoardable_options[:version_updates]
+      self.class.hoardable_config[:version_updates]
     end
 
     def insert_hoardable_version_on_update(&block)

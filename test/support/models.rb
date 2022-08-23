@@ -2,7 +2,6 @@
 
 class Post < ActiveRecord::Base
   include Hoardable::Model
-  hoardable_options version_updates: true, save_trash: true
   belongs_to :user
   has_many :comments, dependent: :destroy
   attr_reader :_hoardable_operation, :reverted, :untrashed, :hoardable_version_id
@@ -51,5 +50,5 @@ end
 class Library < ActiveRecord::Base
   include Hoardable::Model
   has_many :books, dependent: :destroy
-  hoardable_options save_trash: false
+  hoardable_config save_trash: false
 end

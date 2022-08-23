@@ -69,7 +69,7 @@ Rails 7.
 ### Overview
 
 Once you include `Hoardable::Model` into a model, it will dynamically generate a "Version" subclass
-of that model. As we continue our example above, :
+of that model. As we continue our example above:
 
 ```
 $ irb
@@ -146,7 +146,10 @@ choosing.
 One convenient way to assign contextual data to these is by defining a proc in an initializer, i.e.:
 
 ```ruby
+# config/initiailzers/hoardable.rb
 Hoardable.whodunit = -> { Current.user&.id }
+
+# somewhere in your app code
 Current.user = User.find(123)
 post.update!(status: 'live')
 post.versions.last.hoardable_whodunit # => 123
@@ -247,17 +250,26 @@ Hoardable.with(enabled: false) do
 end
 ```
 
-You can also configure these variables per `ActiveRecord` class as well using `hoardable_options`:
+You can also configure these variables per `ActiveRecord` class as well using `hoardable_config`:
 
 ```ruby
 class Comment < ActiveRecord::Base
   include Hoardable::Model
-  hoardable_options version_updates: false
+  hoardable_config version_updates: false
 end
 ```
 
-If either the model-level option or global option for a configuration variable is set to `false`,
-that behavior will be disabled.
+If you want to temporarily set the `hoardable_config` for a specific model, you can use
+`with_hoardable_config`:
+
+``` ruby
+Comment.with_hoardable_config(version_updates: true) do
+  comment.update!(text: "Edited")
+end
+```
+
+If a model-level option exists, it will use that. Otherwise, it will fall back to the global
+`Hoardable` config.
 
 ### Relationships
 

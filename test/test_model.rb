@@ -208,10 +208,10 @@ class TestModel < Minitest::Test
   end
 
   it 'can disallow version_updates with Model configuration' do
-    Post.hoardable_options(version_updates: false)
-    update_post
-    assert_equal post.versions.size, 0
-    Post.hoardable_options(version_updates: true)
+    Post.with_hoardable_config(version_updates: false) do
+      update_post
+      assert_equal post.versions.size, 0
+    end
   end
 
   def expect_whodunit

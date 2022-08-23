@@ -46,7 +46,7 @@ module Hoardable
 
     # This is a general use method for setting {DATA_KEYS} or {CONFIG_KEYS} around a scoped block.
     #
-    # @param hash [Hash] Options and contextual data to set within a block
+    # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
       current_config = @config
       current_context = @context
