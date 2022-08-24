@@ -146,7 +146,7 @@ choosing.
 One convenient way to assign contextual data to these is by defining a proc in an initializer, i.e.:
 
 ```ruby
-# config/initiailzers/hoardable.rb
+# config/initializers/hoardable.rb
 Hoardable.whodunit = -> { Current.user&.id }
 
 # somewhere in your app code
@@ -177,7 +177,7 @@ class ApplicationController < ActionController::Base
     Hoardable.with(whodunit: current_user.id, meta: { request_uuid: request.uuid }) do
       yield
     end
-    # `Hoardable.whodunit` is back to nil or the previously set value
+    # `Hoardable.whodunit` and `Hoardable.meta` are back to nil or their previously set values
   end
 end
 ```
@@ -227,7 +227,7 @@ end
 
 ### Configuration
 
-There are three configurable options currently:
+The configurable options are:
 
 ```ruby
 Hoardable.enabled # => default true
@@ -317,7 +317,8 @@ end
 
 If there are models that might be related to versions that are trashed or otherwise, and/or might
 trashed themselves, you can bypass the inherited tables query handling altogether by using the
-`return_everything` configuration variable in `Hoardable.with`:
+`return_everything` configuration variable in `Hoardable.with`. This will ensure that you always see
+all records, including update and trashed versions.
 
 ```ruby
 post.destroy!
