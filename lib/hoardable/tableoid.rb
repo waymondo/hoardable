@@ -24,7 +24,7 @@ module Hoardable
         if hoardable_config[:return_everything]
           where(nil)
         else
-          where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq))
+          exclude_versions
         end
       end
 
@@ -43,6 +43,14 @@ module Hoardable
       # Returns only +versions+ of the parent +ActiveRecord+ class, cast as instances of the source
       # model’s class.
       scope :versions, -> { include_versions.where(TABLEOID_AREL_CONDITIONS.call(arel_table, :not_eq)) }
+
+      # @!scope class
+      # @!method exclude_versions
+      # @return [ActiveRecord<Object>]
+      #
+      # Excludes +versions+ of the parent +ActiveRecord+ class. This is included by default in the
+      # source model’s +default_scope+.
+      scope :exclude_versions, -> { where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq)) }
     end
 
     private
