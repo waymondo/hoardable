@@ -5,13 +5,13 @@ module Hoardable
   module Tableoid
     extend ActiveSupport::Concern
 
-    # @!visibility private
     TABLEOID_AREL_CONDITIONS = lambda do |arel_table, condition|
       arel_table[:tableoid].send(
         condition,
         Arel::Nodes::NamedFunction.new('CAST', [Arel::Nodes::Quoted.new(arel_table.name).as('regclass')])
       )
     end.freeze
+    private_constant :TABLEOID_AREL_CONDITIONS
 
     included do
       # @!visibility private

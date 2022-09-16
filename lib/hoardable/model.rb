@@ -21,10 +21,10 @@ module Hoardable
       # @return [Hash]
       def hoardable_config(hash = nil)
         if hash
-          @_hoardable_config = hash.slice(*Hoardable::CONFIG_KEYS)
+          @_hoardable_config = hash.slice(*CONFIG_KEYS)
         else
           @_hoardable_config ||= {}
-          Hoardable::CONFIG_KEYS.to_h do |key|
+          CONFIG_KEYS.to_h do |key|
             [key, @_hoardable_config.key?(key) ? @_hoardable_config[key] : Hoardable.send(key)]
           end
         end
@@ -37,7 +37,7 @@ module Hoardable
       #   {CONFIG_KEYS}
       def with_hoardable_config(hash)
         current_config = @_hoardable_config
-        @_hoardable_config = hash.slice(*Hoardable::CONFIG_KEYS)
+        @_hoardable_config = hash.slice(*CONFIG_KEYS)
         yield
       ensure
         @_hoardable_config = current_config

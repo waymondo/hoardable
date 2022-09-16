@@ -13,7 +13,7 @@ module Hoardable
       belongs_to hoardable_source_key, inverse_of: :versions
       alias_method :hoardable_source, hoardable_source_key
 
-      self.table_name = "#{table_name.singularize}#{Hoardable::VERSION_TABLE_SUFFIX}"
+      self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
       alias_attribute :hoardable_operation, :_operation

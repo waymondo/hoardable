@@ -5,18 +5,19 @@ module Hoardable
   # Symbols for use with setting contextual data, when creating versions. See
   # {file:README.md#tracking-contextual-data README} for more.
   DATA_KEYS = %i[meta whodunit note event_uuid].freeze
+
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
   CONFIG_KEYS = %i[enabled version_updates save_trash return_everything].freeze
 
-  # @!visibility private
   VERSION_CLASS_SUFFIX = 'Version'
+  private_constant :VERSION_CLASS_SUFFIX
 
-  # @!visibility private
   VERSION_TABLE_SUFFIX = "_#{VERSION_CLASS_SUFFIX.tableize}"
+  private_constant :VERSION_TABLE_SUFFIX
 
-  # @!visibility private
   DURING_QUERY = '_during @> ?::timestamp'
+  private_constant :DURING_QUERY
 
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
@@ -44,7 +45,8 @@ module Hoardable
       end
     end
 
-    # This is a general use method for setting {DATA_KEYS} or {CONFIG_KEYS} around a scoped block.
+    # This is a general use method for setting {file:README.md#tracking-contextual-data Contextual
+    # Data} or {file:README.md#configuration Configuration} around a block.
     #
     # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
