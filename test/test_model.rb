@@ -131,8 +131,18 @@ class TestModel < Minitest::Test
     assert_equal version.post_id, post_id
     untrashed_post = version.untrash!
     assert_equal untrashed_post.attributes.without('updated_at'), attributes
-    refute_equal untrashed_post.updated_at, post.updated_at
     refute post.reload.trashed?
+  end
+
+  it 'can trash and untrash a model multiple times, with each version creating unique post version IDs' do
+    post_id = post.id
+    Array.new(3) do
+      post.reload.destroy!
+      version = PostVersion.last
+      version.untrash!
+    end
+    assert_equal post.reload.id, post_id
+    assert_equal PostVersion.pluck('id').uniq.count, 6
   end
 
   it 'can hook into after_reverted and after_untrashed callbacks' do
@@ -166,7 +176,7 @@ class TestModel < Minitest::Test
     assert_equal PostVersion.trashed.size, 1
     version = PostVersion.trashed.last
     version.untrash!
-    assert_equal PostVersion.count, 2
+    assert_equal PostVersion.count, 3
     assert_equal PostVersion.trashed.size, 0
   end
 
@@ -358,5 +368,27 @@ class TestModel < Minitest::Test
       assert_equal Post.all.size, 3
       assert_equal PostVersion.all.size, 2
     end
+  end
+
+  it 'can query the source model, including versions that were valid at a certain datetime' do
+    post
+    datetime1 = DateTime.now
+    update_post
+    datetime2 = DateTime.now
+    update_post(title: 'Revert', status: :draft)
+    datetime3 = DateTime.now
+    post.destroy!
+    datetime4 = DateTime.now
+    PostVersion.trashed.last.untrash!
+    datetime5 = DateTime.now
+    post = Post.last
+    post.at(datetime2).revert!
+    datetime6 = DateTime.now
+    assert_equal Post.at(datetime1).pluck('title'), ['Headline']
+    assert_equal Post.at(datetime2).pluck('title'), ['New Headline']
+    assert_equal Post.at(datetime3).pluck('title'), ['Revert']
+    assert_equal Post.at(datetime4).pluck('title'), []
+    assert_equal Post.at(datetime5).pluck('title'), ['Revert']
+    assert_equal Post.at(datetime6).pluck('title'), ['New Headline']
   end
 end

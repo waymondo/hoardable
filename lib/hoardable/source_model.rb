@@ -34,18 +34,33 @@ module Hoardable
 
       # Returns all +versions+ in ascending order of their temporal timeframes.
       has_many(
-        :versions, -> { order(:_during) },
+        :versions, -> { order('UPPER(_during) ASC') },
         dependent: nil,
         class_name: version_class.to_s,
         inverse_of: model_name.i18n_key
       )
+
+      # @!scope class
+      # @!method at
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns instances of the source model and versions that were valid at the supplied
+      # +datetime+ or +time+, all cast as instances of the source model.
+      scope :at, lambda { |datetime|
+        versioned = version_class.at(datetime)
+        trashed = version_class.trashed_at(datetime)
+        foreign_key = version_class.hoardable_source_foreign_key
+        include_versions.where(id: versioned.select('id')).or(
+          where.not(id: versioned.select(foreign_key)).where.not(id: trashed.select(foreign_key))
+        )
+      }
     end
 
     # Returns a boolean of whether the record is actually a trashed +version+.
     #
     # @return [Boolean]
     def trashed?
-      versions.trashed.limit(1).order(_during: :desc).first&.hoardable_source_foreign_id == id
+      versions.trashed.only_most_recent.first&.hoardable_source_foreign_id == id
     end
 
     # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
@@ -90,8 +105,12 @@ module Hoardable
       insert_hoardable_version('delete', &block)
     end
 
+    def insert_hoardable_version_on_untrashed
+      initialize_hoardable_version('insert').save(validate: false, touch: false)
+    end
+
     def insert_hoardable_version(operation)
-      @hoardable_version = initialize_hoardable_version(operation, attributes_before_type_cast.without('id'))
+      @hoardable_version = initialize_hoardable_version(operation)
       run_callbacks(:versioned) do
         yield
         hoardable_version.save(validate: false, touch: false)
@@ -102,9 +121,9 @@ module Hoardable
       Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query('SELECT gen_random_uuid();')[0][0]
     end
 
-    def initialize_hoardable_version(operation, attrs)
+    def initialize_hoardable_version(operation)
       versions.new(
-        attrs.merge(
+        attributes_before_type_cast.without('id').merge(
           changes.transform_values { |h| h[0] },
           {
             _event_uuid: find_or_initialize_hoardable_event_uuid,

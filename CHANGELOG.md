@@ -1,5 +1,16 @@
 ## [Unreleased]
 
+## [0.5.0] - 2022-09-25
+
+- **Breaking Change** - Untrashing a version will now insert a version for the untrash event with
+  it's own temporal timespan. This simplifies the ability to query versions temporarily for when
+  they were trashed or not. This changes, but corrects, temporal query results using `.at`.
+
+- **Breaking Change** - Because of the above, a new operation enum value of "insert" was added. If
+  you already have the `hoardable_operation` enum in your PostgreSQL schema, you can add it by
+  executing the following SQL in a new migration: `ALTER TYPE hoardable_operation ADD VALUE
+  'insert';`.
+
 ## [0.4.0] - 2022-09-24
 
 - **Breaking Change** - Trashed versions now pull from the same postgres sequenced used by the
