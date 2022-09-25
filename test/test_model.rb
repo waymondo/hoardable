@@ -66,12 +66,17 @@ class TestModel < Minitest::Test
     datetime2 = DateTime.now
     update_post(title: 'Revert', status: :draft)
     datetime3 = DateTime.now
+    post.destroy!
+    datetime4 = DateTime.now
     assert_equal post.at(datetime1).title, 'Headline'
     assert_equal PostVersion.at(datetime1).find_by(post_id: post.id).title, 'Headline'
     assert_equal post.at(datetime2).title, 'New Headline'
     assert_equal PostVersion.at(datetime2).find_by(post_id: post.id).title, 'New Headline'
     assert_equal post.at(datetime3).title, 'Revert'
-    assert_nil PostVersion.at(datetime3).find_by(post_id: post.id)
+    assert_equal PostVersion.at(datetime3).find_by(post_id: post.id).title, 'Revert'
+    assert_equal post.trashed?, true
+    assert_equal post.at(datetime4).title, 'Revert'
+    assert_nil PostVersion.at(datetime4).find_by(post_id: post.id)
   end
 
   it 'can revert to version at a datetime' do

@@ -69,7 +69,7 @@ module Hoardable
     def at(datetime)
       raise(Error, 'Future state cannot be known') if datetime.future?
 
-      versions.find_by(DURING_QUERY, datetime) || self
+      versions.at(datetime).first || self
     end
 
     # If a version is found at the supplied datetime, it will +revert!+ to it and return it. This
