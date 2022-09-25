@@ -33,7 +33,7 @@ module Hoardable
       # @!method trashed
       # @return [ActiveRecord<Object>]
       #
-      # Returns only trashed +versions+ that are orphans.
+      # Returns only trashed +versions+ that are currently orphans.
       scope :trashed, lambda {
         left_outer_joins(hoardable_source_key)
           .where(superclass.table_name => { id: nil })
@@ -45,7 +45,14 @@ module Hoardable
       # @return [ActiveRecord<Object>]
       #
       # Returns +versions+ that were valid at the supplied +datetime+ or +time+.
-      scope :at, ->(datetime) { where(DURING_QUERY, datetime) }
+      scope :at, ->(datetime) { where(_operation: %w[delete update]).where(DURING_QUERY, datetime) }
+
+      # @!scope class
+      # @!method trashed_at
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns +versions+ that were trashed at the supplied +datetime+ or +time+.
+      scope :trashed_at, ->(datetime) { where(_operation: 'insert').where(DURING_QUERY, datetime) }
 
       # @!scope class
       # @!method with_hoardable_event_uuid
@@ -54,6 +61,13 @@ module Hoardable
       # Returns all +versions+ that were created as part of the same +ActiveRecord+ database
       # transaction of the supplied +event_uuid+. Useful in +reverted+ and +untrashed+ callbacks.
       scope :with_hoardable_event_uuid, ->(event_uuid) { where(_event_uuid: event_uuid) }
+
+      # @!scope class
+      # @!method only_most_recent
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns a limited +ActiveRecord+ scope of only the most recent version.
+      scope :only_most_recent, -> { limit(1).reorder('UPPER(_during) DESC') }
     end
 
     # Reverts the parent +ActiveRecord+ instance to the saved attributes of this +version+. Raises
@@ -77,8 +91,9 @@ module Hoardable
 
       transaction do
         superscope = self.class.superclass.unscoped
-        superscope.insert(untrashable_hoardable_source_attributes)
+        superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
         superscope.find(hoardable_source_foreign_id).tap do |untrashed|
+          untrashed.send('initialize_hoardable_version', 'insert').save(validate: false, touch: false)
           untrashed.instance_variable_set(:@hoardable_version, self)
           untrashed.run_callbacks(:untrashed)
         end
@@ -107,12 +122,6 @@ module Hoardable
 
     delegate :hoardable_source_foreign_key, to: :class
 
-    def untrashable_hoardable_source_attributes
-      hoardable_source_attributes.merge('id' => hoardable_source_foreign_id).tap do |hash|
-        hash['updated_at'] = Time.now if self.class.column_names.include?('updated_at')
-      end
-    end
-
     def hoardable_source_attributes
       @hoardable_source_attributes ||=
         attributes_before_type_cast
@@ -121,7 +130,7 @@ module Hoardable
     end
 
     def previous_temporal_tsrange_end
-      hoardable_source.versions.limit(1).order(_during: :desc).pluck('_during').first&.end
+      hoardable_source.versions.only_most_recent.pluck('_during').first&.end
     end
 
     def assign_temporal_tsrange
@@ -130,10 +139,10 @@ module Hoardable
         if hoardable_source.class.column_names.include?('created_at')
           hoardable_source.created_at
         else
-          Time.at(0)
+          Time.at(0).utc
         end
       )
-      self._during = (range_start..Time.now)
+      self._during = (range_start..Time.now.utc)
     end
   end
 end

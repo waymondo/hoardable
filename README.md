@@ -118,7 +118,7 @@ Post.find(post.id) # raises ActiveRecord::RecordNotFound
 trashed_post = post.versions.trashed.last
 trashed_post.id # => 2
 trashed_post.untrash!
-Post.find(post.id) # #<Post:0x000000010d44fa30>
+Post.find(post.id) # #<Post>
 ```
 
 ### Querying and Temporal Lookup
@@ -132,14 +132,23 @@ post.versions.where(user_id: Current.user.id, body: "Cool!")
 If you want to look-up the version of a record at a specific time, you can use the `.at` method:
 
 ```ruby
-post.at(1.day.ago) # => #<PostVersion:0x000000010d44fa30>
-# or
-PostVersion.at(1.day.ago).find_by(post_id: post.id) # => #<PostVersion:0x000000010d44fa30>
+post.at(1.day.ago) # => #<PostVersion>
+# or you can use the scope on the version model class
+PostVersion.at(1.day.ago).find_by(post_id: post.id) # => #<PostVersion>
 ```
 
-_Note:_ A `Version` is not created upon initial parent model creation. If you would like to
-accurately capture the valid temporal frame of the first version, make sure your model’s table has a
-`created_at` timestamp field.
+The source model class also has an `.at` method:
+
+``` ruby
+Post.at(1.day.ago) # => [#<Post>, #<Post>]
+```
+
+This will return an ActiveRecord scoped query of all `Posts` and `PostVersions` that were valid at
+that time, all cast as instances of `Post`.
+
+_Note:_ A `Version` is not created upon initial parent model creation. To accurately track the
+beginning of the first temporal period, you will need to ensure the source model table has a
+`created_at` timestamp column.
 
 By default, `hoardable` will keep copies of records you have destroyed. You can query them
 specifically with:

@@ -11,7 +11,7 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
                 SELECT 1 FROM pg_type t
                 WHERE t.typname = 'hoardable_operation'
               ) THEN
-                CREATE TYPE hoardable_operation AS ENUM ('update', 'delete');
+                CREATE TYPE hoardable_operation AS ENUM ('update', 'delete', 'insert');
               END IF;
           END
           $$;
