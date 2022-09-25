@@ -45,6 +45,7 @@ module Hoardable
     end
 
     included do
+      include Associations
       define_model_callbacks :versioned
       define_model_callbacks :reverted, only: :after
       define_model_callbacks :untrashed, only: :after

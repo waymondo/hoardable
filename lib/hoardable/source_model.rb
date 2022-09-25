@@ -45,7 +45,7 @@ module Hoardable
     #
     # @return [Boolean]
     def trashed?
-      versions.trashed.limit(1).order(_during: :desc).first&.id == id
+      versions.trashed.limit(1).order(_during: :desc).first&.hoardable_source_foreign_id == id
     end
 
     # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
@@ -83,15 +83,15 @@ module Hoardable
     end
 
     def insert_hoardable_version_on_update(&block)
-      insert_hoardable_version('update', attributes_before_type_cast.without('id'), &block)
+      insert_hoardable_version('update', &block)
     end
 
     def insert_hoardable_version_on_destroy(&block)
-      insert_hoardable_version('delete', attributes_before_type_cast, &block)
+      insert_hoardable_version('delete', &block)
     end
 
-    def insert_hoardable_version(operation, attrs)
-      @hoardable_version = initialize_hoardable_version(operation, attrs)
+    def insert_hoardable_version(operation)
+      @hoardable_version = initialize_hoardable_version(operation, attributes_before_type_cast.without('id'))
       run_callbacks(:versioned) do
         yield
         hoardable_version.save(validate: false, touch: false)
