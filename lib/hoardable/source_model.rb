@@ -47,11 +47,10 @@ module Hoardable
       # Returns instances of the source model and versions that were valid at the supplied
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at, lambda { |datetime|
-        versioned = version_class.at(datetime)
-        trashed = version_class.trashed_at(datetime)
-        foreign_key = version_class.hoardable_source_foreign_key
-        include_versions.where(id: versioned.select('id')).or(
-          where.not(id: versioned.select(foreign_key)).where.not(id: trashed.select(foreign_key))
+        include_versions.where(id: version_class.at(datetime).select('id')).or(
+          where.not(
+            id: version_class.select(version_class.hoardable_source_foreign_key).where(DURING_QUERY, datetime)
+          )
         )
       }
     end
