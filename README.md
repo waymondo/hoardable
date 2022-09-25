@@ -69,7 +69,7 @@ Rails 7.
 ### Overview
 
 Once you include `Hoardable::Model` into a model, it will dynamically generate a "Version" subclass
-of that model. As we continue our example above:
+of that model. As we continue our example from above:
 
 ```
 $ irb
@@ -79,8 +79,8 @@ $ irb
 => PostVersion(id: integer, body: text, user_id: integer, created_at: datetime, _data: jsonb, _during: tsrange, post_id: integer)
 ```
 
-A `Post` now `has_many :versions`. Whenever an update and deletion of a `Post` occurs, a version is
-created (by default):
+A `Post` now `has_many :versions`. With the default configuration, whenever an update and deletion
+of a `Post` occurs, a version is created:
 
 ```ruby
 post = Post.create!(title: "Title")
@@ -97,9 +97,29 @@ Post.find(post.id) # raises ActiveRecord::RecordNotFound
 Each `PostVersion` has access to the same attributes, relationships, and other model behavior that
 `Post` has, but as a read-only record.
 
-If you ever need to revert to a specific version, you can call `version.revert!` on it. If you would
-like to untrash a specific version, you can call `version.untrash!` on it. This will re-insert the
-model in the parent class’ table with it’s original primary key.
+If you ever need to revert to a specific version, you can call `version.revert!` on it.
+
+``` ruby
+post = Post.create!(title: "Title")
+post.update!(title: "Whoops")
+post.versions.last.revert!
+post.title # => "Title"
+```
+
+If you would like to untrash a specific version, you can call `version.untrash!` on it. This will
+re-insert the model in the parent class’s table with it’s original primary key.
+
+```ruby
+post = Post.create!(title: "Title")
+post.id # => 1
+post.destroy!
+post.versions.size # => 1
+Post.find(post.id) # raises ActiveRecord::RecordNotFound
+trashed_post = post.versions.trashed.last
+trashed_post.id # => 2
+trashed_post.untrash!
+Post.find(post.id) # #<Post:0x000000010d44fa30>
+```
 
 ### Querying and Temporal Lookup
 
@@ -121,11 +141,12 @@ _Note:_ A `Version` is not created upon initial parent model creation. If you wo
 accurately capture the valid temporal frame of the first version, make sure your model’s table has a
 `created_at` timestamp field.
 
-By default, `hoardable` will keep copies of records you have destroyed. You can query for them as
-well:
+By default, `hoardable` will keep copies of records you have destroyed. You can query them
+specifically with:
 
 ```ruby
 PostVersion.trashed
+Post.version_class.trashed # <- same thing as above
 ```
 
 _Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
@@ -278,18 +299,18 @@ If a model-level option exists, it will use that. Otherwise, it will fall back t
 
 ### Relationships
 
-As in life, sometimes relationships can be hard. `hoardable` is still working out best practices and
-features in this area, but here are a couple pointers.
+As in life, sometimes relationships can be hard, but here are some pointers on handling associations
+with `Hoardable` considerations.
 
-Sometimes you’ll have a record that belongs to a record that you’ll trash. Now the child record’s
-foreign key will point to the non-existent trashed version of the parent. If you would like this
-`belongs_to` relationship to always resolve to the parent as if it was not trashed, you can include
-the `include_versions` scope on the relationship definition:
+Sometimes you’ll have a record that belongs to a parent record that you’ll trash. Now the child
+record’s foreign key will point to the non-existent trashed version of the parent. If you would like
+to have `belongs_to` resolve to the trashed parent model in this case, you can use
+`belongs_to_trashable` in place of `belongs_to`:
 
 ```ruby
 class Comment
-  include Hoardable::Model
-  belongs_to :post, -> { include_versions } # `Post` also includes `Hoardable::Model`
+  include Hoardable::Associations # <- This includes is not required if this model already includes `Hoardable::Model`
+  belongs_to_trashable :post, -> { where(status: 'published') }, class_name: 'Article' # <- Accepts normal `belongs_to` arguments
 end
 ```
 

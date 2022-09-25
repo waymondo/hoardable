@@ -6,6 +6,13 @@ module Hoardable
   module VersionModel
     extend ActiveSupport::Concern
 
+    class_methods do
+      # Returns the foreign column that holds the reference to the source model of the version.
+      def hoardable_source_foreign_key
+        @hoardable_source_foreign_key ||= "#{superclass.model_name.i18n_key}_id"
+      end
+    end
+
     included do
       hoardable_source_key = superclass.model_name.i18n_key
 
@@ -91,7 +98,14 @@ module Hoardable
       _data&.dig('changes')
     end
 
+    # Returns the foreign reference that represents the source model of the version.
+    def hoardable_source_foreign_id
+      @hoardable_source_foreign_id ||= public_send(hoardable_source_foreign_key)
+    end
+
     private
+
+    delegate :hoardable_source_foreign_key, to: :class
 
     def untrashable_hoardable_source_attributes
       hoardable_source_attributes.merge('id' => hoardable_source_foreign_id).tap do |hash|
@@ -104,14 +118,6 @@ module Hoardable
         attributes_before_type_cast
         .without(hoardable_source_foreign_key)
         .reject { |k, _v| k.start_with?('_') }
-    end
-
-    def hoardable_source_foreign_key
-      @hoardable_source_foreign_key ||= "#{self.class.superclass.model_name.i18n_key}_id"
-    end
-
-    def hoardable_source_foreign_id
-      @hoardable_source_foreign_id ||= public_send(hoardable_source_foreign_key)
     end
 
     def previous_temporal_tsrange_end

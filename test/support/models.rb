@@ -30,7 +30,7 @@ end
 
 class Comment < ActiveRecord::Base
   include Hoardable::Model
-  belongs_to :post, -> { include_versions }
+  belongs_to_trashable :post
 end
 
 class UserWithTrashedPosts < ActiveRecord::Base

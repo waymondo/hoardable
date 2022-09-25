@@ -129,7 +129,6 @@ class TestModel < Minitest::Test
     assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
     version = PostVersion.last
     assert_equal version.post_id, post_id
-    assert_equal version.id, post_id
     untrashed_post = version.untrash!
     assert_equal untrashed_post.attributes.without('updated_at'), attributes
     refute_equal untrashed_post.updated_at, post.updated_at
@@ -275,14 +274,14 @@ class TestModel < Minitest::Test
   it 'a comment can still point to a trashed post' do
     comment = post.comments.create!(body: 'Comment 1')
     post.destroy!
-    assert comment.reload.post
+    assert_equal comment.post, post
   end
 
   def create_comments_and_destroy_post
     post.comments.create!(body: 'Comment 1')
     post.comments.create!(body: 'Comment 2')
     post.destroy!
-    PostVersion.trashed.find(post.id)
+    PostVersion.trashed.find_by(post_id: post.id)
   end
 
   it 'recursively creates trashed versions with shared event_uuid' do
@@ -322,7 +321,7 @@ class TestModel < Minitest::Test
     assert_equal book.versions.last.title, original_title
     assert_equal book.at(datetime).title, original_title
     book.destroy!
-    untrashed_book = BookVersion.find(book_id).untrash!
+    untrashed_book = BookVersion.trashed.find_by(book_id: book_id).untrash!
     assert_equal untrashed_book.title, new_title
     assert_equal untrashed_book.id, book_id
   end
