@@ -48,9 +48,10 @@ module Hoardable
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at, lambda { |datetime|
         versioned = version_class.at(datetime)
+        trashed = version_class.trashed_at(datetime)
+        foreign_key = version_class.hoardable_source_foreign_key
         include_versions.where(id: versioned.select('id')).or(
-          where.not(id: versioned.select(version_class.hoardable_source_foreign_key))
-            .where.not(id: version_class.select(version_class.hoardable_source_foreign_key).trashed_at(datetime))
+          where.not(id: versioned.select(foreign_key)).where.not(id: trashed.select(foreign_key))
         )
       }
     end
@@ -102,6 +103,10 @@ module Hoardable
 
     def insert_hoardable_version_on_destroy(&block)
       insert_hoardable_version('delete', &block)
+    end
+
+    def insert_hoardable_version_on_untrashed
+      initialize_hoardable_version('insert').save(validate: false, touch: false)
     end
 
     def insert_hoardable_version(operation)
