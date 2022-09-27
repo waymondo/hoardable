@@ -10,5 +10,9 @@ Metrics/ClassLength:
   Exclude:
     - 'test/**/*.rb'
 
+Metrics/BlockLength:
+  Exclude:
+    - 'test/**/*.rb'
+
 Style/DocumentDynamicEvalDefinition:
   Enabled: false

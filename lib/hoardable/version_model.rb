@@ -133,16 +133,30 @@ module Hoardable
       hoardable_source.versions.only_most_recent.pluck('_during').first&.end
     end
 
+    def hoardable_source_epoch
+      if hoardable_source.class.column_names.include?('created_at')
+        hoardable_source.created_at
+      else
+        maybe_warn_about_missing_created_at_column
+        Time.at(0).utc
+      end
+    end
+
     def assign_temporal_tsrange
-      range_start = (
-        previous_temporal_tsrange_end ||
-        if hoardable_source.class.column_names.include?('created_at')
-          hoardable_source.created_at
-        else
-          Time.at(0).utc
-        end
+      self._during = ((previous_temporal_tsrange_end || hoardable_source_epoch)..Time.now.utc)
+    end
+
+    def maybe_warn_about_missing_created_at_column
+      return unless hoardable_source.class.hoardable_config[:warn_on_missing_created_at_column]
+
+      source_table_name = hoardable_source.class.table_name
+      Hoardable.logger.info(
+        <<~LOG
+          '#{source_table_name}' does not have a 'created_at' column, so the first version’s temporal period
+          will begin at the unix epoch instead. Add a 'created_at' column to '#{source_table_name}'
+          or set 'Hoardable.warn_on_missing_created_at_column = false' to disable this message.
+        LOG
       )
-      self._during = (range_start..Time.now.utc)
     end
   end
 end

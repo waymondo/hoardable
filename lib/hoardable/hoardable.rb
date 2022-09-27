@@ -8,7 +8,7 @@ module Hoardable
 
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
-  CONFIG_KEYS = %i[enabled version_updates save_trash return_everything].freeze
+  CONFIG_KEYS = %i[enabled version_updates save_trash return_everything warn_on_missing_created_at_column].freeze
 
   VERSION_CLASS_SUFFIX = 'Version'
   private_constant :VERSION_CLASS_SUFFIX
@@ -58,6 +58,11 @@ module Hoardable
     ensure
       @config = current_config
       @context = current_context
+    end
+
+    # @!visibility private
+    def logger
+      @logger ||= ActiveSupport::TaggedLogging.new(Logger.new($stdout))
     end
   end
 end

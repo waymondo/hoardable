@@ -35,6 +35,7 @@ ActiveRecord::Schema.define do
 
   create_table :libraries, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
     t.string :name, null: false
+    t.timestamps
   end
 
   create_table :books, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
@@ -53,6 +54,10 @@ ActiveRecord::Schema.define do
     t.string :name, null: false
     t.timestamps
   end
+
+  create_table :bookmarks do |t|
+    t.string :name, null: false
+  end
 end
 
 def generate_versions_table(table_name)
@@ -65,3 +70,4 @@ generate_versions_table('Post')
 generate_versions_table('Comment')
 generate_versions_table('Book')
 generate_versions_table('Library')
+generate_versions_table('Bookmark')

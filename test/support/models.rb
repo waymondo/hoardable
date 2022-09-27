@@ -52,3 +52,7 @@ class Library < ActiveRecord::Base
   has_many :books, dependent: :destroy
   hoardable_config save_trash: false
 end
+
+class Bookmark < ActiveRecord::Base
+  include Hoardable::Model
+end

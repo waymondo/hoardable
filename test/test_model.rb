@@ -350,6 +350,22 @@ class TestModel < Minitest::Test
     assert_equal LibraryVersion.count, 0
   end
 
+  it 'warns about missing created_at column' do
+    bookmark = Bookmark.create!(name: 'Paper')
+    assert_output(/'bookmarks' does not have a 'created_at' column/) do
+      bookmark.update!(name: 'Ribbon')
+    end
+  end
+
+  it 'does not warn about missing created_at column when disabled' do
+    bookmark = Bookmark.create!(name: 'Paper')
+    Hoardable.with(warn_on_missing_created_at_column: false) do
+      assert_output('') do
+        bookmark.update!(name: 'Ribbon')
+      end
+    end
+  end
+
   it 'can return all versions and trash through parent class if necessary' do
     comment = post.comments.create!(body: 'Comment 1')
     update_post
