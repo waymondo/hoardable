@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.6.0] - 2022-09-28
+
+- **Breaking Change** - Previously, a source model would `has_many :versions` with an inverse
+  relationship of the i18n interpreted name of the source model. Now it simply `has_many :versions,
+  inverse_of :hoardable_source` to not potentially conflict with previously existing relationships.
+
 ## [0.5.0] - 2022-09-25
 
 - **Breaking Change** - Untrashing a version will now insert a version for the untrash event with

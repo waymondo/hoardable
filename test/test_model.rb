@@ -111,12 +111,6 @@ class TestModel < Minitest::Test
     assert_nil post.hoardable_version
   end
 
-  it 'tests callbacks not available in version' do
-    update_post
-    version = post.versions.first
-    assert_equal version.send(:hoardable_callbacks_enabled), false
-  end
-
   it 'can be reverted from previous version' do
     attributes = post.attributes.without('updated_at')
     update_post

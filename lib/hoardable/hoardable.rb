@@ -19,6 +19,21 @@ module Hoardable
   DURING_QUERY = '_during @> ?::timestamp'
   private_constant :DURING_QUERY
 
+  HOARDABLE_CALLBACKS_ENABLED = proc do |source_model|
+    source_model.class.hoardable_config[:enabled] && !source_model.class.name.end_with?(VERSION_CLASS_SUFFIX)
+  end.freeze
+  private_constant :HOARDABLE_CALLBACKS_ENABLED
+
+  HOARDABLE_SAVE_TRASH = proc do |source_model|
+    source_model.class.hoardable_config[:save_trash]
+  end.freeze
+  private_constant :HOARDABLE_SAVE_TRASH
+
+  HOARDABLE_VERSION_UPDATES = proc do |source_model|
+    source_model.class.hoardable_config[:version_updates]
+  end.freeze
+  private_constant :HOARDABLE_VERSION_UPDATES
+
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
     [key, key != :return_everything]

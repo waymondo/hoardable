@@ -1,14 +1,19 @@
 module Hoardable
   VERSION: String
   DATA_KEYS: [:meta, :whodunit, :note, :event_uuid]
-  CONFIG_KEYS: [:enabled, :version_updates, :save_trash, :return_everything]
+  CONFIG_KEYS: [:enabled, :version_updates, :save_trash, :return_everything, :warn_on_missing_created_at_column]
   VERSION_CLASS_SUFFIX: String
   VERSION_TABLE_SUFFIX: String
   DURING_QUERY: String
+  HOARDABLE_CALLBACKS_ENABLED: ^(untyped) -> untyped
+  HOARDABLE_SAVE_TRASH: ^(untyped) -> untyped
+  HOARDABLE_VERSION_UPDATES: ^(untyped) -> untyped
   self.@context: Hash[untyped, untyped]
   self.@config: untyped
+  self.@logger: untyped
 
   def self.with: (untyped hash) -> untyped
+  def self.logger: -> untyped
 
   module Tableoid
     TABLEOID_AREL_CONDITIONS: Proc
@@ -25,55 +30,69 @@ module Hoardable
 
   module SourceModel
     include Tableoid
+    @hoardable_source_service: Service
 
+    attr_reader hoardable_version: nil
     def trashed?: -> untyped
     def at: (untyped datetime) -> SourceModel
     def revert_to!: (untyped datetime) -> SourceModel?
 
     private
-    def hoardable_callbacks_enabled: -> untyped
-    def hoardable_save_trash: -> untyped
-    def hoardable_version_updates: -> untyped
-    def insert_hoardable_version_on_update: -> untyped
-    def insert_hoardable_version_on_destroy: -> untyped
-    def insert_hoardable_version: (String operation, untyped attrs) -> untyped
-    def find_or_initialize_hoardable_event_uuid: -> untyped
-    def initialize_hoardable_version: (String operation, untyped attrs) -> untyped
-    def initialize_hoardable_data: -> untyped
-    def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
-    def delete_hoardable_versions: -> untyped
-    def unset_hoardable_version_and_event_uuid: -> nil
+    def hoardable_source_service: -> Service
 
     public
     def version_class: -> untyped
-    attr_reader hoardable_version: nil
+
+    class Service
+      attr_reader source_model: SourceModel
+      def initialize: (SourceModel source_model) -> void
+      def insert_hoardable_version: (untyped operation) -> untyped
+      def find_or_initialize_hoardable_event_uuid: -> untyped
+      def initialize_hoardable_version: (untyped operation) -> untyped
+      def initialize_hoardable_data: -> untyped
+      def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
+      def unset_hoardable_version_and_event_uuid: -> nil
+    end
   end
 
   module VersionModel
-    @hoardable_source_attributes: untyped
-    @hoardable_source_foreign_key: String
     @hoardable_source_foreign_id: untyped
+    @hoardable_source_foreign_key: String
+    @hoardable_version_service: Service
 
     def revert!: -> untyped
     def untrash!: -> untyped
     def changes: -> untyped
-
-    private
-    def untrashable_hoardable_source_attributes: -> untyped
-    def hoardable_source_attributes: -> untyped
-    def hoardable_source_foreign_key: -> String
     def hoardable_source_foreign_id: -> untyped
-    def previous_temporal_tsrange_end: -> untyped
-    def assign_temporal_tsrange: -> Range
+    def hoardable_version_service: -> Service
+    def hoardable_source_foreign_key: -> String
+
+    class Service
+      @hoardable_source_attributes: untyped
+
+      attr_reader version_model: VersionModel
+      def initialize: (VersionModel version_model) -> void
+      def insert_untrashed_source: -> untyped
+      def hoardable_source_attributes: -> untyped
+      def previous_temporal_tsrange_end: -> untyped
+      def hoardable_source_epoch: -> Time
+      def assign_temporal_tsrange: -> Range
+      def maybe_warn_about_missing_created_at_column: -> nil
+    end
   end
 
   module Model
     include VersionModel
     include SourceModel
+    include Associations
 
     attr_reader _hoardable_config: Hash[untyped, untyped]
     def hoardable_config: (?nil hash) -> untyped
     def with_hoardable_config: (untyped hash) -> untyped
+  end
+
+  module Associations
+    def belongs_to_trashable: (untyped name, ?nil scope, **untyped) -> untyped
   end
 
   class MigrationGenerator

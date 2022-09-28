@@ -14,11 +14,13 @@ module Hoardable
     end
 
     included do
-      hoardable_source_key = superclass.model_name.i18n_key
-
       # A +version+ belongs to it’s parent +ActiveRecord+ source.
-      belongs_to hoardable_source_key, inverse_of: :versions
-      alias_method :hoardable_source, hoardable_source_key
+      belongs_to(
+        :hoardable_source,
+        inverse_of: :versions,
+        class_name: superclass.model_name,
+        foreign_key: hoardable_source_foreign_key
+      )
 
       self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
@@ -27,7 +29,7 @@ module Hoardable
       alias_attribute :hoardable_event_uuid, :_event_uuid
       alias_attribute :hoardable_during, :_during
 
-      before_create :assign_temporal_tsrange
+      before_create { hoardable_version_service.assign_temporal_tsrange }
 
       # @!scope class
       # @!method trashed
@@ -35,7 +37,7 @@ module Hoardable
       #
       # Returns only trashed +versions+ that are currently orphans.
       scope :trashed, lambda {
-        left_outer_joins(hoardable_source_key)
+        left_outer_joins(:hoardable_source)
           .where(superclass.table_name => { id: nil })
           .where(_operation: 'delete')
       }
@@ -77,7 +79,7 @@ module Hoardable
 
       transaction do
         hoardable_source.tap do |reverted|
-          reverted.update!(hoardable_source_attributes.without('id'))
+          reverted.update!(hoardable_version_service.hoardable_source_attributes.without('id'))
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
         end
@@ -90,10 +92,8 @@ module Hoardable
       raise(Error, 'Version is not trashed, cannot untrash') unless hoardable_operation == 'delete'
 
       transaction do
-        superscope = self.class.superclass.unscoped
-        superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
-        superscope.find(hoardable_source_foreign_id).tap do |untrashed|
-          untrashed.send('insert_hoardable_version_on_untrashed')
+        hoardable_version_service.insert_untrashed_source.tap do |untrashed|
+          untrashed.send('hoardable_source_service').insert_hoardable_version('insert')
           untrashed.instance_variable_set(:@hoardable_version, self)
           untrashed.run_callbacks(:untrashed)
         end
@@ -118,45 +118,67 @@ module Hoardable
       @hoardable_source_foreign_id ||= public_send(hoardable_source_foreign_key)
     end
 
-    private
-
     delegate :hoardable_source_foreign_key, to: :class
 
-    def hoardable_source_attributes
-      @hoardable_source_attributes ||=
-        attributes_before_type_cast
-        .without(hoardable_source_foreign_key)
-        .reject { |k, _v| k.start_with?('_') }
+    def hoardable_version_service
+      @hoardable_version_service ||= Service.new(self)
     end
 
-    def previous_temporal_tsrange_end
-      hoardable_source.versions.only_most_recent.pluck('_during').first&.end
-    end
+    # This is a private service class that manages the construction of {VersionModel} attributes and
+    # untrashing / re-insertion into the {SourceModel} table.
+    class Service
+      attr_reader :version_model
 
-    def hoardable_source_epoch
-      if hoardable_source.class.column_names.include?('created_at')
-        hoardable_source.created_at
-      else
-        maybe_warn_about_missing_created_at_column
-        Time.at(0).utc
+      def initialize(version_model)
+        @version_model = version_model
+      end
+
+      delegate :hoardable_source_foreign_id, :hoardable_source_foreign_key, :hoardable_source, to: :version_model
+
+      def insert_untrashed_source
+        superscope = version_model.class.superclass.unscoped
+        superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
+        superscope.find(hoardable_source_foreign_id)
+      end
+
+      def hoardable_source_attributes
+        @hoardable_source_attributes ||=
+          version_model
+          .attributes_before_type_cast
+          .without(hoardable_source_foreign_key)
+          .reject { |k, _v| k.start_with?('_') }
+      end
+
+      def previous_temporal_tsrange_end
+        hoardable_source.versions.only_most_recent.pluck('_during').first&.end
+      end
+
+      def hoardable_source_epoch
+        if hoardable_source.class.column_names.include?('created_at')
+          hoardable_source.created_at
+        else
+          maybe_warn_about_missing_created_at_column
+          Time.at(0).utc
+        end
+      end
+
+      def assign_temporal_tsrange
+        version_model._during = ((previous_temporal_tsrange_end || hoardable_source_epoch)..Time.now.utc)
+      end
+
+      def maybe_warn_about_missing_created_at_column
+        return unless hoardable_source.class.hoardable_config[:warn_on_missing_created_at_column]
+
+        source_table_name = hoardable_source.class.table_name
+        Hoardable.logger.info(
+          <<~LOG
+            '#{source_table_name}' does not have a 'created_at' column, so the first version’s temporal period
+            will begin at the unix epoch instead. Add a 'created_at' column to '#{source_table_name}'
+            or set 'Hoardable.warn_on_missing_created_at_column = false' to disable this message.
+          LOG
+        )
       end
     end
-
-    def assign_temporal_tsrange
-      self._during = ((previous_temporal_tsrange_end || hoardable_source_epoch)..Time.now.utc)
-    end
-
-    def maybe_warn_about_missing_created_at_column
-      return unless hoardable_source.class.hoardable_config[:warn_on_missing_created_at_column]
-
-      source_table_name = hoardable_source.class.table_name
-      Hoardable.logger.info(
-        <<~LOG
-          '#{source_table_name}' does not have a 'created_at' column, so the first version’s temporal period
-          will begin at the unix epoch instead. Add a 'created_at' column to '#{source_table_name}'
-          or set 'Hoardable.warn_on_missing_created_at_column = false' to disable this message.
-        LOG
-      )
-    end
+    private_constant :Service
   end
 end
