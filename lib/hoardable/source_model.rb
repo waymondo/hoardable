@@ -8,7 +8,7 @@ module Hoardable
     extend ActiveSupport::Concern
 
     # The +Version+ class instance for use within +versioned+, +reverted+, and +untrashed+ callbacks.
-    attr_accessor :hoardable_version
+    attr_reader :hoardable_version
 
     # @!attribute [r] hoardable_event_uuid
     #   @return [String] A postgres UUID that represents the +version+’s +ActiveRecord+ database transaction
@@ -104,7 +104,7 @@ module Hoardable
       end
 
       def insert_hoardable_version(operation)
-        source_model.hoardable_version = initialize_hoardable_version(operation)
+        source_model.instance_variable_set('@hoardable_version', initialize_hoardable_version(operation))
         source_model.run_callbacks(:versioned) do
           yield if block_given?
           source_model.hoardable_version.save(validate: false, touch: false)
@@ -141,7 +141,7 @@ module Hoardable
       end
 
       def unset_hoardable_version_and_event_uuid
-        source_model.hoardable_version = nil
+        source_model.instance_variable_set('@hoardable_version', nil)
         return if source_model.class.connection.transaction_open?
 
         Thread.current[:hoardable_event_uuid] = nil
