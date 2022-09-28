@@ -93,7 +93,7 @@ module Hoardable
         superscope = self.class.superclass.unscoped
         superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
         superscope.find(hoardable_source_foreign_id).tap do |untrashed|
-          untrashed.send('insert_hoardable_version_on_untrashed')
+          untrashed.send('hoardable_database_client').insert_hoardable_version_on_untrashed
           untrashed.instance_variable_set(:@hoardable_version, self)
           untrashed.run_callbacks(:untrashed)
         end
