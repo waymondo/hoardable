@@ -338,14 +338,13 @@ class Post < ActiveRecord::Base
     Comment
       .version_class
       .trashed
-      .where(post_id: id)
       .with_hoardable_event_uuid(hoardable_event_uuid)
       .find_each(&:untrash!)
   end
 end
 ```
 
-If there are models that might be related to versions that are trashed or otherwise, and/or might
+If there are models that might be related to versions that are trashed or otherwise, and/or might be
 trashed themselves, you can bypass the inherited tables query handling altogether by using the
 `return_everything` configuration variable in `Hoardable.with`. This will ensure that you always see
 all records, including update and trashed versions.
