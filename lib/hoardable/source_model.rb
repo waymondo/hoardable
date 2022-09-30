@@ -45,7 +45,8 @@ module Hoardable
         :versions, -> { order('UPPER(_during) ASC') },
         dependent: nil,
         class_name: version_class.to_s,
-        inverse_of: :hoardable_source
+        inverse_of: :hoardable_source,
+        foreign_key: :hoardable_source_id
       )
 
       # @!scope class
@@ -56,7 +57,7 @@ module Hoardable
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at, lambda { |datetime|
         include_versions.where(id: version_class.at(datetime).select('id')).or(
-          where.not(id: version_class.select(version_class.hoardable_source_foreign_key).where(DURING_QUERY, datetime))
+          where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
         )
       }
     end
