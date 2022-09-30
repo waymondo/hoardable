@@ -4,10 +4,11 @@
 
 ## [0.7.0] - 2022-09-29
 
-- **Breaking Change** - Continuing along with the change below, the `foreign_key` for this
-  relationship has now changed to `hoardable_source_id` for all `_versions` tables. The intent is to
-  never leave room for confliction of foreign keys for existing relationships. This can be resolved
-  by renaming the columns from their i18n model name derived column names to `hoardable_source_id`.
+- **Breaking Change** - Continuing along with the change below, the `foreign_key` on the `_versions`
+  tables is now changed to `hoardable_source_id` instead of the i18n model name dervied foreign key.
+  The intent is to never leave room for conflict of foreign keys for existing relationships. This
+  can be resolved by renaming the foreign key columns from their i18n model name derived column
+  names to `hoardable_source_id`, i.e. `rename_column :post_versions, :post_id, :hoardable_source_id`.
 
 ## [0.6.0] - 2022-09-28
 
