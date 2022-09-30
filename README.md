@@ -76,7 +76,7 @@ $ irb
 >> Post
 => Post(id: integer, body: text, user_id: integer, created_at: datetime)
 >> PostVersion
-=> PostVersion(id: integer, body: text, user_id: integer, created_at: datetime, _data: jsonb, _during: tsrange, post_id: integer)
+=> PostVersion(id: integer, body: text, user_id: integer, created_at: datetime, _data: jsonb, _during: tsrange, hoardable_source_id: integer)
 ```
 
 A `Post` now `has_many :versions`. With the default configuration, whenever an update and deletion
@@ -134,7 +134,7 @@ If you want to look-up the version of a record at a specific time, you can use t
 ```ruby
 post.at(1.day.ago) # => #<PostVersion>
 # or you can use the scope on the version model class
-PostVersion.at(1.day.ago).find_by(post_id: post.id) # => #<PostVersion>
+PostVersion.at(1.day.ago).find_by(hoardable_source_id: post.id) # => #<PostVersion>
 ```
 
 The source model class also has an `.at` method:

@@ -17,5 +17,5 @@ end
 
 FileUtils.rm_f Dir.glob("#{tmp_dir}/**/*")
 
-require 'support/models'
-require 'support/database'
+require_relative 'support/models'
+require_relative 'support/database'

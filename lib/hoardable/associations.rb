@@ -19,7 +19,7 @@ module Hoardable
           source_reflection = self.class.reflections[name.to_s]
           version_class = source_reflection.klass.version_class
           version_class.trashed.only_most_recent.find_by(
-            version_class.hoardable_source_foreign_key => source_reflection.foreign_key
+            hoardable_source_id: source_reflection.foreign_key
           )
         end
 

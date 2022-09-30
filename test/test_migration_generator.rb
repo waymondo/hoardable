@@ -11,14 +11,14 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
   def shared_post_assertions
     assert_migration 'db/migrate/create_post_versions.rb' do |migration|
       assert_match(/create_table :post_versions/, migration)
-      assert_match(/t.bigint :post_id/, migration)
+      assert_match(/t.bigint :hoardable_source_id/, migration)
     end
   end
 
   def shared_book_assertions(foreign_key_type = 'uuid')
     assert_migration 'db/migrate/create_book_versions.rb' do |migration|
       assert_match(/create_table :book_versions/, migration)
-      assert_match("t.#{foreign_key_type} :book_id", migration)
+      assert_match("t.#{foreign_key_type} :hoardable_source_id", migration)
     end
   end
 

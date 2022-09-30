@@ -6,20 +6,12 @@ module Hoardable
   module VersionModel
     extend ActiveSupport::Concern
 
-    class_methods do
-      # Returns the foreign column that holds the reference to the source model of the version.
-      def hoardable_source_foreign_key
-        @hoardable_source_foreign_key ||= "#{superclass.model_name.i18n_key}_id"
-      end
-    end
-
     included do
       # A +version+ belongs to it’s parent +ActiveRecord+ source.
       belongs_to(
         :hoardable_source,
         inverse_of: :versions,
-        class_name: superclass.model_name,
-        foreign_key: hoardable_source_foreign_key
+        class_name: superclass.model_name
       )
 
       self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
@@ -115,10 +107,8 @@ module Hoardable
 
     # Returns the foreign reference that represents the source model of the version.
     def hoardable_source_foreign_id
-      @hoardable_source_foreign_id ||= public_send(hoardable_source_foreign_key)
+      @hoardable_source_foreign_id ||= public_send(:hoardable_source_id)
     end
-
-    delegate :hoardable_source_foreign_key, to: :class
 
     def hoardable_version_service
       @hoardable_version_service ||= Service.new(self)
@@ -133,7 +123,7 @@ module Hoardable
         @version_model = version_model
       end
 
-      delegate :hoardable_source_foreign_id, :hoardable_source_foreign_key, :hoardable_source, to: :version_model
+      delegate :hoardable_source_foreign_id, :hoardable_source, to: :version_model
 
       def insert_untrashed_source
         superscope = version_model.class.superclass.unscoped
@@ -145,7 +135,7 @@ module Hoardable
         @hoardable_source_attributes ||=
           version_model
           .attributes_before_type_cast
-          .without(hoardable_source_foreign_key)
+          .without('hoardable_source_id')
           .reject { |k, _v| k.start_with?('_') }
       end
 
