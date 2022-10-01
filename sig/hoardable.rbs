@@ -28,57 +28,52 @@ module Hoardable
   class Error < StandardError
   end
 
+  class DatabaseClient
+    attr_reader source_model: SourceModel
+    def initialize: (SourceModel source_model) -> void
+    def insert_hoardable_version: (untyped operation) -> untyped
+    def find_or_initialize_hoardable_event_uuid: -> untyped
+    def initialize_version_attributes: (untyped operation) -> untyped
+    def initialize_temporal_range: -> Range
+    def initialize_hoardable_data: -> untyped
+    def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
+    def unset_hoardable_version_and_event_uuid: -> nil
+    def previous_temporal_tsrange_end: -> untyped
+    def hoardable_source_epoch: -> Time
+    def maybe_warn_about_missing_created_at_column: -> nil
+  end
+
   module SourceModel
     include Tableoid
-    @hoardable_source_service: Service
+    @hoardable_client: DatabaseClient
 
-    attr_reader hoardable_version: nil
+    attr_reader hoardable_version: untyped
     def trashed?: -> untyped
     def at: (untyped datetime) -> SourceModel
     def revert_to!: (untyped datetime) -> SourceModel?
 
     private
-    def hoardable_source_service: -> Service
+    def hoardable_client: -> DatabaseClient
 
     public
     def version_class: -> untyped
-
-    class Service
-      attr_reader source_model: SourceModel
-      def initialize: (SourceModel source_model) -> void
-      def insert_hoardable_version: (untyped operation) -> untyped
-      def find_or_initialize_hoardable_event_uuid: -> untyped
-      def initialize_hoardable_version: (untyped operation) -> untyped
-      def initialize_hoardable_data: -> untyped
-      def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
-      def unset_hoardable_version_and_event_uuid: -> nil
-    end
   end
 
   module VersionModel
     @hoardable_source_foreign_id: untyped
-    @hoardable_source_foreign_key: String
-    @hoardable_version_service: Service
+    @hoardable_source_attributes: untyped
 
     def revert!: -> untyped
     def untrash!: -> untyped
     def changes: -> untyped
     def hoardable_source_foreign_id: -> untyped
-    def hoardable_version_service: -> Service
-    def hoardable_source_foreign_key: -> String
 
-    class Service
-      @hoardable_source_attributes: untyped
+    private
+    def insert_untrashed_source: -> untyped
+    def hoardable_source_attributes: -> untyped
 
-      attr_reader version_model: VersionModel
-      def initialize: (VersionModel version_model) -> void
-      def insert_untrashed_source: -> untyped
-      def hoardable_source_attributes: -> untyped
-      def previous_temporal_tsrange_end: -> untyped
-      def hoardable_source_epoch: -> Time
-      def assign_temporal_tsrange: -> Range
-      def maybe_warn_about_missing_created_at_column: -> nil
-    end
+    public
+    def scope_attributes: -> untyped
   end
 
   module Model

@@ -20,6 +20,16 @@ class Post < ActiveRecord::Base
   end
 end
 
+class UnversionablePost < ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = 'posts'
+  belongs_to :user
+
+  after_versioned do
+    raise StandardError, 'readonly'
+  end
+end
+
 class User < ActiveRecord::Base
   has_many :posts
 end

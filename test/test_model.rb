@@ -110,6 +110,14 @@ class TestModel < Minitest::Test
     assert_nil post.hoardable_version
   end
 
+  it 'it can halt transaction in after_versioned hook if necessary' do
+    post = UnversionablePost.create!(title: 'Unversionable', user: user)
+    assert_raises(StandardError, 'readonly') { post.update!(title: 'Version?') }
+    post.reload
+    assert_equal post.title, 'Unversionable'
+    assert_equal post.versions.size, 0
+  end
+
   it 'can be reverted from previous version' do
     attributes = post.attributes.without('updated_at')
     update_post

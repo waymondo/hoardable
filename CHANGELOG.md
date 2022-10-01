@@ -2,6 +2,21 @@
 
 - Stability is coming.
 
+## [0.8.0] - 2022-10-01
+
+- **Breaking Change** - Due to the performance benefit of using `insert` for database injection of
+  versions, and a personal opinion that only an `after_versioned` hook might be needed, the
+  `before_versioned` and `around_versioned` ActiveRecord hooks are removed.
+
+- **Breaking Change** - Another side effect of the performance benefit gained by using `insert` is
+  that a source model will need to be reloaded before a call to `versions` on it can access the
+  latest version after an `update` on the source model.
+
+- **Breaking Change** - Previously the `_versions` tables did not have a unique index on the ID
+  column, though it still pulled from the same sequence as the parent table. Prior to version 0.4.0
+  though, it was possible to have multiple trashed versions with the same ID. Adding unique indexes
+  to version tables prior to version 0.4.0 could result in issues.
+
 ## [0.7.0] - 2022-09-29
 
 - **Breaking Change** - Continuing along with the change below, the `foreign_key` on the `_versions`
