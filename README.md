@@ -86,7 +86,7 @@ of a `Post` occurs, a version is created:
 post = Post.create!(title: "Title")
 post.versions.size # => 0
 post.update!(title: "Revised Title")
-post.versions.size # => 1
+post.reload.versions.size # => 1
 post.versions.first.title # => "Title"
 post.destroy!
 post.trashed? # true
@@ -102,7 +102,7 @@ If you ever need to revert to a specific version, you can call `version.revert!`
 ``` ruby
 post = Post.create!(title: "Title")
 post.update!(title: "Whoops")
-post.versions.last.revert!
+post.reload.versions.last.revert!
 post.title # => "Title"
 ```
 
@@ -182,7 +182,7 @@ Hoardable.whodunit = -> { Current.user&.id }
 # somewhere in your app code
 Current.user = User.find(123)
 post.update!(status: 'live')
-post.versions.last.hoardable_whodunit # => 123
+post.reload.versions.last.hoardable_whodunit # => 123
 ```
 
 You can also set this context manually as well, just remember to clear them afterwards.
@@ -191,7 +191,7 @@ You can also set this context manually as well, just remember to clear them afte
 Hoardable.note = "reverting due to accidental deletion"
 post.update!(title: "We’re back!")
 Hoardable.note = nil
-post.versions.last.hoardable_note # => "reverting due to accidental deletion"
+post.reload.versions.last.hoardable_note # => "reverting due to accidental deletion"
 ```
 
 A more useful pattern is to use `Hoardable.with` to set the context around a block. A good example
@@ -225,9 +225,9 @@ version.hoardable_event_uuid
 
 ### Model Callbacks
 
-Sometimes you might want to do something with a version before or after it gets inserted to the
-database. You can access it in `before/after/around_versioned` callbacks on the source record as
-`hoardable_version`. These happen around `.save`, which is enclosed in an ActiveRecord transaction.
+Sometimes you might want to do something with a version after it gets inserted to the database. You
+can access it in `after_versioned` callbacks on the source record as `hoardable_version`. These
+happen within `ActiveRecord`’s `.save`, which is enclosed in an ActiveRecord transaction.
 
 There are also `after_reverted` and `after_untrashed` callbacks available as well, which are called
 on the source record after a version is reverted or untrashed.
@@ -235,14 +235,14 @@ on the source record after a version is reverted or untrashed.
 ```ruby
 class User
   include Hoardable::Model
-  before_versioned :sanitize_version
+  after_versioned :track_versioned_event
   after_reverted :track_reverted_event
   after_untrashed :track_untrashed_event
 
   private
 
-  def sanitize_version
-    hoardable_version.sanitize_password
+  def track_versioned_event
+    track_event(:user_versioned, hoardable_version)
   end
 
   def track_reverted_event

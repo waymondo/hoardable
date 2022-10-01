@@ -27,18 +27,18 @@ module Hoardable
       include Tableoid
 
       around_update(if: [HOARDABLE_CALLBACKS_ENABLED, HOARDABLE_VERSION_UPDATES]) do |_, block|
-        hoardable_source_service.insert_hoardable_version('update', &block)
+        hoardable_client.insert_hoardable_version('update', &block)
       end
 
       around_destroy(if: [HOARDABLE_CALLBACKS_ENABLED, HOARDABLE_SAVE_TRASH]) do |_, block|
-        hoardable_source_service.insert_hoardable_version('delete', &block)
+        hoardable_client.insert_hoardable_version('delete', &block)
       end
 
       before_destroy(if: HOARDABLE_CALLBACKS_ENABLED, unless: HOARDABLE_SAVE_TRASH) do
         versions.delete_all(:delete_all)
       end
 
-      after_commit { hoardable_source_service.unset_hoardable_version_and_event_uuid }
+      after_commit { hoardable_client.unset_hoardable_version_and_event_uuid }
 
       # Returns all +versions+ in ascending order of their temporal timeframes.
       has_many(
@@ -86,68 +86,15 @@ module Hoardable
     def revert_to!(datetime)
       return unless (version = at(datetime))
 
-      version.is_a?(self.class.version_class) ? version.revert! : self
+      version.is_a?(version_class) ? version.revert! : self
     end
+
+    delegate :version_class, to: :class
 
     private
 
-    def hoardable_source_service
-      @hoardable_source_service ||= Service.new(self)
+    def hoardable_client
+      @hoardable_client ||= DatabaseClient.new(self)
     end
-
-    # This is a private service class that manages the insertion of {VersionModel}s for a
-    # {SourceModel} into the PostgreSQL database.
-    class Service
-      attr_reader :source_model
-
-      def initialize(source_model)
-        @source_model = source_model
-      end
-
-      def insert_hoardable_version(operation)
-        source_model.instance_variable_set('@hoardable_version', initialize_hoardable_version(operation))
-        source_model.run_callbacks(:versioned) do
-          yield if block_given?
-          source_model.hoardable_version.save(validate: false, touch: false)
-        end
-      end
-
-      def find_or_initialize_hoardable_event_uuid
-        Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query('SELECT gen_random_uuid();')[0][0]
-      end
-
-      def initialize_hoardable_version(operation)
-        source_model.versions.new(
-          source_model.attributes_before_type_cast.without('id').merge(
-            source_model.changes.transform_values { |h| h[0] },
-            {
-              _event_uuid: find_or_initialize_hoardable_event_uuid,
-              _operation: operation,
-              _data: initialize_hoardable_data.merge(changes: source_model.changes)
-            }
-          )
-        )
-      end
-
-      def initialize_hoardable_data
-        DATA_KEYS.to_h do |key|
-          [key, assign_hoardable_context(key)]
-        end
-      end
-
-      def assign_hoardable_context(key)
-        return nil if (value = Hoardable.public_send(key)).nil?
-
-        value.is_a?(Proc) ? value.call : value
-      end
-
-      def unset_hoardable_version_and_event_uuid
-        source_model.instance_variable_set('@hoardable_version', nil)
-        return if source_model.class.connection.transaction_open?
-
-        Thread.current[:hoardable_event_uuid] = nil
-      end
-    end
-    private_constant :Service
   end
 end

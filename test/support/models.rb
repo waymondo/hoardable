@@ -6,10 +6,6 @@ class Post < ActiveRecord::Base
   has_many :comments, dependent: :destroy
   attr_reader :_hoardable_operation, :reverted, :untrashed, :hoardable_version_id
 
-  before_versioned do
-    @_hoardable_operation = hoardable_operation
-  end
-
   after_versioned do
     @hoardable_version_id = hoardable_version&.id
   end
@@ -21,6 +17,16 @@ class Post < ActiveRecord::Base
 
   after_reverted do
     @reverted = true
+  end
+end
+
+class UnversionablePost < ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = 'posts'
+  belongs_to :user
+
+  after_versioned do
+    raise StandardError, 'readonly'
   end
 end
 

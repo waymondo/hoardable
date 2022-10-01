@@ -20,7 +20,7 @@ class TestModel < Minitest::Test
   it 'can do the very first readme example' do
     assert_equal post.versions.size, 0
     update_post
-    assert_equal post.versions.size, 1
+    assert_equal post.reload.versions.size, 1
     post.destroy!
     assert post.trashed?
     assert_equal post.versions.size, 2
@@ -30,7 +30,7 @@ class TestModel < Minitest::Test
   it 'creates a version with previous state' do
     assert_equal post.versions.size, 0
     update_post
-    assert_equal post.versions.size, 1
+    assert_equal post.reload.versions.size, 1
     version = post.versions.first
     assert_equal version.status, 'draft'
     assert_equal version.title, 'Headline'
@@ -106,9 +106,24 @@ class TestModel < Minitest::Test
 
   it 'tests version is available in callbacks' do
     update_post
-    assert_equal post._hoardable_operation, 'update'
     assert post.hoardable_version_id
     assert_nil post.hoardable_version
+  end
+
+  it 'it can halt transaction in after_versioned hook if necessary' do
+    post = UnversionablePost.create!(title: 'Unversionable', user: user)
+    assert_raises(StandardError, 'readonly') { post.update!(title: 'Version?') }
+    post.reload
+    assert_equal post.title, 'Unversionable'
+    assert_equal post.versions.size, 0
+  end
+
+  it 'it won’t persist an inserted version if the save fails' do
+    post
+    assert_raises(ActiveRecord::NotNullViolation) { post.update!(user: nil) }
+    post.reload
+    assert post.user
+    assert_equal post.versions.size, 0
   end
 
   it 'can be reverted from previous version' do
