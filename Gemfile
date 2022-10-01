@@ -2,6 +2,7 @@
 
 source 'https://rubygems.org'
 
+gem 'benchmark-ips', '~> 2.10'
 gem 'debug', '~> 1.6'
 gem 'minitest', '~> 5.0'
 gem 'rake', '~> 13.0'

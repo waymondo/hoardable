@@ -6,6 +6,15 @@ module Hoardable
   module VersionModel
     extend ActiveSupport::Concern
 
+    class_methods do
+      # This is needed to omit the pseudo row of 'tableoid' when using +ActiveRecord+’s +insert+.
+      #
+      # @!visibility private
+      def scope_attributes
+        super.without('tableoid')
+      end
+    end
+
     included do
       # A +version+ belongs to it’s parent +ActiveRecord+ source.
       belongs_to(
@@ -69,7 +78,7 @@ module Hoardable
 
       transaction do
         hoardable_source.tap do |reverted|
-          reverted.update!(hoardable_version_service.hoardable_source_attributes.without('id'))
+          reverted.update!(hoardable_source_attributes.without('id'))
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
         end
@@ -82,10 +91,11 @@ module Hoardable
       raise(Error, 'Version is not trashed, cannot untrash') unless hoardable_operation == 'delete'
 
       transaction do
-        hoardable_version_service.insert_untrashed_source.tap do |untrashed|
-          untrashed.send('hoardable_source_service').insert_hoardable_version('insert')
-          untrashed.instance_variable_set(:@hoardable_version, self)
-          untrashed.run_callbacks(:untrashed)
+        insert_untrashed_source.tap do |untrashed|
+          untrashed.send('hoardable_client').insert_hoardable_version('insert') do
+            untrashed.instance_variable_set(:@hoardable_version, self)
+            untrashed.run_callbacks(:untrashed)
+          end
         end
       end
     end
@@ -108,35 +118,19 @@ module Hoardable
       @hoardable_source_foreign_id ||= public_send(:hoardable_source_id)
     end
 
-    def hoardable_version_service
-      @hoardable_version_service ||= Service.new(self)
+    private
+
+    def insert_untrashed_source
+      superscope = self.class.superclass.unscoped
+      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
+      superscope.find(hoardable_source_foreign_id)
     end
 
-    # This is a private service class that manages the construction of {VersionModel} attributes and
-    # untrashing / re-insertion into the {SourceModel} table.
-    class Service
-      attr_reader :version_model
-
-      def initialize(version_model)
-        @version_model = version_model
-      end
-
-      delegate :hoardable_source_foreign_id, :hoardable_source, to: :version_model
-
-      def insert_untrashed_source
-        superscope = version_model.class.superclass.unscoped
-        superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
-        superscope.find(hoardable_source_foreign_id)
-      end
-
-      def hoardable_source_attributes
-        @hoardable_source_attributes ||=
-          version_model
-          .attributes_before_type_cast
-          .without('hoardable_source_id')
-          .reject { |k, _v| k.start_with?('_') }
-      end
+    def hoardable_source_attributes
+      @hoardable_source_attributes ||=
+        attributes_before_type_cast
+        .without('hoardable_source_id')
+        .reject { |k, _v| k.start_with?('_') }
     end
-    private_constant :Service
   end
 end
