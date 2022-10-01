@@ -118,6 +118,14 @@ class TestModel < Minitest::Test
     assert_equal post.versions.size, 0
   end
 
+  it 'it won’t persist an inserted version if the save fails' do
+    post
+    assert_raises(ActiveRecord::NotNullViolation) { post.update!(user: nil) }
+    post.reload
+    assert post.user
+    assert_equal post.versions.size, 0
+  end
+
   it 'can be reverted from previous version' do
     attributes = post.attributes.without('updated_at')
     update_post
