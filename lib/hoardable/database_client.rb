@@ -4,19 +4,19 @@ module Hoardable
   # This is a private service class that manages the insertion of {VersionModel}s into the
   # PostgreSQL database.
   class DatabaseClient
-    attr_reader :source_model
+    attr_reader :source_record
 
-    def initialize(source_model)
-      @source_model = source_model
+    def initialize(source_record)
+      @source_record = source_record
     end
 
-    delegate :version_class, to: :source_model
+    delegate :version_class, to: :source_record
 
     def insert_hoardable_version(operation, &block)
       version = version_class.insert(initialize_version_attributes(operation), returning: :id)
       version_id = version[0]['id']
-      source_model.instance_variable_set('@hoardable_version', version_class.find(version_id))
-      source_model.run_callbacks(:versioned, &block)
+      source_record.instance_variable_set('@hoardable_version', version_class.find(version_id))
+      source_record.run_callbacks(:versioned, &block)
     end
 
     def find_or_initialize_hoardable_event_uuid
@@ -24,13 +24,13 @@ module Hoardable
     end
 
     def initialize_version_attributes(operation)
-      source_model.attributes_before_type_cast.without('id').merge(
-        source_model.changes.transform_values { |h| h[0] },
+      source_record.attributes_before_type_cast.without('id').merge(
+        source_record.changes.transform_values { |h| h[0] },
         {
-          'hoardable_source_id' => source_model.id,
+          'hoardable_source_id' => source_record.id,
           '_event_uuid' => find_or_initialize_hoardable_event_uuid,
           '_operation' => operation,
-          '_data' => initialize_hoardable_data.merge(changes: source_model.changes),
+          '_data' => initialize_hoardable_data.merge(changes: source_record.changes),
           '_during' => initialize_temporal_range
         }
       )
@@ -53,19 +53,19 @@ module Hoardable
     end
 
     def unset_hoardable_version_and_event_uuid
-      source_model.instance_variable_set('@hoardable_version', nil)
-      return if source_model.class.connection.transaction_open?
+      source_record.instance_variable_set('@hoardable_version', nil)
+      return if source_record.class.connection.transaction_open?
 
       Thread.current[:hoardable_event_uuid] = nil
     end
 
     def previous_temporal_tsrange_end
-      source_model.versions.only_most_recent.pluck('_during').first&.end
+      source_record.versions.only_most_recent.pluck('_during').first&.end
     end
 
     def hoardable_source_epoch
-      if source_model.class.column_names.include?('created_at')
-        source_model.created_at
+      if source_record.class.column_names.include?('created_at')
+        source_record.created_at
       else
         maybe_warn_about_missing_created_at_column
         Time.at(0).utc
@@ -73,9 +73,9 @@ module Hoardable
     end
 
     def maybe_warn_about_missing_created_at_column
-      return unless source_model.class.hoardable_config[:warn_on_missing_created_at_column]
+      return unless source_record.class.hoardable_config[:warn_on_missing_created_at_column]
 
-      source_table_name = source_model.class.table_name
+      source_table_name = source_record.class.table_name
       Hoardable.logger.info(
         <<~LOG
           '#{source_table_name}' does not have a 'created_at' column, so the first version’s temporal period
