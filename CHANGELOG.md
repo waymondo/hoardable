@@ -10,12 +10,12 @@
 
 - **Breaking Change** - Another side effect of the performance benefit gained by using `insert` is
   that a source model will need to be reloaded before a call to `versions` on it can access the
-  latest version after an `update` on the source model.
+  latest version after an `update` on the source record.
 
-- **Breaking Change** - Previously the `_versions` tables did not have a unique index on the ID
-  column, though it still pulled from the same sequence as the parent table. Prior to version 0.4.0
-  though, it was possible to have multiple trashed versions with the same ID. Adding unique indexes
-  to version tables prior to version 0.4.0 could result in issues.
+- **Breaking Change** - Previously the inherited `_versions` tables did not have a unique index on
+  the ID column, though it still pulled from the same sequence as the parent table. Prior to version
+  0.4.0 though, it was possible to have multiple trashed versions with the same ID. Adding unique
+  indexes to version tables prior to version 0.4.0 could result in issues.
 
 ## [0.7.0] - 2022-09-29
 
