@@ -16,21 +16,34 @@ module Hoardable
     #   @return [String] The database operation that created the +version+ - either +update+ or +delete+.
     delegate :hoardable_event_uuid, :hoardable_operation, to: :hoardable_version, allow_nil: true
 
+    # A module for overriding +ActiveRecord+’s find the case you are doing a temporal query and the
+    # current {SourceModel} record may in fact be a {VersionModel} record.
+    module FinderMethods
+      # Returns instances of the source model and versions that were valid at the supplied
+      # +datetime+ or +time+, all cast as instances of the source model.
+      #
+      # @return ActiveRecord<Object>
+      def find(*args)
+        if Hoardable.instance_variable_get('@at')
+          id = args.first
+          conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
+          find_by(conditions) || where(conditions).raise_record_not_found_exception!
+        else
+          super(*args)
+        end
+      end
+    end
+    private_constant :FinderMethods
+
     class_methods do
       # The dynamically generated +Version+ class for this model.
       def version_class
         "#{name}#{VERSION_CLASS_SUFFIX}".constantize
       end
 
-      # @!scope class
-      # @!method hoardable_find
-      # @return ActiveRecord<Object>
-      #
-      # Returns instances of the source model and versions that were valid at the supplied
-      # +datetime+ or +time+, all cast as instances of the source model.
-      def hoardable_find(id)
-        conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
-        find_by(conditions) || where(conditions).raise_record_not_found_exception!
+      # Extends the {SourceModel} scoping to include Hoardable’s {FinderMethods} overrides.
+      def hoardable
+        extending(FinderMethods)
       end
     end
 
@@ -49,6 +62,7 @@ module Hoardable
         versions.delete_all(:delete_all)
       end
 
+      before_commit { hoardable_client.prevent_saving_if_actually_a_version }
       after_commit { hoardable_client.unset_hoardable_version_and_event_uuid }
 
       # Returns all +versions+ in ascending order of their temporal timeframes.

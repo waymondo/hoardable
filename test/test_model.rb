@@ -422,22 +422,34 @@ class TestModel < Minitest::Test
     assert_equal Post.at(datetime6).pluck('title'), ['New Headline']
   end
 
-  it 'returns hoardable records at the specified time with Hoardable.at' do
+  it 'returns hoardable records at the specified time with Hoardable.at and hoardable.find' do
     comment = post.comments.create!(body: 'Comment')
     datetime = DateTime.now
     comment.update!(body: 'Comment Updated')
     post.update!(title: 'Headline Updated')
     post_id = post.id
     Hoardable.at(datetime) do
-      post = Post.hoardable_find(post_id)
+      post = Post.hoardable.find(post_id)
       assert_equal post.title, 'Headline'
       assert_equal post.comments.first.body, 'Comment'
     end
     Hoardable.at(DateTime.now) do
-      post = Post.hoardable_find(post_id)
+      post = Post.hoardable.find(post_id)
       assert_equal post.title, 'Headline Updated'
       assert_equal post.comments.first.body, 'Comment Updated'
     end
+  end
+
+  it 'cannot save a hoardable source record that is actually a version' do
+    post
+    datetime = DateTime.now
+    post.update!(title: 'Headline Updated')
+    post_id = post.id
+    Hoardable.at(datetime) do
+      post = Post.hoardable.find(post_id)
+      assert_raises(Hoardable::Error) { post.update!(title: 'Hmmm') }
+    end
+    assert_equal post.reload.versions.size, 1
   end
 
   it 'can return hoardable records at a specified time with an ID of a record that is destroyed' do
@@ -446,10 +458,10 @@ class TestModel < Minitest::Test
     post.destroy!
     post_id = post.id
     Hoardable.at(datetime) do
-      assert Post.hoardable_find(post_id)
+      assert Post.hoardable.find(post_id)
     end
     Hoardable.at(DateTime.now) do
-      assert_raises(ActiveRecord::RecordNotFound) { Post.hoardable_find(post_id) }
+      assert_raises(ActiveRecord::RecordNotFound) { Post.hoardable.find(post_id) }
     end
   end
 end

@@ -9,7 +9,7 @@ module Hoardable
 
     # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_source_id+ as
     # if they were {SourceModel} ids.
-    module Scope
+    module HasManyScope
       def scope
         @scope ||= hoardable_scope
       end
@@ -27,6 +27,7 @@ module Hoardable
         end
       end
     end
+    private_constant :HasManyScope
 
     class_methods do
       # A wrapper for +ActiveRecord+’s +belongs_to+ that allows for falling back to the most recent
@@ -54,7 +55,7 @@ module Hoardable
       # A wrapper for +ActiveRecord+’s +has_many+ that allows for finding temporal versions of a
       # versioned record that is cast as a {SourceModel}, when doing a {Hoardable#at} query.
       def has_many_versionable(name, scope = nil, **options)
-        has_many(name, scope, **options) { include Scope }
+        has_many(name, scope, **options) { include HasManyScope }
       end
     end
   end
