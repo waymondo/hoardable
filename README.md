@@ -31,6 +31,12 @@ gem 'hoardable'
 
 And then execute `bundle install`.
 
+If you would like to generate an initializer with the global [configuration](#configuration) options:
+
+```
+rails g hoardable:initializer
+```
+
 ### Model Installation
 
 You must include `Hoardable::Model` into an ActiveRecord model that you would like to hoard versions
