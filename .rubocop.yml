@@ -16,3 +16,6 @@ Metrics/BlockLength:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: false
+
+Naming/PredicateName:
+  Enabled: false

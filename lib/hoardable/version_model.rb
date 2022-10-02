@@ -113,17 +113,16 @@ module Hoardable
       _data&.dig('changes')
     end
 
-    # Returns the foreign reference that represents the source model of the version.
-    def hoardable_source_foreign_id
-      @hoardable_source_foreign_id ||= public_send(:hoardable_source_id)
+    def hoardable_source_id
+      read_attribute('hoardable_source_id')
     end
 
     private
 
     def insert_untrashed_source
       superscope = self.class.superclass.unscoped
-      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_foreign_id))
-      superscope.find(hoardable_source_foreign_id)
+      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_id))
+      superscope.find(hoardable_source_id)
     end
 
     def hoardable_source_attributes

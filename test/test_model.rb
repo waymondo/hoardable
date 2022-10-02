@@ -421,4 +421,35 @@ class TestModel < Minitest::Test
     assert_equal Post.at(datetime5).pluck('title'), ['Revert']
     assert_equal Post.at(datetime6).pluck('title'), ['New Headline']
   end
+
+  it 'returns hoardable records at the specified time with Hoardable.at' do
+    comment = post.comments.create!(body: 'Comment')
+    datetime = DateTime.now
+    comment.update!(body: 'Comment Updated')
+    post.update!(title: 'Headline Updated')
+    post_id = post.id
+    Hoardable.at(datetime) do
+      post = Post.hoardable_find(post_id)
+      assert_equal post.title, 'Headline'
+      assert_equal post.comments.first.body, 'Comment'
+    end
+    Hoardable.at(DateTime.now) do
+      post = Post.hoardable_find(post_id)
+      assert_equal post.title, 'Headline Updated'
+      assert_equal post.comments.first.body, 'Comment Updated'
+    end
+  end
+
+  it 'can return hoardable records at a specified time with an ID of a record that is destroyed' do
+    post
+    datetime = DateTime.now
+    post.destroy!
+    post_id = post.id
+    Hoardable.at(datetime) do
+      assert Post.hoardable_find(post_id)
+    end
+    Hoardable.at(DateTime.now) do
+      assert_raises(ActiveRecord::RecordNotFound) { Post.hoardable_find(post_id) }
+    end
+  end
 end

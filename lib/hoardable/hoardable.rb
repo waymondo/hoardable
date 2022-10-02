@@ -75,6 +75,13 @@ module Hoardable
       @context = current_context
     end
 
+    def at(datetime)
+      @at = datetime
+      yield
+    ensure
+      @at = nil
+    end
+
     # @!visibility private
     def logger
       @logger ||= ActiveSupport::TaggedLogging.new(Logger.new($stdout))

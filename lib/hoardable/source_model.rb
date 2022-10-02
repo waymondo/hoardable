@@ -21,10 +21,21 @@ module Hoardable
       def version_class
         "#{name}#{VERSION_CLASS_SUFFIX}".constantize
       end
+
+      # @!scope class
+      # @!method hoardable_find
+      # @return ActiveRecord<Object>
+      #
+      # Returns instances of the source model and versions that were valid at the supplied
+      # +datetime+ or +time+, all cast as instances of the source model.
+      def hoardable_find(id)
+        conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
+        find_by(conditions) || where(conditions).raise_record_not_found_exception!
+      end
     end
 
     included do
-      include Tableoid
+      include Scopes
 
       around_update(if: [HOARDABLE_CALLBACKS_ENABLED, HOARDABLE_VERSION_UPDATES]) do |_, block|
         hoardable_client.insert_hoardable_version('update', &block)
@@ -48,25 +59,22 @@ module Hoardable
         inverse_of: :hoardable_source,
         foreign_key: :hoardable_source_id
       )
-
-      # @!scope class
-      # @!method at
-      # @return [ActiveRecord<Object>]
-      #
-      # Returns instances of the source model and versions that were valid at the supplied
-      # +datetime+ or +time+, all cast as instances of the source model.
-      scope :at, lambda { |datetime|
-        include_versions.where(id: version_class.at(datetime).select('id')).or(
-          where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
-        )
-      }
     end
 
-    # Returns a boolean of whether the record is actually a trashed +version+.
+    # Returns a boolean of whether the record is actually a trashed +version+ cast as an instance of the
+    # source model.
     #
     # @return [Boolean]
     def trashed?
-      versions.trashed.only_most_recent.first&.hoardable_source_foreign_id == id
+      versions.trashed.only_most_recent.first&.hoardable_source_id == id
+    end
+
+    # Returns a boolean of whether the record is actually a +version+ cast as an instance of the
+    # source model.
+    #
+    # @return [Boolean]
+    def version?
+      !!hoardable_source_id
     end
 
     # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
@@ -87,6 +95,15 @@ module Hoardable
       return unless (version = at(datetime))
 
       version.is_a?(version_class) ? version.revert! : self
+    end
+
+    # Returns the +hoardable_source_id+ that represents the original {SourceModel} record’s ID. Will
+    # return nil if the current {SourceModel} record is not an instance of a {VersionModel} cast as
+    # {SourceModel}.
+    #
+    # @return [Integer, nil]
+    def hoardable_source_id
+      @hoardable_source_id ||= version_class.where(id: id).pluck('hoardable_source_id')[0]
     end
 
     delegate :version_class, to: :class
