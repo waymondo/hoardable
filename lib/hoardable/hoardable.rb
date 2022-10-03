@@ -75,10 +75,10 @@ module Hoardable
       @context = current_context
     end
 
-    # This is a general use method for setting {file:README.md#tracking-contextual-data Contextual
-    # Data} or {file:README.md#configuration Configuration} around a block.
+    # Allows performing a query for record states at a certain time. Returned {SourceModel}
+    # instances within the block may be {SourceModel} or {VersionModel} records.
     #
-    # @param hash [Hash] config and contextual data to set within a block
+    # @param datetime [DateTime, Time] the datetime or time to temporally query records at
     def at(datetime)
       @at = datetime
       yield

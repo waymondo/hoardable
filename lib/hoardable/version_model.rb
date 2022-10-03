@@ -113,6 +113,7 @@ module Hoardable
       _data&.dig('changes')
     end
 
+    # Returns the ID of the {SourceModel} that created this {VersionModel}
     def hoardable_source_id
       read_attribute('hoardable_source_id')
     end

@@ -16,16 +16,12 @@ module Hoardable
     #   @return [String] The database operation that created the +version+ - either +update+ or +delete+.
     delegate :hoardable_event_uuid, :hoardable_operation, to: :hoardable_version, allow_nil: true
 
-    # A module for overriding +ActiveRecord+’s find the case you are doing a temporal query and the
-    # current {SourceModel} record may in fact be a {VersionModel} record.
+    # A module for overriding +ActiveRecord#find_one+’ in the case you are doing a temporal query
+    # and the current {SourceModel} record may in fact be a {VersionModel} record.
     module FinderMethods
       def find_one(id)
-        if Hoardable.instance_variable_get('@at')
-          conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
-          find_by(conditions) || where(conditions).raise_record_not_found_exception!
-        else
-          super(id)
-        end
+        conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
+        find_by(conditions) || where(conditions).raise_record_not_found_exception!
       end
     end
     private_constant :FinderMethods
@@ -36,7 +32,7 @@ module Hoardable
         "#{name}#{VERSION_CLASS_SUFFIX}".constantize
       end
 
-      # Extends the {SourceModel} scoping to include Hoardable’s {FinderMethods} overrides.
+      # Extends the current {SourceModel} scoping to include Hoardable’s {FinderMethods} overrides.
       def hoardable
         extending(FinderMethods)
       end

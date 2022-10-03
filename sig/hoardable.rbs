@@ -101,7 +101,7 @@ module Hoardable
 
   module Associations
     def belongs_to_trashable: (untyped name, ?nil scope, **untyped) -> untyped
-    def has_many_versionable: (untyped name, ?nil scope, **untyped) -> untyped
+    def has_many_hoardable: (untyped name, ?nil scope, **untyped) -> untyped
 
     module HasManyScope
       @scope: untyped
