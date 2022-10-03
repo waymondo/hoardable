@@ -10,6 +10,20 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
       t.enum :_operation, enum_type: 'hoardable_operation', null: false, index: true
       t.<%= foreign_key_type %> :hoardable_source_id, null: false, index: true
     end
+    execute(
+      <<~SQL
+        CREATE OR REPLACE FUNCTION hoardable_version_prevent_update() RETURNS trigger
+          LANGUAGE plpgsql AS
+        $$BEGIN
+          RAISE EXCEPTION 'updating a version is not allowed';
+          RETURN NEW;
+        END;$$;
+
+        CREATE TRIGGER <%= singularized_table_name %>_versions_prevent_update
+          BEFORE UPDATE ON <%= singularized_table_name %>_versions FOR EACH ROW
+          EXECUTE PROCEDURE hoardable_version_prevent_update();
+      SQL
+    )
     add_index(:<%= singularized_table_name %>_versions, :id, unique: true)
     add_index(
       :<%= singularized_table_name %>_versions,

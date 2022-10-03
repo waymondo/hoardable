@@ -12,10 +12,6 @@ module Hoardable
 
     delegate :version_class, to: :source_record
 
-    def prevent_saving_if_actually_a_version
-      raise Error, 'You cannot save a Hoardable Model that is actually already a version' if source_record.version?
-    end
-
     def insert_hoardable_version(operation, &block)
       version = version_class.insert(initialize_version_attributes(operation), returning: :id)
       version_id = version[0]['id']
