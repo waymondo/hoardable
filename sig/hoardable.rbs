@@ -35,7 +35,6 @@ module Hoardable
 
     attr_reader source_record: SourceModel
     def initialize: (SourceModel source_record) -> void
-    def prevent_saving_if_actually_a_version: -> nil
     def insert_hoardable_version: (untyped operation) -> untyped
     def find_or_initialize_hoardable_event_uuid: -> untyped
     def hoardable_version_source_id: -> untyped

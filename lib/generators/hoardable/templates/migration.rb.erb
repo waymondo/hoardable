@@ -10,6 +10,10 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
       t.enum :_operation, enum_type: 'hoardable_operation', null: false, index: true
       t.<%= foreign_key_type %> :hoardable_source_id, null: false, index: true
     end
+    execute('REVOKE UPDATE ON <%= singularized_table_name %>_versions FROM CURRENT_USER;')
+    execute('REVOKE UPDATE ON <%= singularized_table_name %>_versions FROM SESSION_USER;')
+    execute('REVOKE UPDATE ON <%= singularized_table_name %>_versions FROM CURRENT_ROLE;')
+    execute('REVOKE UPDATE ON <%= singularized_table_name %>_versions FROM PUBLIC;')
     add_index(:<%= singularized_table_name %>_versions, :id, unique: true)
     add_index(
       :<%= singularized_table_name %>_versions,

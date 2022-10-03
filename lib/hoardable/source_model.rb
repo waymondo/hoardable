@@ -53,7 +53,6 @@ module Hoardable
         versions.delete_all(:delete_all)
       end
 
-      before_commit { hoardable_client.prevent_saving_if_actually_a_version }
       after_commit { hoardable_client.unset_hoardable_version_and_event_uuid }
 
       # Returns all +versions+ in ascending order of their temporal timeframes.
