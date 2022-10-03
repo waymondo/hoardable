@@ -27,6 +27,15 @@ module Hoardable
       Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query('SELECT gen_random_uuid();')[0][0]
     end
 
+    def hoardable_version_source_id
+      @hoardable_version_source_id ||= query_hoardable_version_source_id
+    end
+
+    def query_hoardable_version_source_id
+      primary_key = source_record.class.primary_key
+      version_class.where(primary_key => source_record.read_attribute(primary_key)).pluck('hoardable_source_id')[0]
+    end
+
     def initialize_version_attributes(operation)
       source_record.attributes_before_type_cast.without('id').merge(
         source_record.changes.transform_values { |h| h[0] },

@@ -19,17 +19,12 @@ module Hoardable
     # A module for overriding +ActiveRecord+’s find the case you are doing a temporal query and the
     # current {SourceModel} record may in fact be a {VersionModel} record.
     module FinderMethods
-      # Returns instances of the source model and versions that were valid at the supplied
-      # +datetime+ or +time+, all cast as instances of the source model.
-      #
-      # @return ActiveRecord<Object>
-      def find(*args)
+      def find_one(id)
         if Hoardable.instance_variable_get('@at')
-          id = args.first
           conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
           find_by(conditions) || where(conditions).raise_record_not_found_exception!
         else
-          super(*args)
+          super(id)
         end
       end
     end
@@ -88,7 +83,7 @@ module Hoardable
     #
     # @return [Boolean]
     def version?
-      !!hoardable_source_id
+      !!hoardable_client.hoardable_version_source_id
     end
 
     # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
@@ -117,7 +112,7 @@ module Hoardable
     #
     # @return [Integer, nil]
     def hoardable_source_id
-      @hoardable_source_id ||= version_class.where(id: id).pluck('hoardable_source_id')[0]
+      hoardable_client.hoardable_version_source_id || id
     end
 
     delegate :version_class, to: :class

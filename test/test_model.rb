@@ -378,25 +378,17 @@ class TestModel < Minitest::Test
   it 'can return all versions and trash through parent class if necessary' do
     comment = post.comments.create!(body: 'Comment 1')
     update_post
+    datetime = Time.now
     post.destroy!
     assert_equal Post.all.size, 0
     assert_equal Comment.all.size, 0
-    Hoardable.with(return_everything: true) do
+    post_id = post.id
+    Hoardable.at(datetime) do
       assert_equal Post.all.size, 2
-      assert_equal PostVersion.all.size, 2
       assert_equal Comment.all.size, 1
-      assert_equal CommentVersion.all.size, 1
-      assert_equal comment.post, post
-    end
-  end
-
-  it 'can still create models, versions and trash when returning everything' do
-    Hoardable.with(return_everything: true) do
-      update_post
-      post.destroy!
-      Post.create!(title: 'Another Headline', user: user)
-      assert_equal Post.all.size, 3
-      assert_equal PostVersion.all.size, 2
+      post = Post.hoardable.find(post_id)
+      assert comment.post
+      assert_equal post.comments.hoardable.size, 1
     end
   end
 
@@ -434,9 +426,19 @@ class TestModel < Minitest::Test
       assert_equal post.comments.first.body, 'Comment'
     end
     Hoardable.at(DateTime.now) do
-      post = Post.hoardable.find(post_id)
+      post = Post.find(post_id)
       assert_equal post.title, 'Headline Updated'
       assert_equal post.comments.first.body, 'Comment Updated'
+    end
+  end
+
+  it 'cannot find a post that was deleted without including the hoardable scope' do
+    post
+    datetime = DateTime.now
+    post.destroy!
+    post_id = post.id
+    Hoardable.at(datetime) do
+      assert_raises(ActiveRecord::RecordNotFound) { Post.find(post_id) }
     end
   end
 
@@ -463,5 +465,24 @@ class TestModel < Minitest::Test
     Hoardable.at(DateTime.now) do
       assert_raises(ActiveRecord::RecordNotFound) { Post.hoardable.find(post_id) }
     end
+  end
+
+  it 'can returns a set of comment versions at specified time' do
+    comment1 = post.comments.create!(body: 'Comment 1')
+    comment2 = post.comments.create!(body: 'Comment 2')
+    comment3 = post.comments.create!(body: 'Comment 3')
+    datetime = DateTime.now
+    comment2.destroy!
+    Hoardable.at(datetime) do
+      assert_equal(
+        post.reload.comment_ids,
+        [comment1.id, comment3.id, comment2.versions.last.id]
+      )
+      assert_equal(
+        post.reload.comments.map(&:hoardable_source_id),
+        [comment1.id, comment3.id, comment2.id]
+      )
+    end
+    assert_equal(post.reload.comment_ids, post.reload.comments.map(&:hoardable_source_id))
   end
 end

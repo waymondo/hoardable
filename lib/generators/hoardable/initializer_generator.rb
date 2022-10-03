@@ -14,7 +14,6 @@ module Hoardable
           # Hoardable.enabled = true
           # Hoardable.version_updates = true
           # Hoardable.save_trash = true
-          # Hoardable.return_everything = true
         TEXT
       )
     end

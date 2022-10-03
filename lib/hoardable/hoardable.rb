@@ -8,7 +8,7 @@ module Hoardable
 
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
-  CONFIG_KEYS = %i[enabled version_updates save_trash return_everything warn_on_missing_created_at_column].freeze
+  CONFIG_KEYS = %i[enabled version_updates save_trash warn_on_missing_created_at_column].freeze
 
   VERSION_CLASS_SUFFIX = 'Version'
   private_constant :VERSION_CLASS_SUFFIX
@@ -36,7 +36,7 @@ module Hoardable
 
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
-    [key, key != :return_everything]
+    [key, true]
   end
 
   class << self
@@ -75,6 +75,10 @@ module Hoardable
       @context = current_context
     end
 
+    # This is a general use method for setting {file:README.md#tracking-contextual-data Contextual
+    # Data} or {file:README.md#configuration Configuration} around a block.
+    #
+    # @param hash [Hash] config and contextual data to set within a block
     def at(datetime)
       @at = datetime
       yield
