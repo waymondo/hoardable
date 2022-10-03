@@ -34,7 +34,7 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
           RETURN NEW;
         END;$$;
 
-        CREATE TRIGGER noupdate
+        CREATE TRIGGER <%= singularized_table_name %>_versions_prevent_update
           BEFORE UPDATE ON <%= singularized_table_name %>_versions FOR EACH ROW
           EXECUTE PROCEDURE hoardable_version_prevent_update();
       SQL

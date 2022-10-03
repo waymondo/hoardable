@@ -450,6 +450,7 @@ class TestModel < Minitest::Test
     Hoardable.at(datetime) do
       post = Post.hoardable.find(post_id)
       assert_raises(ActiveRecord::StatementInvalid) { post.update!(title: 'Hmmm') }
+      assert_equal post.reload.title, 'Headline'
     end
     assert_equal post.reload.versions.size, 1
   end
