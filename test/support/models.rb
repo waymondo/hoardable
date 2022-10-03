@@ -3,7 +3,7 @@
 class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
-  has_many_hoardable :comments, dependent: :destroy
+  has_many :comments, dependent: :destroy, hoardable: true
   attr_reader :_hoardable_operation, :reverted, :untrashed, :hoardable_version_id
 
   after_versioned do

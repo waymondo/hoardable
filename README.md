@@ -330,13 +330,13 @@ end
 
 Sometimes you'll have a Hoardable record that `has_many` other Hoardable records and you will want
 to know the state of both the parent record and the children at a cetain point in time. You
-accomplish this by establishing a `has_many_hoardable` relationship and using the `Hoardable.at`
-method:
+accomplish this by adding `hoardable: true` to the `has_many` relationship and using the
+`Hoardable.at` method:
 
 ```ruby
 class Post
   include Hoardable::Model
-  has_many_hoardable :comments
+  has_many :comments, hoardable: true
 end
 
 def Comment

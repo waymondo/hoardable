@@ -8,8 +8,8 @@ module Hoardable
     extend ActiveSupport::Concern
 
     # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_source_id+ as
-    # if they were {SourceModel}s.
-    module HasManyScope
+    # if they were {SourceModel}s when using {Hoardable#at}.
+    module Scope
       def scope
         @scope ||= hoardable_scope
       end
@@ -25,7 +25,7 @@ module Hoardable
         end
       end
     end
-    private_constant :HasManyScope
+    private_constant :Scope
 
     class_methods do
       # A wrapper for +ActiveRecord+’s +belongs_to+ that allows for falling back to the most recent
@@ -37,8 +37,7 @@ module Hoardable
 
         define_method(trashable_relationship_name) do
           source_reflection = self.class.reflections[name.to_s]
-          version_class = source_reflection.version_class
-          version_class.trashed.only_most_recent.find_by(
+          source_reflection.version_class.trashed.only_most_recent.find_by(
             hoardable_source_id: source_reflection.foreign_key
           )
         end
@@ -50,10 +49,10 @@ module Hoardable
         RUBY
       end
 
-      # A wrapper for +ActiveRecord+’s +has_many+ that allows for finding temporal versions of a
-      # record cast as instances of the {SourceModel}, when doing a {Hoardable#at} query.
-      def has_many_hoardable(name, scope = nil, **options)
-        has_many(name, scope, **options) { include HasManyScope }
+      def has_many(*args, &block)
+        options = args.extract_options!
+        options[:extend] = Array(options[:extend]).push(Scope) if options.delete(:hoardable)
+        super(*args, **options, &block)
       end
     end
   end
