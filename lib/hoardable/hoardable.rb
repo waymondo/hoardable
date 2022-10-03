@@ -8,7 +8,7 @@ module Hoardable
 
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
-  CONFIG_KEYS = %i[enabled version_updates save_trash return_everything warn_on_missing_created_at_column].freeze
+  CONFIG_KEYS = %i[enabled version_updates save_trash warn_on_missing_created_at_column].freeze
 
   VERSION_CLASS_SUFFIX = 'Version'
   private_constant :VERSION_CLASS_SUFFIX
@@ -36,7 +36,7 @@ module Hoardable
 
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
-    [key, key != :return_everything]
+    [key, true]
   end
 
   class << self
@@ -73,6 +73,17 @@ module Hoardable
     ensure
       @config = current_config
       @context = current_context
+    end
+
+    # Allows performing a query for record states at a certain time. Returned {SourceModel}
+    # instances within the block may be {SourceModel} or {VersionModel} records.
+    #
+    # @param datetime [DateTime, Time] the datetime or time to temporally query records at
+    def at(datetime)
+      @at = datetime
+      yield
+    ensure
+      @at = nil
     end
 
     # @!visibility private

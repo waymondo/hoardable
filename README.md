@@ -70,6 +70,9 @@ _Note:_ If you are on Rails 6.1, you might want to set `config.active_record.sch
 in `application.rb`, so that the enum type is captured in your schema dump. This is not required in
 Rails 7.
 
+_Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
+need to query versions often, you should add appropriate indexes to the `_versions` tables.
+
 ## Usage
 
 ### Overview
@@ -105,7 +108,7 @@ Each `PostVersion` has access to the same attributes, relationships, and other m
 
 If you ever need to revert to a specific version, you can call `version.revert!` on it.
 
-``` ruby
+```ruby
 post = Post.create!(title: "Title")
 post.update!(title: "Whoops")
 post.reload.versions.last.revert!
@@ -113,7 +116,7 @@ post.title # => "Title"
 ```
 
 If you would like to untrash a specific version, you can call `version.untrash!` on it. This will
-re-insert the model in the parent class’s table with it’s original primary key.
+re-insert the model in the parent class’s table with the original primary key.
 
 ```ruby
 post = Post.create!(title: "Title")
@@ -145,16 +148,15 @@ PostVersion.at(1.day.ago).find_by(hoardable_source_id: post.id) # => #<PostVersi
 
 The source model class also has an `.at` method:
 
-``` ruby
+```ruby
 Post.at(1.day.ago) # => [#<Post>, #<Post>]
 ```
 
-This will return an ActiveRecord scoped query of all `Posts` and `PostVersions` that were valid at
-that time, all cast as instances of `Post`.
+This will return an ActiveRecord scoped query of all `Post` and `PostVersion` records that were
+valid at that time, all cast as instances of `Post`.
 
-_Note:_ A `Version` is not created upon initial parent model creation. To accurately track the
-beginning of the first temporal period, you will need to ensure the source model table has a
-`created_at` timestamp column.
+There is also an `at` method on `Hoardable` itself for more complex temporal resource querying. See
+[Relationships](#relationships) for more.
 
 By default, `hoardable` will keep copies of records you have destroyed. You can query them
 specifically with:
@@ -162,10 +164,12 @@ specifically with:
 ```ruby
 PostVersion.trashed
 Post.version_class.trashed # <- same thing as above
+PostVersion.trashed.first.trashed? # <- true
 ```
 
-_Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
-need to query versions often, you should add appropriate indexes to the `_versions` tables.
+_Note:_ A `Version` is not created upon initial parent model creation. To accurately track the
+beginning of the first temporal period, you will need to ensure the source model table has a
+`created_at` timestamp column.
 
 ### Tracking Contextual Data
 
@@ -269,7 +273,6 @@ The configurable options are:
 Hoardable.enabled # => default true
 Hoardable.version_updates # => default true
 Hoardable.save_trash # => default true
-Hoardable.return_everything # => default false
 ```
 
 `Hoardable.enabled` controls whether versions will be ever be created.
@@ -278,10 +281,6 @@ Hoardable.return_everything # => default false
 
 `Hoardable.save_trash` controls whether to create versions upon record deletion. When this is set to
 `false`, all versions of a record will be deleted when the record is destroyed.
-
-`Hoardable.return_everything` controls whether to include versions when doing queries for source
-models. This is typically only useful to set around a block, as explained below in
-[Relationships](#relationships).
 
 If you would like to temporarily set a config setting, you can use `Hoardable.with`:
 
@@ -329,8 +328,54 @@ class Comment
 end
 ```
 
-Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and both the parent
-and child model classes include `Hoardable::Model`. Whenever a hoardable version is created in a
+Sometimes you'll have a Hoardable record that `has_many` other Hoardable records and you will want
+to know the state of both the parent record and the children at a cetain point in time. You
+accomplish this by establishing a `has_many_hoardable` relationship and using the `Hoardable.at`
+method:
+
+```ruby
+class Post
+  include Hoardable::Model
+  has_many_hoardable :comments
+end
+
+def Comment
+  include Hoardable::Model
+end
+
+post = Post.create!(title: 'Title')
+comment1 = post.comments.create!(body: 'Comment')
+comment2 = post.comments.create!(body: 'Comment')
+datetime = DateTime.current
+comment2.destroy!
+post.update!(title: 'New Title')
+post_id = post.id # 1
+
+Hoardable.at(datetime) do
+  post = Post.hoardable.find(post_id)
+  post.title # => 'Title'
+  post.comments.size # => 2
+  post.id # => 2
+  post.version? # => true
+  post.hoardable_source_id # => 1
+end
+```
+
+There are some additional details to point out above. Firstly, it is important to note that the
+final `post.id` yields a different value than the originally created `Post`. This is because the
+`post` within the `#at` block is actually a temporal version, since it has been subsequently
+updated, but it has been reified as a `Post` for the purposes of your business logic (serialization,
+rendering views, exporting, etc). Don’t fret - you will not be able to commit any updates to the
+version, even though it is masquerading as a `Post`.
+
+If you are ever unsure if a Hoardable record is a "source" or a "version", you can be sure by
+calling `version?` on it. If you want to get the true original source record ID, you can call
+`hoardable_source_id`. Finally, if you prepend `.hoardable` to a `.find` call on the source model
+class, you can always find the relevant source or temporal version record using just the original
+source record’s id.
+
+Sometimes you’ll trash something that `has_many_hoardable :children, dependent: :destroy` and want
+to untrash everything in a similar dependent manner. Whenever a hoardable version is created in a
 database transaction, it will create or re-use a unique event UUID for that transaction and tag all
 versions created with it. That way, when you `untrash!` a record, you can find and `untrash!`
 records that were trashed with it:
@@ -338,7 +383,7 @@ records that were trashed with it:
 ```ruby
 class Post < ActiveRecord::Base
   include Hoardable::Model
-  has_many :comments, dependent: :destroy # `Comment` also includes `Hoardable::Model`
+  has_many_hoardable :comments, dependent: :destroy # `Comment` also includes `Hoardable::Model`
 
   after_untrashed do
     Comment
@@ -348,22 +393,6 @@ class Post < ActiveRecord::Base
       .find_each(&:untrash!)
   end
 end
-```
-
-If there are models that might be related to versions that are trashed or otherwise, and/or might be
-trashed themselves, you can bypass the inherited tables query handling altogether by using the
-`return_everything` configuration variable in `Hoardable.with`. This will ensure that you always see
-all records, including update and trashed versions.
-
-```ruby
-post.destroy!
-
-Hoardable.with(return_everything: true) do
-  post = Post.find(post.id) # returns the trashed post as if it was not
-  post.comments # returns the trashed comments as well
-end
-
-post.reload # raises ActiveRecord::RecordNotFound
 ```
 
 ## Gem Comparison

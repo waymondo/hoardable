@@ -7,6 +7,26 @@ module Hoardable
   module Associations
     extend ActiveSupport::Concern
 
+    # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_source_id+ as
+    # if they were {SourceModel}s.
+    module HasManyScope
+      def scope
+        @scope ||= hoardable_scope
+      end
+
+      private
+
+      def hoardable_scope
+        if Hoardable.instance_variable_get('@at') &&
+           (hoardable_source_id = @association.owner.hoardable_source_id)
+          @association.scope.rewhere(@association.reflection.foreign_key => hoardable_source_id)
+        else
+          @association.scope
+        end
+      end
+    end
+    private_constant :HasManyScope
+
     class_methods do
       # A wrapper for +ActiveRecord+’s +belongs_to+ that allows for falling back to the most recent
       # trashed +version+, in the case that the related source has been trashed.
@@ -28,6 +48,12 @@ module Hoardable
             super || #{trashable_relationship_name}
           end
         RUBY
+      end
+
+      # A wrapper for +ActiveRecord+’s +has_many+ that allows for finding temporal versions of a
+      # record cast as instances of the {SourceModel}, when doing a {Hoardable#at} query.
+      def has_many_hoardable(name, scope = nil, **options)
+        has_many(name, scope, **options) { include HasManyScope }
       end
     end
   end

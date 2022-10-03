@@ -12,6 +12,10 @@ module Hoardable
 
     delegate :version_class, to: :source_record
 
+    def prevent_saving_if_actually_a_version
+      raise Error, 'You cannot save a Hoardable Model that is actually already a version' if source_record.version?
+    end
+
     def insert_hoardable_version(operation, &block)
       version = version_class.insert(initialize_version_attributes(operation), returning: :id)
       version_id = version[0]['id']
@@ -21,6 +25,15 @@ module Hoardable
 
     def find_or_initialize_hoardable_event_uuid
       Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query('SELECT gen_random_uuid();')[0][0]
+    end
+
+    def hoardable_version_source_id
+      @hoardable_version_source_id ||= query_hoardable_version_source_id
+    end
+
+    def query_hoardable_version_source_id
+      primary_key = source_record.class.primary_key
+      version_class.where(primary_key => source_record.read_attribute(primary_key)).pluck('hoardable_source_id')[0]
     end
 
     def initialize_version_attributes(operation)

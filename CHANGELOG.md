@@ -2,6 +2,11 @@
 
 - Stability is coming.
 
+## [0.9.0] - 2022-10-02
+
+- **Breaking Change** - `Hoardable.return_everything` was removed in favor of the newly added
+  `Hoardable.at`.
+
 ## [0.8.0] - 2022-10-01
 
 - **Breaking Change** - Due to the performance benefit of using `insert` for database injection of

@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 module Hoardable
-  # This concern provides support for PostgreSQL’s tableoid system column to {SourceModel}.
-  module Tableoid
+  # This concern provides support for PostgreSQL’s tableoid system column to {SourceModel} and
+  # temporal +ActiveRecord+ scopes.
+  module Scopes
     extend ActiveSupport::Concern
 
     TABLEOID_AREL_CONDITIONS = lambda do |arel_table, condition|
@@ -19,10 +20,10 @@ module Hoardable
 
       # By default {Hoardable} only returns instances of the parent table, and not the +versions+ in
       # the inherited table. This can be bypassed by using the {.include_versions} scope or wrapping
-      # the code in a `Hoardable.with(return_everything: true)` block.
+      # the code in a `Hoardable.at(datetime)` block.
       default_scope do
-        if hoardable_config[:return_everything]
-          where(nil)
+        if (hoardable_at = Hoardable.instance_variable_get('@at'))
+          at(hoardable_at)
         else
           exclude_versions
         end
@@ -51,6 +52,18 @@ module Hoardable
       # Excludes +versions+ of the parent +ActiveRecord+ class. This is included by default in the
       # source model’s +default_scope+.
       scope :exclude_versions, -> { where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq)) }
+
+      # @!scope class
+      # @!method at
+      # @return [ActiveRecord<Object>]
+      #
+      # Returns instances of the source model and versions that were valid at the supplied
+      # +datetime+ or +time+, all cast as instances of the source model.
+      scope :at, lambda { |datetime|
+        include_versions.where(id: version_class.at(datetime).select('id')).or(
+          where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
+        )
+      }
     end
 
     private
