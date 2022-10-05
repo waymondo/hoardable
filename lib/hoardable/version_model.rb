@@ -13,6 +13,11 @@ module Hoardable
       def scope_attributes
         super.without('tableoid')
       end
+
+      # WHY
+      def version_class
+        self
+      end
     end
 
     included do
@@ -23,7 +28,7 @@ module Hoardable
         class_name: superclass.model_name
       )
 
-      self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
+      self.table_name = "#{ActiveRecord::Base.table_name_prefix}#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
       alias_attribute :hoardable_operation, :_operation

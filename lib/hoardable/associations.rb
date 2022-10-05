@@ -9,7 +9,7 @@ module Hoardable
 
     # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_source_id+ as
     # if they were {SourceModel}s when using {Hoardable#at}.
-    module Scope
+    module HasManyExtension
       def scope
         @scope ||= hoardable_scope
       end
@@ -17,15 +17,17 @@ module Hoardable
       private
 
       def hoardable_scope
-        if Hoardable.instance_variable_get('@at') &&
-           (hoardable_source_id = @association.owner.hoardable_source_id)
-          @association.scope.rewhere(@association.reflection.foreign_key => hoardable_source_id)
+        if Hoardable.instance_variable_get('@at')
+          @association
+            .scope
+            .hoardable
+            .rewhere(@association.reflection.foreign_key => @association.owner.hoardable_source_id)
         else
           @association.scope
         end
       end
     end
-    private_constant :Scope
+    private_constant :HasManyExtension
 
     class_methods do
       # A wrapper for +ActiveRecord+’s +belongs_to+ that allows for falling back to the most recent
@@ -51,7 +53,7 @@ module Hoardable
 
       def has_many(*args, &block)
         options = args.extract_options!
-        options[:extend] = Array(options[:extend]).push(Scope) if options.delete(:hoardable)
+        options[:extend] = Array(options[:extend]).push(HasManyExtension) if options.delete(:hoardable)
         super(*args, **options, &block)
       end
     end

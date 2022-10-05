@@ -16,16 +16,6 @@ module Hoardable
     #   @return [String] The database operation that created the +version+ - either +update+ or +delete+.
     delegate :hoardable_event_uuid, :hoardable_operation, to: :hoardable_version, allow_nil: true
 
-    # A module for overriding +ActiveRecord#find_one+’ in the case you are doing a temporal query
-    # and the current {SourceModel} record may in fact be a {VersionModel} record.
-    module FinderMethods
-      def find_one(id)
-        conditions = { primary_key => [id, *version_class.where(hoardable_source_id: id).select(primary_key).ids] }
-        find_by(conditions) || where(conditions).raise_record_not_found_exception!
-      end
-    end
-    private_constant :FinderMethods
-
     class_methods do
       # The dynamically generated +Version+ class for this model.
       def version_class

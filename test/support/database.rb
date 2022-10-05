@@ -50,6 +50,11 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
+  create_table :likes do |t|
+    t.bigint :comment_id, null: false, index: true
+    t.timestamps
+  end
+
   create_table :users do |t|
     t.string :name, null: false
     t.timestamps
@@ -71,3 +76,4 @@ generate_versions_table('Comment')
 generate_versions_table('Book')
 generate_versions_table('Library')
 generate_versions_table('Bookmark')
+generate_versions_table('Like')

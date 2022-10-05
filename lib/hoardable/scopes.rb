@@ -23,7 +23,7 @@ module Hoardable
       # the code in a `Hoardable.at(datetime)` block.
       default_scope do
         if (hoardable_at = Hoardable.instance_variable_get('@at'))
-          at(hoardable_at)
+          at(hoardable_at).extending(FinderMethods)
         else
           exclude_versions
         end
@@ -61,7 +61,8 @@ module Hoardable
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at, lambda { |datetime|
         include_versions.where(id: version_class.at(datetime).select('id')).or(
-          where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
+          where("#{table_name}.created_at < ?", datetime)
+            .where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
         )
       }
     end

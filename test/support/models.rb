@@ -4,6 +4,7 @@ class Post < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
   has_many :comments, dependent: :destroy, hoardable: true
+  has_many :likes, through: :comments, hoardable: true
   attr_reader :_hoardable_operation, :reverted, :untrashed, :hoardable_version_id
 
   after_versioned do
@@ -36,7 +37,13 @@ end
 
 class Comment < ActiveRecord::Base
   include Hoardable::Model
+  has_many :likes, hoardable: true, dependent: :destroy
   belongs_to_trashable :post
+end
+
+class Like < ActiveRecord::Base
+  include Hoardable::Model
+  belongs_to :comment
 end
 
 class UserWithTrashedPosts < ActiveRecord::Base
