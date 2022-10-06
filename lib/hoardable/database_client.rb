@@ -73,11 +73,9 @@ module Hoardable
     end
 
     def hoardable_source_epoch
-      if source_record.class.column_names.include?('created_at')
-        source_record.created_at
-      else
-        raise CreatedAtColumnMissingError, source_record.class.table_name
-      end
+      return source_record.created_at if source_record.class.column_names.include?('created_at')
+
+      raise CreatedAtColumnMissingError, source_record.class.table_name
     end
   end
   private_constant :DatabaseClient
