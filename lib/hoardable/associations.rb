@@ -17,8 +17,9 @@ module Hoardable
       private
 
       def hoardable_scope
-        if Hoardable.instance_variable_get('@at')
-          @association.scope.rewhere(@association.reflection.foreign_key => @association.owner.hoardable_source_id)
+        if Hoardable.instance_variable_get('@at') &&
+           (hoardable_source_id = @association.owner.hoardable_source_id)
+          @association.scope.rewhere(@association.reflection.foreign_key => hoardable_source_id)
         else
           @association.scope
         end

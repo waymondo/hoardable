@@ -2,6 +2,12 @@
 
 - Stability is coming.
 
+## [0.10.0] - 2022-10-06
+
+- `has_many_hoardable` was replaced with `has_many :resources, hoardable: true`.
+
+- **Breaking Change** - a `created_at` column is now required for `Hoardable::Model`s.
+
 ## [0.9.0] - 2022-10-02
 
 - **Breaking Change** - `Hoardable.return_everything` was removed in favor of the newly added
