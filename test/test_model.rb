@@ -323,7 +323,7 @@ class TestModel < Minitest::Test
   it 'can recursively untrash verisons with shared event_uuid' do
     trashed_post = create_comments_and_destroy_post
     assert_equal CommentVersion.trashed.where(post_id: post.id).size, 2
-    assert_equal post.comments.size, 0
+    assert_equal trashed_post.comments.size, 0
     trashed_post.untrash!
     untrashed_post = Post.find(post.id)
     assert_equal CommentVersion.trashed.size, 0
@@ -361,17 +361,8 @@ class TestModel < Minitest::Test
 
   it 'warns about missing created_at column' do
     bookmark = Bookmark.create!(name: 'Paper')
-    assert_output(/'bookmarks' does not have a 'created_at' column/) do
+    assert_raises(Hoardable::CreatedAtColumnMissingError) do
       bookmark.update!(name: 'Ribbon')
-    end
-  end
-
-  it 'does not warn about missing created_at column when disabled' do
-    bookmark = Bookmark.create!(name: 'Paper')
-    Hoardable.with(warn_on_missing_created_at_column: false) do
-      assert_output('') do
-        bookmark.update!(name: 'Ribbon')
-      end
     end
   end
 
@@ -384,11 +375,11 @@ class TestModel < Minitest::Test
     assert_equal Comment.all.size, 0
     post_id = post.id
     Hoardable.at(datetime) do
-      assert_equal Post.all.size, 2
+      assert_equal Post.all.size, 1
       assert_equal Comment.all.size, 1
-      post = Post.hoardable.find(post_id)
+      post = Post.find(post_id)
       assert comment.post
-      assert_equal post.comments.hoardable.size, 1
+      assert_equal post.comments.size, 1
     end
   end
 
@@ -414,14 +405,14 @@ class TestModel < Minitest::Test
     assert_equal Post.at(datetime6).pluck('title'), ['New Headline']
   end
 
-  it 'returns hoardable records at the specified time with Hoardable.at and hoardable.find' do
+  it 'returns hoardable records at the specified time with Hoardable.at' do
     comment = post.comments.create!(body: 'Comment')
     datetime = DateTime.now
     comment.update!(body: 'Comment Updated')
     post.update!(title: 'Headline Updated')
     post_id = post.id
     Hoardable.at(datetime) do
-      post = Post.hoardable.find(post_id)
+      post = Post.find(post_id)
       assert_equal post.title, 'Headline'
       assert_equal post.comments.first.body, 'Comment'
     end
@@ -432,23 +423,13 @@ class TestModel < Minitest::Test
     end
   end
 
-  it 'cannot find a post that was deleted without including the hoardable scope' do
-    post
-    datetime = DateTime.now
-    post.destroy!
-    post_id = post.id
-    Hoardable.at(datetime) do
-      assert_raises(ActiveRecord::RecordNotFound) { Post.find(post_id) }
-    end
-  end
-
   it 'cannot save a hoardable source record that is actually a version' do
     post
     datetime = DateTime.now
     post.update!(title: 'Headline Updated')
     post_id = post.id
     Hoardable.at(datetime) do
-      post = Post.hoardable.find(post_id)
+      post = Post.find(post_id)
       assert_raises(ActiveRecord::StatementInvalid) { post.update!(title: 'Hmmm') }
       assert_equal post.reload.title, 'Headline'
     end
@@ -461,10 +442,43 @@ class TestModel < Minitest::Test
     post.destroy!
     post_id = post.id
     Hoardable.at(datetime) do
-      assert Post.hoardable.find(post_id)
+      assert Post.find(post_id)
     end
     Hoardable.at(DateTime.now) do
-      assert_raises(ActiveRecord::RecordNotFound) { Post.hoardable.find(post_id) }
+      assert_raises(ActiveRecord::RecordNotFound) { Post.find(post_id) }
+    end
+  end
+
+  it 'can return hoardable records at a specified time with multiple IDs' do
+    post
+    post2 = Post.create!(title: 'Number 2', user: user)
+    datetime = DateTime.now
+    post.update!(title: 'Foo')
+    post2.update!(title: 'Bar')
+    Hoardable.at(datetime) do
+      assert_equal Post.find([post.id, post2.id]).pluck('title').sort, ['Headline', 'Number 2'].sort
+    end
+  end
+
+  it 'can return hoardable records via a has many through relationship' do
+    skip
+    post = Post.create!(user: user, title: 'Title')
+    comment = post.comments.create!(body: 'Comment')
+    comment.likes.create!
+    comment.likes.create!
+    datetime = DateTime.now
+    comment.update!(body: 'Updated')
+    comment.likes.create!
+    comment.likes.create!
+    post_id = post.id
+    Hoardable.at(datetime) do
+      post = Post.find(post_id)
+      assert_equal post.comments.pluck('body'), ['Comment']
+      comment = post.comments.first
+      assert_equal Like.all.size, 2
+      assert_equal comment.likes.size, 2
+      # TODO: this does not work yet
+      assert_equal post.likes.size, 2
     end
   end
 

@@ -169,7 +169,7 @@ PostVersion.trashed.first.trashed? # <- true
 
 _Note:_ A `Version` is not created upon initial parent model creation. To accurately track the
 beginning of the first temporal period, you will need to ensure the source model table has a
-`created_at` timestamp column.
+`created_at` timestamp column. If this is missing, an error will be raised.
 
 ### Tracking Contextual Data
 
@@ -330,13 +330,13 @@ end
 
 Sometimes you'll have a Hoardable record that `has_many` other Hoardable records and you will want
 to know the state of both the parent record and the children at a cetain point in time. You
-accomplish this by establishing a `has_many_hoardable` relationship and using the `Hoardable.at`
-method:
+accomplish this by adding `hoardable: true` to the `has_many` relationship and using the
+`Hoardable.at` method:
 
 ```ruby
 class Post
   include Hoardable::Model
-  has_many_hoardable :comments
+  has_many :comments, hoardable: true
 end
 
 def Comment
@@ -352,7 +352,7 @@ post.update!(title: 'New Title')
 post_id = post.id # 1
 
 Hoardable.at(datetime) do
-  post = Post.hoardable.find(post_id)
+  post = Post.find(post_id)
   post.title # => 'Title'
   post.comments.size # => 2
   post.id # => 2
@@ -370,9 +370,7 @@ version, even though it is masquerading as a `Post`.
 
 If you are ever unsure if a Hoardable record is a "source" or a "version", you can be sure by
 calling `version?` on it. If you want to get the true original source record ID, you can call
-`hoardable_source_id`. Finally, if you prepend `.hoardable` to a `.find` call on the source model
-class, you can always find the relevant source or temporal version record using just the original
-source record’s id.
+`hoardable_source_id`. 
 
 Sometimes you’ll trash something that `has_many_hoardable :children, dependent: :destroy` and want
 to untrash everything in a similar dependent manner. Whenever a hoardable version is created in a

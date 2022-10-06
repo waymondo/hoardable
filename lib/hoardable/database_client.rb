@@ -73,25 +73,9 @@ module Hoardable
     end
 
     def hoardable_source_epoch
-      if source_record.class.column_names.include?('created_at')
-        source_record.created_at
-      else
-        maybe_warn_about_missing_created_at_column
-        Time.at(0).utc
-      end
-    end
+      return source_record.created_at if source_record.class.column_names.include?('created_at')
 
-    def maybe_warn_about_missing_created_at_column
-      return unless source_record.class.hoardable_config[:warn_on_missing_created_at_column]
-
-      source_table_name = source_record.class.table_name
-      Hoardable.logger.info(
-        <<~LOG
-          '#{source_table_name}' does not have a 'created_at' column, so the first version’s temporal period
-          will begin at the unix epoch instead. Add a 'created_at' column to '#{source_table_name}'
-          or set 'Hoardable.warn_on_missing_created_at_column = false' to disable this message.
-        LOG
-      )
+      raise CreatedAtColumnMissingError, source_record.class.table_name
     end
   end
   private_constant :DatabaseClient

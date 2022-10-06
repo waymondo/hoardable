@@ -8,8 +8,8 @@ module Hoardable
     extend ActiveSupport::Concern
 
     # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_source_id+ as
-    # if they were {SourceModel}s.
-    module HasManyScope
+    # if they were {SourceModel}s when using {Hoardable#at}.
+    module HasManyExtension
       def scope
         @scope ||= hoardable_scope
       end
@@ -25,7 +25,7 @@ module Hoardable
         end
       end
     end
-    private_constant :HasManyScope
+    private_constant :HasManyExtension
 
     class_methods do
       # A wrapper for +ActiveRecord+’s +belongs_to+ that allows for falling back to the most recent
@@ -33,27 +33,33 @@ module Hoardable
       def belongs_to_trashable(name, scope = nil, **options)
         belongs_to(name, scope, **options)
 
-        trashable_relationship_name = "trashable_#{name}"
-
-        define_method(trashable_relationship_name) do
+        define_method("trashable_#{name}") do
           source_reflection = self.class.reflections[name.to_s]
-          version_class = source_reflection.version_class
-          version_class.trashed.only_most_recent.find_by(
+          source_reflection.version_class.trashed.only_most_recent.find_by(
             hoardable_source_id: source_reflection.foreign_key
           )
         end
 
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
-            super || #{trashable_relationship_name}
+            super || trashable_#{name}
           end
         RUBY
       end
 
-      # A wrapper for +ActiveRecord+’s +has_many+ that allows for finding temporal versions of a
-      # record cast as instances of the {SourceModel}, when doing a {Hoardable#at} query.
-      def has_many_hoardable(name, scope = nil, **options)
-        has_many(name, scope, **options) { include HasManyScope }
+      def has_many(*args, &block)
+        options = args.extract_options!
+        options[:extend] = Array(options[:extend]).push(HasManyExtension) if options.delete(:hoardable)
+        super(*args, **options, &block)
+        name = args.first
+
+        # This hack is needed to force Rails to not use any existing method cache so that the
+        # {HasManyExtension} scope is always used.
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
+          def #{name}
+            super.extending
+          end
+        RUBY
       end
     end
   end

@@ -1,7 +1,7 @@
 module Hoardable
   VERSION: String
   DATA_KEYS: [:meta, :whodunit, :note, :event_uuid]
-  CONFIG_KEYS: [:enabled, :version_updates, :save_trash, :warn_on_missing_created_at_column]
+  CONFIG_KEYS: [:enabled, :version_updates, :save_trash]
   VERSION_CLASS_SUFFIX: String
   VERSION_TABLE_SUFFIX: String
   DURING_QUERY: String
@@ -46,7 +46,6 @@ module Hoardable
     def unset_hoardable_version_and_event_uuid: -> nil
     def previous_temporal_tsrange_end: -> untyped
     def hoardable_source_epoch: -> Time
-    def maybe_warn_about_missing_created_at_column: -> nil
   end
 
   module SourceModel
