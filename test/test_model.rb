@@ -323,7 +323,7 @@ class TestModel < Minitest::Test
   it 'can recursively untrash verisons with shared event_uuid' do
     trashed_post = create_comments_and_destroy_post
     assert_equal CommentVersion.trashed.where(post_id: post.id).size, 2
-    assert_equal post.comments.size, 0
+    assert_equal trashed_post.comments.size, 0
     trashed_post.untrash!
     untrashed_post = Post.find(post.id)
     assert_equal CommentVersion.trashed.size, 0
@@ -384,11 +384,11 @@ class TestModel < Minitest::Test
     assert_equal Comment.all.size, 0
     post_id = post.id
     Hoardable.at(datetime) do
-      assert_equal Post.all.size, 2
+      assert_equal Post.all.size, 1
       assert_equal Comment.all.size, 1
       post = Post.find(post_id)
       assert comment.post
-      assert_equal post.comments.hoardable.size, 1
+      assert_equal post.comments.size, 1
     end
   end
 
@@ -429,16 +429,6 @@ class TestModel < Minitest::Test
       post = Post.find(post_id)
       assert_equal post.title, 'Headline Updated'
       assert_equal post.comments.first.body, 'Comment Updated'
-    end
-  end
-
-  it 'cannot find a post that was deleted without including the hoardable scope' do
-    post
-    datetime = DateTime.now
-    post.destroy!
-    post_id = post.id
-    Hoardable.at(datetime) do
-      assert_raises(ActiveRecord::RecordNotFound) { Post.find(post_id) }
     end
   end
 
@@ -493,9 +483,8 @@ class TestModel < Minitest::Test
       post = Post.find(post_id)
       assert_equal post.comments.pluck('body'), ['Comment']
       comment = post.comments.first
-      # debugger
+      assert_equal comment.likes.size, 2
       assert_equal post.likes.size, 2
-      # assert_equal comment.likes.size, 2
     end
   end
 

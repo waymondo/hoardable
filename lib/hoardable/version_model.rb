@@ -13,11 +13,6 @@ module Hoardable
       def scope_attributes
         super.without('tableoid')
       end
-
-      # WHY
-      def version_class
-        self
-      end
     end
 
     included do
