@@ -8,7 +8,7 @@ module Hoardable
 
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
-  CONFIG_KEYS = %i[enabled version_updates save_trash warn_on_missing_created_at_column].freeze
+  CONFIG_KEYS = %i[enabled version_updates save_trash].freeze
 
   VERSION_CLASS_SUFFIX = 'Version'
   private_constant :VERSION_CLASS_SUFFIX

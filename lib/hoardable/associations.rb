@@ -33,9 +33,7 @@ module Hoardable
       def belongs_to_trashable(name, scope = nil, **options)
         belongs_to(name, scope, **options)
 
-        trashable_relationship_name = "trashable_#{name}"
-
-        define_method(trashable_relationship_name) do
+        define_method("trashable_#{name}") do
           source_reflection = self.class.reflections[name.to_s]
           source_reflection.version_class.trashed.only_most_recent.find_by(
             hoardable_source_id: source_reflection.foreign_key
@@ -44,7 +42,7 @@ module Hoardable
 
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
-            super || #{trashable_relationship_name}
+            super || trashable_#{name}
           end
         RUBY
       end

@@ -60,6 +60,8 @@ module Hoardable
       # Returns instances of the source model and versions that were valid at the supplied
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at, lambda { |datetime|
+        raise(CreatedAtColumnMissingError, @klass.table_name) unless @klass.column_names.include?('created_at')
+
         include_versions.where(id: version_class.at(datetime).select('id')).or(
           exclude_versions
             .where("#{table_name}.created_at < ?", datetime)

@@ -169,7 +169,7 @@ PostVersion.trashed.first.trashed? # <- true
 
 _Note:_ A `Version` is not created upon initial parent model creation. To accurately track the
 beginning of the first temporal period, you will need to ensure the source model table has a
-`created_at` timestamp column.
+`created_at` timestamp column. If this is missing, an error will be raised.
 
 ### Tracking Contextual Data
 
