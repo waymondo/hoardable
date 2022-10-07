@@ -36,7 +36,7 @@ module Hoardable
       end
 
       def override_belongs_to(name)
-        klass.define_method("trashable_#{name}") do
+        klass.define_method("trashed_#{name}") do
           source_reflection = klass.reflections[name.to_s]
           source_reflection.version_class.trashed.only_most_recent.find_by(
             hoardable_source_id: source_reflection.foreign_key
@@ -45,7 +45,7 @@ module Hoardable
 
         klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
-            super || trashable_#{name}
+            super || trashed_#{name}
           end
         RUBY
       end
@@ -56,7 +56,7 @@ module Hoardable
             return super unless (at = Hoardable.instance_variable_get('@at'))
 
             super&.version_at(at) ||
-              _reflections["profile"].klass.where(_reflections["profile"].foreign_key => id).first
+              _reflections['profile'].klass.where(_reflections['profile'].foreign_key => id).first
           end
         RUBY
       end
