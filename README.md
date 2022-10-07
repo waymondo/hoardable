@@ -395,7 +395,7 @@ end
 
 ## Gem Comparison
 
-### [`paper_trail`](https://github.com/paper-trail-gem/paper_trail)
+#### [`paper_trail`](https://github.com/paper-trail-gem/paper_trail)
 
 `paper_trail` is maybe the most popular and fully featured gem in this space. It works for other
 database types than PostgeSQL and (by default) stores all versions of all versioned models in a
@@ -408,7 +408,7 @@ same database columns as their parents, which are more efficient for querying as
 for truncating and dropping. The concept of a `temporal` time-frame does not exist for a single
 version since there is only a `created_at` timestamp.
 
-### [`audited`](https://github.com/collectiveidea/audited)
+#### [`audited`](https://github.com/collectiveidea/audited)
 
 `audited` works in a similar manner as `paper_trail`. It stores all versions for all model types in
 a single table, you must opt into using `jsonb` as the column type to store "changes", in case you
@@ -416,7 +416,7 @@ want to query them, and there is no concept of a `temporal` time-frame for a sin
 makes opinionated decisions about contextual data requirements and stores them as top level data
 types on the `audited` table.
 
-### [`discard`](https://github.com/jhawthorn/discard)
+#### [`discard`](https://github.com/jhawthorn/discard)
 
 `discard` only covers soft-deletion. The act of "soft deleting" a record is only captured through
 the time-stamping of a `discarded_at` column on the records table; there is no other capturing of
@@ -425,13 +425,20 @@ record is restored, the previous "discarded" awareness is lost. Since "discarded
 the same table as "undiscarded" records, you must explicitly omit the discarded records from queries
 across your app to keep them from leaking in.
 
-### [`paranoia`](https://github.com/rubysherpas/paranoia)
+#### [`paranoia`](https://github.com/rubysherpas/paranoia)
 
 `paranoia` also only covers soft-deletion. In their README, they recommend using `discard` instead
 of `paranoia` because of the fact they override ActiveRecord’s `delete` and `destroy` methods.
 `hoardable` employs callbacks to create trashed versions instead of overriding methods. Otherwise,
 `paranoia` works similarly to `discard` in that it keeps deleted records in the same table and tags
 them with a `deleted_at` timestamp. No other information about the soft-deletion event is stored.
+
+#### [`logidze`](https://github.com/palkan/logidze)
+
+`logidze` is an interesting versioning alternative that leverages the power of PostgreSQL triggers.
+Instead of storing the previous versions or changes in a separate table, it stores them in a
+proprietary JSON format directly on the database row of the record itself. If does not support soft
+deletion.
 
 ## Contributing
 
