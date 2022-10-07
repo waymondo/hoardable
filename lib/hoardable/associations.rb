@@ -28,11 +28,13 @@ module Hoardable
     private_constant :HasManyExtension
 
     class_methods do
-      # A wrapper for +ActiveRecord+’s +belongs_to+ that allows for falling back to the most recent
-      # trashed +version+, in the case that the related source has been trashed.
-      def belongs_to_trashable(name, scope = nil, **options)
-        belongs_to(name, scope, **options)
+      def belongs_to(*args)
+        options = args.extract_options!
+        trashable = options.delete(:trashable)
+        super(*args, **options)
+        return unless trashable
 
+        name = args.first
         define_method("trashable_#{name}") do
           source_reflection = self.class.reflections[name.to_s]
           source_reflection.version_class.trashed.only_most_recent.find_by(

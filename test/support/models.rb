@@ -38,7 +38,7 @@ end
 class Comment < ActiveRecord::Base
   include Hoardable::Model
   has_many :likes, hoardable: true, dependent: :destroy
-  belongs_to_trashable :post
+  belongs_to :post, trashable: true
 end
 
 class Like < ActiveRecord::Base
