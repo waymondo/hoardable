@@ -4,7 +4,10 @@ require 'rails/generators'
 
 module Hoardable
   # Generates an initializer file for {Hoardable} configuration.
-  class InitializerGenerator < Rails::Generators::Base
+  class InstallGenerator < Rails::Generators::Base
+    source_root File.expand_path('templates', __dir__)
+    include Rails::Generators::Migration
+
     def create_initializer_file
       create_file(
         'config/initializers/hoardable.rb',
@@ -16,6 +19,14 @@ module Hoardable
           # Hoardable.save_trash = true
         TEXT
       )
+    end
+
+    def create_migration_file
+      migration_template 'functions.rb.erb', 'db/migrate/install_hoardable.rb'
+    end
+
+    def self.next_migration_number(dir)
+      ::ActiveRecord::Generators::Base.next_migration_number(dir)
     end
   end
 end

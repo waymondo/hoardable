@@ -66,12 +66,11 @@ explicitly, you can do so:
 bin/rails g hoardable:migration Post --foreign-key-type uuid
 ```
 
-_Note:_ If you are on Rails 6.1, you might want to set `config.active_record.schema_format = :sql`
-in `application.rb`, so that the enum type is captured in your schema dump. This is not required in
-Rails 7.
-
 _Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
 need to query versions often, you should add appropriate indexes to the `_versions` tables.
+
+_Note:_ It is recommended to set `config.active_record.schema_format = :sql` in `application.rb`, so
+that the trigger in the migration to prevent updates to the versions table get captured.
 
 ## Usage
 
