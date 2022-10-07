@@ -35,6 +35,14 @@ class Create<%= class_name.singularize %>Versions < ActiveRecord::Migration[<%= 
           SQL
         )
       end
+      dir.down do
+        execute(
+          <<~SQL
+            DROP TRIGGER <%= singularized_table_name %>_versions_prevent_update
+              ON <%= singularized_table_name %>_versions;
+          SQL
+        )
+      end
     end
     add_index(:<%= singularized_table_name %>_versions, :id, unique: true)
     add_index(

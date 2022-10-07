@@ -3,7 +3,8 @@
 require 'rails/generators'
 
 module Hoardable
-  # Generates an initializer file for {Hoardable} configuration.
+  # Generates an initializer file for {Hoardable} configuration and a migration with a PostgreSQL
+  # function.
   class InstallGenerator < Rails::Generators::Base
     source_root File.expand_path('templates', __dir__)
     include Rails::Generators::Migration
