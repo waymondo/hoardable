@@ -17,8 +17,17 @@ module Hoardable
   def self.at: (untyped datetime) -> untyped
   def self.logger: -> untyped
 
+  module FinderMethods
+    def find_one: (untyped id) -> untyped
+    def find_some: (untyped ids) -> untyped
+
+    private
+    def hoardable_source_ids: ([untyped] ids) -> Array[untyped]
+  end
+
   module Scopes
     TABLEOID_AREL_CONDITIONS: Proc
+    self.@klass: bot
 
     private
     def tableoid: -> untyped
@@ -28,6 +37,10 @@ module Hoardable
   end
 
   class Error < StandardError
+  end
+
+  class CreatedAtColumnMissingError < Error
+    def initialize: (untyped source_table_name) -> void
   end
 
   class DatabaseClient
@@ -45,7 +58,7 @@ module Hoardable
     def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
     def unset_hoardable_version_and_event_uuid: -> nil
     def previous_temporal_tsrange_end: -> untyped
-    def hoardable_source_epoch: -> Time
+    def hoardable_source_epoch: -> untyped
   end
 
   module SourceModel
@@ -55,7 +68,8 @@ module Hoardable
     attr_reader hoardable_version: untyped
     def trashed?: -> untyped
     def version?: -> untyped
-    def at: (untyped datetime) -> SourceModel
+    def at: (untyped datetime) -> SourceModel?
+    def version_at: (untyped datetime) -> untyped
     def revert_to!: (untyped datetime) -> SourceModel?
     def hoardable_source_id: -> untyped
 
@@ -65,10 +79,6 @@ module Hoardable
     public
     def version_class: -> untyped
     def hoardable: -> untyped
-
-    module FinderMethods
-      def find_one: (untyped id) -> untyped
-    end
   end
 
   module VersionModel
@@ -98,10 +108,16 @@ module Hoardable
   end
 
   module Associations
-    def belongs_to_trashable: (untyped name, ?nil scope, **untyped) -> untyped
-    def has_many_hoardable: (untyped name, ?nil scope, **untyped) -> untyped
+    @hoardable_association_overrider: Overrider
 
-    module HasManyScope
+    def belongs_to: (*untyped args) -> nil
+    def has_one: (*untyped args) -> nil
+    def has_many: (*untyped args) -> untyped
+
+    private
+    def hoardable_association_overrider: -> Overrider
+
+    module HasManyExtension
       @scope: untyped
       @association: bot
 
@@ -109,6 +125,14 @@ module Hoardable
 
       private
       def hoardable_scope: -> untyped
+    end
+
+    class Overrider
+      attr_reader klass: Associations
+      def initialize: (Associations klass) -> void
+      def override_belongs_to: (untyped name) -> untyped
+      def override_has_one: (untyped name) -> untyped
+      def override_has_many: (untyped name) -> untyped
     end
   end
 
@@ -121,7 +145,9 @@ module Hoardable
     def singularized_table_name: -> untyped
   end
 
-  class InitializerGenerator
+  class InstallGenerator
     def create_initializer_file: -> untyped
+    def create_migration_file: -> untyped
+    def self.next_migration_number: (untyped dir) -> untyped
   end
 end

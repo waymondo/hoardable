@@ -372,7 +372,7 @@ If you are ever unsure if a Hoardable record is a "source" or a "version", you c
 calling `version?` on it. If you want to get the true original source record ID, you can call
 `hoardable_source_id`. 
 
-Sometimes you’ll trash something that `has_many_hoardable :children, dependent: :destroy` and want
+Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and want
 to untrash everything in a similar dependent manner. Whenever a hoardable version is created in a
 database transaction, it will create or re-use a unique event UUID for that transaction and tag all
 versions created with it. That way, when you `untrash!` a record, you can find and `untrash!`
@@ -381,7 +381,7 @@ records that were trashed with it:
 ```ruby
 class Post < ActiveRecord::Base
   include Hoardable::Model
-  has_many_hoardable :comments, dependent: :destroy # `Comment` also includes `Hoardable::Model`
+  has_many :comments, hoardable: true, dependent: :destroy # `Comment` also includes `Hoardable::Model`
 
   after_untrashed do
     Comment
