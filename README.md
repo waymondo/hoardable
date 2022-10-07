@@ -29,13 +29,18 @@ Add this line to your application's Gemfile:
 gem 'hoardable'
 ```
 
-And then execute `bundle install`.
-
-If you would like to generate an initializer with the global [configuration](#configuration) options:
+Run `bundle install`, and then run:
 
 ```
-rails g hoardable:initializer
+bin/rails g hoardable:install
+bin/rails db:migrate
 ```
+
+This will generate a PostgreSQL function and an initiailzer.
+
+_Note:_ It is recommended to set `config.active_record.schema_format = :sql` in `application.rb`, so
+that the function and triggers in the migrations that prevent updates to the versions table get
+captured in your schema.
 
 ### Model Installation
 
@@ -65,10 +70,6 @@ explicitly, you can do so:
 ```
 bin/rails g hoardable:migration Post --foreign-key-type uuid
 ```
-
-_Note:_ If you are on Rails 6.1, you might want to set `config.active_record.schema_format = :sql`
-in `application.rb`, so that the enum type is captured in your schema dump. This is not required in
-Rails 7.
 
 _Note:_ Creating an inherited table does not copy over the indexes from the parent table. If you
 need to query versions often, you should add appropriate indexes to the `_versions` tables.

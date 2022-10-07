@@ -2,9 +2,9 @@
 
 require 'test_helper'
 
-class InitializerGeneratorTest < Rails::Generators::TestCase
+class InstallGeneratorTest < Rails::Generators::TestCase
   extend Minitest::Spec::DSL
-  tests Hoardable::InitializerGenerator
+  tests Hoardable::InstallGenerator
   destination tmp_dir
   setup :prepare_destination
 

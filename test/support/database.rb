@@ -77,6 +77,13 @@ def generate_versions_table(table_name)
   "Create#{table_name.classify.singularize}Versions".constantize.migrate(:up)
 end
 
+def run_install_migration
+  Rails::Generators.invoke('hoardable:install', ['--quiet'], destination_root: tmp_dir)
+  Dir[File.join(tmp_dir, 'db/migrate/*.rb')].sort.each { |file| require file }
+  'InstallHoardable'.constantize.migrate(:up)
+end
+
+run_install_migration
 generate_versions_table('Post')
 generate_versions_table('Comment')
 generate_versions_table('Book')

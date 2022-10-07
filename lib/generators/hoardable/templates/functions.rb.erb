@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def up
+    execute(
+      <<~SQL
+        CREATE OR REPLACE FUNCTION hoardable_version_prevent_update() RETURNS trigger
+          LANGUAGE plpgsql AS
+        $$BEGIN
+          RAISE EXCEPTION 'updating a version is not allowed';
+          RETURN NEW;
+        END;$$;
+      SQL
+    )
+  end
+end
