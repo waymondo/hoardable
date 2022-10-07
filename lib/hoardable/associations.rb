@@ -49,12 +49,29 @@ module Hoardable
         RUBY
       end
 
+      def has_one(*args)
+        options = args.extract_options!
+        hoardable = options.delete(:hoardable)
+        super(*args, **options)
+        return unless hoardable
+
+        name = args.first
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
+          def #{name}
+            return super unless (at = Hoardable.instance_variable_get('@at'))
+
+            super&.version_at(at) ||
+              _reflections["profile"].klass.where(_reflections["profile"].foreign_key => id).first
+          end
+        RUBY
+      end
+
       def has_many(*args, &block)
         options = args.extract_options!
         options[:extend] = Array(options[:extend]).push(HasManyExtension) if options.delete(:hoardable)
         super(*args, **options, &block)
-        name = args.first
 
+        name = args.first
         # This hack is needed to force Rails to not use any existing method cache so that the
         # {HasManyExtension} scope is always used.
         class_eval <<-RUBY, __FILE__, __LINE__ + 1

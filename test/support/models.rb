@@ -32,7 +32,14 @@ class UnversionablePost < ActiveRecord::Base
 end
 
 class User < ActiveRecord::Base
+  include Hoardable::Model
   has_many :posts
+  has_one :profile, hoardable: true
+end
+
+class Profile < ActiveRecord::Base
+  include Hoardable::Model
+  belongs_to :user
 end
 
 class Comment < ActiveRecord::Base

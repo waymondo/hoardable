@@ -71,14 +71,21 @@ module Hoardable
       !!hoardable_client.hoardable_version_source_id
     end
 
-    # Returns the +version+ at the supplied +datetime+ or +time+. It will return +self+ if there is
-    # none. This will raise an error if you try to find a version in the future.
+    # Returns the +version+ at the supplied +datetime+ or +time+, or +self+ if there is none.
     #
     # @param datetime [DateTime, Time]
     def at(datetime)
+      version_at(datetime) || (self if created_at < datetime)
+    end
+
+    # Returns the +version+ at the supplied +datetime+ or +time+. This will raise an error if you
+    # try to find a version in the future.
+    #
+    # @param datetime [DateTime, Time]
+    def version_at(datetime)
       raise(Error, 'Future state cannot be known') if datetime.future?
 
-      versions.at(datetime).first || self
+      versions.at(datetime).limit(1).first
     end
 
     # If a version is found at the supplied datetime, it will +revert!+ to it and return it. This

@@ -33,6 +33,12 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
+  create_table :profiles do |t|
+    t.string :email, null: false
+    t.bigint :user_id, null: false, index: true
+    t.timestamps
+  end
+
   create_table :libraries, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
     t.string :name, null: false
     t.timestamps
@@ -77,3 +83,4 @@ generate_versions_table('Book')
 generate_versions_table('Library')
 generate_versions_table('Bookmark')
 generate_versions_table('Like')
+generate_versions_table('Profile')
