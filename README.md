@@ -164,7 +164,6 @@ specifically with:
 ```ruby
 PostVersion.trashed
 Post.version_class.trashed # <- same thing as above
-PostVersion.trashed.first.trashed? # <- true
 ```
 
 _Note:_ A `Version` is not created upon initial parent model creation. To accurately track the
@@ -318,13 +317,13 @@ with `Hoardable` considerations.
 
 Sometimes you’ll have a record that belongs to a parent record that you’ll trash. Now the child
 record’s foreign key will point to the non-existent trashed version of the parent. If you would like
-to have `belongs_to` resolve to the trashed parent model in this case, you can use
-`belongs_to_trashable` in place of `belongs_to`:
+to have `belongs_to` resolve to the trashed parent model in this case, you can give it the option of
+`trashable: true`:
 
 ```ruby
 class Comment
   include Hoardable::Associations # <- This includes is not required if this model already includes `Hoardable::Model`
-  belongs_to_trashable :post, -> { where(status: 'published') }, class_name: 'Article' # <- Accepts normal `belongs_to` arguments
+  belongs_to :post, trashable: true
 end
 ```
 

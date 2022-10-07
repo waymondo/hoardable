@@ -59,7 +59,7 @@ class TestModel < Minitest::Test
     assert version._during
   end
 
-  it 'can create multiple versions, and knows how to query "at"' do
+  it 'can create multiple versions, and knows how to query at' do
     post
     datetime1 = DateTime.now
     update_post
@@ -499,5 +499,24 @@ class TestModel < Minitest::Test
       )
     end
     assert_equal(post.reload.comment_ids, post.reload.comments.map(&:hoardable_source_id))
+  end
+
+  it 'can return hoardable results with has one relationship' do
+    profile = Profile.create!(user: user, email: 'email@example.com')
+    datetime1 = DateTime.now
+    profile.update!(email: 'foo@bar.com')
+    datetime2 = DateTime.now
+    profile.destroy!
+    datetime3 = DateTime.now
+    assert_nil user.reload.profile
+    Hoardable.at(datetime1) do
+      assert_equal user.profile.email, 'email@example.com'
+    end
+    Hoardable.at(datetime2) do
+      assert_equal user.profile.email, 'foo@bar.com'
+    end
+    Hoardable.at(datetime3) do
+      assert_nil user.profile
+    end
   end
 end
