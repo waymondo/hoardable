@@ -403,7 +403,8 @@ bin/rails g hoardable:migration ActionText::RichText
 bin/rails db:migrate
 ```
 
-Then in your model, include `Hoardable::Model` and provide the `hoardable: true` keyword:
+Then in your model, include `Hoardable::Model` and provide the `hoardable: true` keyword to
+`has_rich_text`:
 
 ``` ruby
 class Post < ActiveRecord::Base
@@ -418,6 +419,7 @@ Now the `rich_text_content` relationship will be managed as a Hoardable `has_one
 post = Post.create!(content: '<div>Hello World</div>')
 datetime = DateTime.current
 post.update!(content: '<div>Goodbye Cruel World</div>')
+post.content.versions.size # => 1
 assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
 Hoardable.at(datetime) do
   assert_equal post.content.to_plain_text, 'Hello World'
