@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'hoardable/version'
-require_relative 'hoardable/hoardable'
 require_relative 'hoardable/engine'
 require_relative 'hoardable/finder_methods'
 require_relative 'hoardable/scopes'
