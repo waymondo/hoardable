@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 ActiveRecord::Schema.verbose = false
-# ActiveRecord::Base.logger = Logger.new($stdout)
+
+def enable_sql_log
+  ActiveRecord::Base.logger = Logger.new($stdout)
+end
 
 def truncate_db
   ActiveRecord::Base.connection.tables.each do |table|
@@ -124,3 +127,4 @@ generate_versions_table('Library')
 generate_versions_table('Bookmark')
 generate_versions_table('Like')
 generate_versions_table('Profile')
+generate_versions_table('action_text_rich_text')

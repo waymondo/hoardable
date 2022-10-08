@@ -61,6 +61,11 @@ module Hoardable
         RUBY
       end
 
+      def override_has_rich_text(name)
+        reflection_options = klass.reflections["rich_text_#{name}"].options
+        reflection_options[:class_name] = reflection_options[:class_name].sub(/ActionText/, 'Hoardable')
+      end
+
       def override_has_many(name)
         # This hack is needed to force Rails to not use any existing method cache so that the
         # {HasManyExtension} scope is always used.
@@ -86,10 +91,20 @@ module Hoardable
       def has_one(*args)
         options = args.extract_options!
         hoardable = options.delete(:hoardable)
-        super(*args, **options)
+        association = super(*args, **options)
+        name = args.first
+        return unless hoardable || association[name.to_s].options[:class_name].match?(/RichText$/)
+
+        hoardable_association_overrider.override_has_one(name)
+      end
+
+      def has_rich_text(name, encrypted: false, hoardable: false)
+        # HACK: to defer loading of ActionText models if they aren’t yet loaded
+        'ActionText::RichText'.constantize
+        super(name, encrypted: encrypted)
         return unless hoardable
 
-        hoardable_association_overrider.override_has_one(args.first)
+        hoardable_association_overrider.override_has_rich_text(name)
       end
 
       def has_many(*args, &block)

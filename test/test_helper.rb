@@ -5,7 +5,7 @@ ENV['RAILS_ENV'] ||= 'test'
 require 'bundler/setup'
 require 'debug'
 require 'active_support/concern'
-require 'active_record'
+require 'rails'
 require 'minitest/autorun'
 require 'minitest/spec'
 
@@ -18,19 +18,20 @@ end
 
 FileUtils.rm_f Dir.glob("#{tmp_dir}/**/*")
 
-require 'rails'
 require 'active_model/railtie'
 require 'active_record/railtie'
 require 'action_text/engine'
 
 class Dummy < Rails::Application
-  config.load_defaults(::Rails.gem_version.segments.take(2).join('.'))
+  config.load_defaults Rails::VERSION::STRING.to_f
   config.eager_load = false
   config.active_storage.service_configurations = {
     service: 'Disk',
     root: Rails.root.join('tmp/storage')
   }
   config.paths['config/database'] = ['test/config/database.yml']
+  config.active_record.encryption.key_derivation_salt = SecureRandom.hex
+  config.active_record.encryption.primary_key = SecureRandom.hex
 end
 
 Rails.initialize!

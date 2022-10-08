@@ -59,6 +59,12 @@ class TestModel < Minitest::Test
     assert version._during
   end
 
+  it 'knows how to dynamically create namespaced version classes' do
+    post = Hoardable::Post.create!(title: 'Hi', user: user)
+    post.update!(title: 'Bye')
+    assert_instance_of Hoardable::PostVersion, post.versions.first
+  end
+
   it 'can create multiple versions, and knows how to query at' do
     post
     datetime1 = DateTime.now
@@ -518,5 +524,26 @@ class TestModel < Minitest::Test
     Hoardable.at(datetime3) do
       assert_nil user.profile
     end
+  end
+
+  def rich_text_shared_assumptions(klass)
+    post = klass.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+    datetime = DateTime.now
+    post.update!(content: '<div>Goodbye Cruel World</div>')
+    assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+    Hoardable.at(datetime) do
+      assert_equal post.content.to_plain_text, 'Hello World'
+    end
+    post
+  end
+
+  it 'creates rich text record for versions' do
+    post = rich_text_shared_assumptions(PostWithRichText)
+    refute post.content.encrypted_attribute?('body')
+  end
+
+  it 'creates encrypted rich text record for versions' do
+    post = rich_text_shared_assumptions(PostWithEncryptedRichText)
+    assert post.content.encrypted_attribute?('body')
   end
 end

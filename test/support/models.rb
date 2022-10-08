@@ -21,6 +21,14 @@ class Post < ActiveRecord::Base
   end
 end
 
+module Hoardable
+  class Post < ::ActiveRecord::Base
+    include Hoardable::Model
+    self.table_name = 'posts'
+    belongs_to :user
+  end
+end
+
 class UnversionablePost < ActiveRecord::Base
   include Hoardable::Model
   self.table_name = 'posts'
@@ -29,6 +37,20 @@ class UnversionablePost < ActiveRecord::Base
   after_versioned do
     raise StandardError, 'readonly'
   end
+end
+
+class PostWithRichText < ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = 'posts'
+  belongs_to :user
+  has_rich_text :content, hoardable: true
+end
+
+class PostWithEncryptedRichText < ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = 'posts'
+  belongs_to :user
+  has_rich_text :content, encrypted: true, hoardable: true
 end
 
 class User < ActiveRecord::Base

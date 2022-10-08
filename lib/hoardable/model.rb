@@ -53,11 +53,17 @@ module Hoardable
       TracePoint.new(:end) do |trace|
         next unless self == trace.self
 
-        version_class_name = "#{name}#{VERSION_CLASS_SUFFIX}"
-        unless Object.const_defined?(version_class_name)
-          Object.const_set(version_class_name, Class.new(self) { include VersionModel })
+        full_version_class_name = "#{name}#{VERSION_CLASS_SUFFIX}"
+        if (namespace_match = full_version_class_name.match(/(.*)::(.*)/))
+          object_namespace = namespace_match[1].constantize
+          version_class_name = namespace_match[2]
+        else
+          object_namespace = Object
+          version_class_name = full_version_class_name
         end
-
+        unless Object.const_defined?(full_version_class_name)
+          object_namespace.const_set(version_class_name, Class.new(self) { include VersionModel })
+        end
         include SourceModel
 
         trace.disable
