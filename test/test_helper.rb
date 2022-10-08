@@ -30,8 +30,8 @@ class Dummy < Rails::Application
     root: Rails.root.join('tmp/storage')
   }
   config.paths['config/database'] = ['test/config/database.yml']
-  config.active_record.encryption.key_derivation_salt = SecureRandom.hex
-  config.active_record.encryption.primary_key = SecureRandom.hex
+  config.active_record.encryption&.key_derivation_salt = SecureRandom.hex
+  config.active_record.encryption&.primary_key = SecureRandom.hex
 end
 
 Rails.initialize!

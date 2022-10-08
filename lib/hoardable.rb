@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'active_record'
 require_relative 'hoardable/version'
 require_relative 'hoardable/engine'
 require_relative 'hoardable/finder_methods'

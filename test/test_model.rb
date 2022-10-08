@@ -536,20 +536,21 @@ class TestModel < Minitest::Test
     Hoardable.at(datetime) do
       assert_equal post.content.to_plain_text, 'Hello World'
     end
-    refute post.content.encrypted_attribute?('body')
   end
 
-  it 'creates encrypted rich text record for versions' do
-    post = PostWithEncryptedRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
-    datetime = DateTime.now
-    post.update!(content: '<div>Goodbye Cruel World</div>')
-    assert_equal post.content.versions.size, 1
-    assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
-    assert_equal post.content.versions.first.body.to_plain_text, 'Hello World'
-    Hoardable.at(datetime) do
-      assert_equal post.content.to_plain_text, 'Hello World'
+  if ActiveRecord.version >= ::Gem::Version.new('7.0')
+    it 'creates encrypted rich text record for versions' do
+      post = PostWithEncryptedRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+      datetime = DateTime.now
+      post.update!(content: '<div>Goodbye Cruel World</div>')
+      assert_equal post.content.versions.size, 1
+      assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+      assert_equal post.content.versions.first.body.to_plain_text, 'Hello World'
+      Hoardable.at(datetime) do
+        assert_equal post.content.to_plain_text, 'Hello World'
+      end
+      assert post.content.encrypted_attribute?('body')
     end
-    assert post.content.encrypted_attribute?('body')
   end
 
   it 'does not create versions without hoardable keyword' do

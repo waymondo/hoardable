@@ -7,9 +7,11 @@ module Hoardable
 
     class_methods do
       def has_rich_text(name, encrypted: false, hoardable: false)
-        # HACK: to load deferred ActionText models if they aren’t yet loaded
-        'ActionText::RichText'.constantize
-        super(name, encrypted: encrypted)
+        if SUPPORTS_ENCRYPTED_ACTION_TEXT
+          super(name, encrypted: encrypted)
+        else
+          super(name)
+        end
         return unless hoardable
 
         reflection_options = reflections["rich_text_#{name}"].options
