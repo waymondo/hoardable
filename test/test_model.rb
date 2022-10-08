@@ -526,24 +526,29 @@ class TestModel < Minitest::Test
     end
   end
 
-  def rich_text_shared_assumptions(klass)
-    post = klass.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+  it 'creates rich text record for versions' do
+    post = PostWithRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
     datetime = DateTime.now
     post.update!(content: '<div>Goodbye Cruel World</div>')
+    assert_equal post.content.versions.size, 1
     assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+    assert_equal post.content.versions.first.body.to_plain_text, 'Hello World'
     Hoardable.at(datetime) do
       assert_equal post.content.to_plain_text, 'Hello World'
     end
-    post
-  end
-
-  it 'creates rich text record for versions' do
-    post = rich_text_shared_assumptions(PostWithRichText)
     refute post.content.encrypted_attribute?('body')
   end
 
   it 'creates encrypted rich text record for versions' do
-    post = rich_text_shared_assumptions(PostWithEncryptedRichText)
+    post = PostWithEncryptedRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+    datetime = DateTime.now
+    post.update!(content: '<div>Goodbye Cruel World</div>')
+    assert_equal post.content.versions.size, 1
+    assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+    assert_equal post.content.versions.first.body.to_plain_text, 'Hello World'
+    Hoardable.at(datetime) do
+      assert_equal post.content.to_plain_text, 'Hello World'
+    end
     assert post.content.encrypted_attribute?('body')
   end
 

@@ -393,6 +393,37 @@ class Post < ActiveRecord::Base
 end
 ```
 
+## ActionText
+
+Hoardable provides support for ActiveRecord models with `has_rich_text`. First, you must create a
+temporal table for `ActionText::RichText`:
+
+```
+bin/rails g hoardable:migration ActionText::RichText
+bin/rails db:migrate
+```
+
+Then in your model, include `Hoardable::Model` and provide the `hoardable: true` keyword:
+
+``` ruby
+class Post < ActiveRecord::Base
+  include Hoardable::Model # or `Hoardable::Associations` if you don't need `PostVersion`
+  has_rich_text :content, hoardable: true
+end
+```
+
+Now the `rich_text_content` relationship will be managed as a Hoardable `has_one` relationship:
+
+``` ruby
+post = Post.create!(content: '<div>Hello World</div>')
+datetime = DateTime.current
+post.update!(content: '<div>Goodbye Cruel World</div>')
+assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+Hoardable.at(datetime) do
+  assert_equal post.content.to_plain_text, 'Hello World'
+end
+```
+
 ## Gem Comparison
 
 #### [`paper_trail`](https://github.com/paper-trail-gem/paper_trail)
