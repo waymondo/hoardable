@@ -28,7 +28,7 @@ class Dummy < Rails::Application
   config.eager_load = false
   config.active_storage.service_configurations = {
     service: 'Disk',
-    root: Rails.root.join("tmp/storage")
+    root: Rails.root.join('tmp/storage')
   }
   config.paths['config/database'] = ['test/config/database.yml']
 end

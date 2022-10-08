@@ -120,7 +120,7 @@ class TestModel < Minitest::Test
 
   it 'it won’t persist an inserted version if the save fails' do
     post
-    assert_raises(ActiveRecord::NotNullViolation) { post.update!(user: nil) }
+    assert_raises(ActiveRecord::RecordInvalid) { post.update!(user: nil) }
     post.reload
     assert post.user
     assert_equal post.versions.size, 0
