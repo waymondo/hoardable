@@ -1,20 +1,11 @@
 # frozen_string_literal: true
 
-ActiveRecord::Base.establish_connection(
-  adapter: 'postgresql',
-  database: 'hoardable',
-  host: 'localhost',
-  port: nil,
-  username: ENV.fetch('POSTGRES_USER', nil),
-  password: ENV.fetch('POSTGRES_PASSWORD', nil)
-)
-
 ActiveRecord::Schema.verbose = false
 # ActiveRecord::Base.logger = Logger.new($stdout)
 
 def truncate_db
   ActiveRecord::Base.connection.tables.each do |table|
-    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY")
+    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
   end
 end
 
@@ -68,6 +59,48 @@ ActiveRecord::Schema.define do
 
   create_table :bookmarks do |t|
     t.string :name, null: false
+  end
+
+  create_table :active_storage_blobs do |t|
+    t.string   :key, null: false
+    t.string   :filename, null: false
+    t.string   :content_type
+    t.text     :metadata
+    t.string   :service_name, null: false
+    t.bigint   :byte_size,    null: false
+    t.string   :checksum
+    t.datetime :created_at, precision: 6, null: false
+    t.index [:key], unique: true
+  end
+
+  create_table :active_storage_attachments do |t|
+    t.string     :name,     null: false
+    t.references :record,   null: false, polymorphic: true, index: false, type: :bigint
+    t.references :blob,     null: false, type: :bigint
+    t.datetime :created_at, precision: 6, null: false
+    t.index(
+      %i[record_type record_id name blob_id],
+      name: :index_active_storage_attachments_uniqueness,
+      unique: true
+    )
+    t.foreign_key :active_storage_blobs, column: :blob_id
+  end
+
+  create_table :active_storage_variant_records do |t|
+    t.belongs_to :blob, null: false, index: false, type: :bigint
+    t.string :variation_digest, null: false
+    t.index %i[blob_id variation_digest], name: :index_active_storage_variant_records_uniqueness, unique: true
+    t.foreign_key :active_storage_blobs, column: :blob_id
+  end
+
+  create_table :action_text_rich_texts do |t|
+    t.string :name, null: false
+    t.text       :body, size: :long
+    t.references :record, null: false, polymorphic: true, index: false, type: :bigint
+
+    t.timestamps
+
+    t.index %i[record_type record_id name], name: 'index_action_text_rich_texts_uniqueness', unique: true
   end
 end
 
