@@ -53,6 +53,13 @@ class PostWithEncryptedRichText < ActiveRecord::Base
   has_rich_text :content, encrypted: true, hoardable: true
 end
 
+class PostWithUnhoardableRichText < ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = 'posts'
+  belongs_to :user
+  has_rich_text :content
+end
+
 class User < ActiveRecord::Base
   include Hoardable::Model
   has_many :posts

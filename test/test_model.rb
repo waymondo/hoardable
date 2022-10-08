@@ -546,4 +546,10 @@ class TestModel < Minitest::Test
     post = rich_text_shared_assumptions(PostWithEncryptedRichText)
     assert post.content.encrypted_attribute?('body')
   end
+
+  it 'does not create versions without hoardable keyword' do
+    post = PostWithUnhoardableRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+    assert_instance_of ActionText::RichText, post.content
+    assert_raises(StandardError) { post.content.versions }
+  end
 end

@@ -110,7 +110,7 @@ end
 def generate_versions_table(table_name)
   Rails::Generators.invoke('hoardable:migration', [table_name, '--quiet'], destination_root: tmp_dir)
   Dir[File.join(tmp_dir, 'db/migrate/*.rb')].sort.each { |file| require file }
-  "Create#{table_name.classify.singularize}Versions".constantize.migrate(:up)
+  "Create#{table_name.delete(':').singularize}Versions".constantize.migrate(:up)
 end
 
 def run_install_migration
@@ -127,4 +127,4 @@ generate_versions_table('Library')
 generate_versions_table('Bookmark')
 generate_versions_table('Like')
 generate_versions_table('Profile')
-generate_versions_table('action_text_rich_text')
+generate_versions_table('ActionText::RichText')

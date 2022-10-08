@@ -51,4 +51,12 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
     run_generator ['book', '--foreign-key-type', 'foo']
     shared_book_assertions('foo')
   end
+
+  it 'generates migration with namespaced model name' do
+    run_generator ['ActionText::RichText']
+    assert_migration 'db/migrate/create_action_text_rich_text_versions.rb' do |migration|
+      assert_match(/create_table :action_text_rich_text_versions/, migration)
+      assert_match("t.bigint :hoardable_source_id", migration)
+    end
+  end
 end
