@@ -59,6 +59,12 @@ class TestModel < Minitest::Test
     assert version._during
   end
 
+  it 'knows how to dynamically create namespaced version classes' do
+    post = Hoardable::Post.create!(title: 'Hi', user: user)
+    post.update!(title: 'Bye')
+    assert_instance_of Hoardable::PostVersion, post.versions.first
+  end
+
   it 'can create multiple versions, and knows how to query at' do
     post
     datetime1 = DateTime.now
@@ -120,7 +126,7 @@ class TestModel < Minitest::Test
 
   it 'it won’t persist an inserted version if the save fails' do
     post
-    assert_raises(ActiveRecord::NotNullViolation) { post.update!(user: nil) }
+    assert_raises(ActiveRecord::RecordInvalid) { post.update!(user: nil) }
     post.reload
     assert post.user
     assert_equal post.versions.size, 0
@@ -518,5 +524,38 @@ class TestModel < Minitest::Test
     Hoardable.at(datetime3) do
       assert_nil user.profile
     end
+  end
+
+  it 'creates rich text record for versions' do
+    post = PostWithRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+    datetime = DateTime.now
+    post.update!(content: '<div>Goodbye Cruel World</div>')
+    assert_equal post.content.versions.size, 1
+    assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+    assert_equal post.content.versions.first.body.to_plain_text, 'Hello World'
+    Hoardable.at(datetime) do
+      assert_equal post.content.to_plain_text, 'Hello World'
+    end
+  end
+
+  if ActiveRecord.version >= ::Gem::Version.new('7.0')
+    it 'creates encrypted rich text record for versions' do
+      post = PostWithEncryptedRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+      datetime = DateTime.now
+      post.update!(content: '<div>Goodbye Cruel World</div>')
+      assert_equal post.content.versions.size, 1
+      assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+      assert_equal post.content.versions.first.body.to_plain_text, 'Hello World'
+      Hoardable.at(datetime) do
+        assert_equal post.content.to_plain_text, 'Hello World'
+      end
+      assert post.content.encrypted_attribute?('body')
+    end
+  end
+
+  it 'does not create versions without hoardable keyword' do
+    post = PostWithUnhoardableRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+    assert_instance_of ActionText::RichText, post.content
+    assert_raises(StandardError) { post.content.versions }
   end
 end

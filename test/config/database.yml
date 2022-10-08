@@ -1,0 +1,10 @@
+default: &default
+  adapter: 'postgresql'
+  database: 'hoardable'
+  host: 'localhost'
+  port: null
+  username: <%= ENV.fetch('POSTGRES_USER', nil) %>
+  password: <%= ENV.fetch('POSTGRES_PASSWORD', nil) %>
+
+test:
+  <<: *default
