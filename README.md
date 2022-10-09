@@ -393,7 +393,7 @@ class Post < ActiveRecord::Base
 end
 ```
 
-## ActionText
+## Action Text
 
 Hoardable provides support for ActiveRecord models with `has_rich_text`. First, you must create a
 temporal table for `ActionText::RichText`:
@@ -420,9 +420,9 @@ post = Post.create!(content: '<div>Hello World</div>')
 datetime = DateTime.current
 post.update!(content: '<div>Goodbye Cruel World</div>')
 post.content.versions.size # => 1
-assert_equal post.content.to_plain_text, 'Goodbye Cruel World'
+post.content.to_plain_text # => 'Goodbye Cruel World'
 Hoardable.at(datetime) do
-  assert_equal post.content.to_plain_text, 'Hello World'
+  post.content.to_plain_text # => 'Hello World'
 end
 ```
 
