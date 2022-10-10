@@ -4,6 +4,15 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
   def up
     execute(
       <<~SQL
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_type t WHERE t.typname = 'hoardable_operation'
+          ) THEN
+            CREATE TYPE hoardable_operation AS ENUM ('update', 'delete', 'insert');
+          END IF;
+        END
+        $$;
         CREATE OR REPLACE FUNCTION hoardable_version_prevent_update() RETURNS trigger
           LANGUAGE plpgsql AS
         $$BEGIN

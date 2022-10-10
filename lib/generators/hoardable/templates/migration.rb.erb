@@ -2,7 +2,6 @@
 
 class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
-    create_enum :hoardable_operation, %w[update delete insert]
     create_table :<%= singularized_table_name %>_versions, id: false, options: 'INHERITS (<%= table_name %>)' do |t|
       t.jsonb :_data
       t.tsrange :_during, null: false

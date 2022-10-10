@@ -23,7 +23,7 @@ module Hoardable
     end
 
     def create_migration_file
-      migration_template 'functions.rb.erb', 'db/migrate/install_hoardable.rb'
+      migration_template 'install.rb.erb', 'db/migrate/install_hoardable.rb'
     end
 
     def self.next_migration_number(dir)
