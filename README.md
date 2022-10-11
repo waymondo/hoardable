@@ -84,9 +84,9 @@ of that model. As we continue our example from above:
 ```
 $ irb
 >> Post
-=> Post(id: integer, body: text, user_id: integer, created_at: datetime)
+=> Post(id: integer, body: text, user_id: integer, created_at: datetime, hoardable_id: integer)
 >> PostVersion
-=> PostVersion(id: integer, body: text, user_id: integer, created_at: datetime, _data: jsonb, _during: tsrange, hoardable_source_id: integer)
+=> PostVersion(id: integer, body: text, user_id: integer, created_at: datetime, hoardable_id: integer, _data: jsonb, _during: tsrange)
 ```
 
 A `Post` now `has_many :versions`. With the default configuration, whenever an update and deletion
@@ -144,7 +144,7 @@ If you want to look-up the version of a record at a specific time, you can use t
 ```ruby
 post.at(1.day.ago) # => #<PostVersion>
 # or you can use the scope on the version model class
-PostVersion.at(1.day.ago).find_by(hoardable_source_id: post.id) # => #<PostVersion>
+PostVersion.at(1.day.ago).find_by(hoardable_id: post.id) # => #<PostVersion>
 ```
 
 The source model class also has an `.at` method:
@@ -357,7 +357,7 @@ Hoardable.at(datetime) do
   post.comments.size # => 2
   post.id # => 2
   post.version? # => true
-  post.hoardable_source_id # => 1
+  post.hoardable_id # => 1
 end
 ```
 
@@ -370,7 +370,7 @@ version, even though it is masquerading as a `Post`.
 
 If you are ever unsure if a Hoardable record is a "source" or a "version", you can be sure by
 calling `version?` on it. If you want to get the true original source record ID, you can call
-`hoardable_source_id`. 
+`hoardable_id`. 
 
 Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and want
 to untrash everything in a similar dependent manner. Whenever a hoardable version is created in a

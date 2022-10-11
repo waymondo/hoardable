@@ -7,6 +7,13 @@ module Hoardable
     extend ActiveSupport::Concern
 
     class_methods do
+      # This is needed to allow {FinderMethods} to work with the version class.
+      #
+      # @!visibility private
+      def version_class
+        self
+      end
+
       # This is needed to omit the pseudo row of 'tableoid' when using +ActiveRecord+’s +insert+.
       #
       # @!visibility private
@@ -20,6 +27,7 @@ module Hoardable
       belongs_to(
         :hoardable_source,
         inverse_of: :versions,
+        foreign_key: :hoardable_id,
         class_name: superclass.model_name
       )
 
@@ -113,24 +121,17 @@ module Hoardable
       _data&.dig('changes')
     end
 
-    # Returns the ID of the {SourceModel} that created this {VersionModel}
-    def hoardable_source_id
-      read_attribute('hoardable_source_id')
-    end
-
     private
 
     def insert_untrashed_source
       superscope = self.class.superclass.unscoped
-      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_id))
-      superscope.find(hoardable_source_id)
+      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_id))
+      superscope.find(hoardable_id)
     end
 
     def hoardable_source_attributes
       @hoardable_source_attributes ||=
-        attributes_before_type_cast
-        .without('hoardable_source_id')
-        .reject { |k, _v| k.start_with?('_') }
+        attributes_before_type_cast.without(self.class.column_names - self.class.superclass.column_names)
     end
   end
 end

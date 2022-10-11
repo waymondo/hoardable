@@ -35,3 +35,5 @@ Rails.initialize!
 
 require_relative 'support/models'
 require_relative 'support/database'
+
+ActiveRecord::Base.descendants.each(&:reset_column_information)

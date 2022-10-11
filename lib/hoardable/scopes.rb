@@ -65,7 +65,7 @@ module Hoardable
         include_versions.where(id: version_class.at(datetime).select('id')).or(
           exclude_versions
             .where("#{table_name}.created_at < ?", datetime)
-            .where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
+            .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime))
         ).hoardable
       }
     end
