@@ -51,7 +51,7 @@ module Hoardable
         dependent: nil,
         class_name: version_class.to_s,
         inverse_of: :hoardable_source,
-        foreign_key: :hoardable_source_id
+        foreign_key: :id
       )
     end
 
@@ -60,7 +60,7 @@ module Hoardable
     #
     # @return [Boolean]
     def trashed?
-      versions.trashed.only_most_recent.first&.hoardable_source_id == id
+      !self.class.exists?(id: id)
     end
 
     # Returns a boolean of whether the record is actually a +version+ cast as an instance of the
@@ -68,7 +68,8 @@ module Hoardable
     #
     # @return [Boolean]
     def version?
-      !!hoardable_client.hoardable_version_source_id
+      # TODO:
+      false
     end
 
     # Returns the +version+ at the supplied +datetime+ or +time+, or +self+ if there is none.
@@ -96,15 +97,6 @@ module Hoardable
       return unless (version = at(datetime))
 
       version.is_a?(version_class) ? version.revert! : self
-    end
-
-    # Returns the +hoardable_source_id+ that represents the original {SourceModel} record’s ID. Will
-    # return nil if the current {SourceModel} record is not an instance of a {VersionModel} cast as
-    # {SourceModel}.
-    #
-    # @return [Integer, nil]
-    def hoardable_source_id
-      hoardable_client.hoardable_version_source_id || id
     end
 
     delegate :version_class, to: :class

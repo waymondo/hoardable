@@ -62,18 +62,28 @@ module Hoardable
       scope :at, lambda { |datetime|
         raise(CreatedAtColumnMissingError, @klass.table_name) unless @klass.column_names.include?('created_at')
 
-        include_versions.where(id: version_class.at(datetime).select('id')).or(
+        include_versions.where(version_class.table_name => { _version_id: version_class.at(datetime).select('_version_id') }).or(
           exclude_versions
             .where("#{table_name}.created_at < ?", datetime)
-            .where.not(id: version_class.select(:hoardable_source_id).where(DURING_QUERY, datetime))
-        ).hoardable
+            .where.not(id: version_class.select('id').where(DURING_QUERY, datetime))
+        ) # .hoardable
       }
+    end
+
+    class_methods do
+      # @return Integer
+      #
+      # Returns the internal postgres object identifier for the model’s table. This returns
+      # different values based between the source and version model tables.
+      def tableoid
+        connection.execute("SELECT oid FROM pg_class WHERE relname = '#{table_name}'")[0]['oid']
+      end
     end
 
     private
 
-    def tableoid
-      connection.execute("SELECT oid FROM pg_class WHERE relname = '#{table_name}'")[0]['oid']
+    def _primary_key_constraints_hash
+      { @primary_key => id_in_database, 'tableoid' => self.class.tableoid }
     end
   end
 end

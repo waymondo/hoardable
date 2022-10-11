@@ -21,7 +21,7 @@ class Post < ActiveRecord::Base
   end
 end
 
-module Hoardable
+module Foo
   class Post < ::ActiveRecord::Base
     include Hoardable::Model
     self.table_name = 'posts'

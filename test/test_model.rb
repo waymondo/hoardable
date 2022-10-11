@@ -60,9 +60,9 @@ class TestModel < Minitest::Test
   end
 
   it 'knows how to dynamically create namespaced version classes' do
-    post = Hoardable::Post.create!(title: 'Hi', user: user)
+    post = Foo::Post.create!(title: 'Hi', user: user)
     post.update!(title: 'Bye')
-    assert_instance_of Hoardable::PostVersion, post.versions.first
+    assert_instance_of Foo::PostVersion, post.versions.first
   end
 
   it 'can create multiple versions, and knows how to query at' do
@@ -75,14 +75,14 @@ class TestModel < Minitest::Test
     post.destroy!
     datetime4 = DateTime.now
     assert_equal post.at(datetime1).title, 'Headline'
-    assert_equal PostVersion.at(datetime1).find_by(hoardable_source_id: post.id).title, 'Headline'
+    assert_equal PostVersion.at(datetime1).find_by(id: post.id).title, 'Headline'
     assert_equal post.at(datetime2).title, 'New Headline'
-    assert_equal PostVersion.at(datetime2).find_by(hoardable_source_id: post.id).title, 'New Headline'
+    assert_equal PostVersion.at(datetime2).find_by(id: post.id).title, 'New Headline'
     assert_equal post.at(datetime3).title, 'Revert'
-    assert_equal PostVersion.at(datetime3).find_by(hoardable_source_id: post.id).title, 'Revert'
+    assert_equal PostVersion.at(datetime3).find_by(id: post.id).title, 'Revert'
     assert_equal post.trashed?, true
     assert_equal post.at(datetime4).title, 'Revert'
-    assert_nil PostVersion.at(datetime4).find_by(hoardable_source_id: post.id)
+    assert_nil PostVersion.at(datetime4).find_by(id: post.id)
   end
 
   it 'can revert to version at a datetime' do
@@ -148,13 +148,13 @@ class TestModel < Minitest::Test
     assert post.trashed?
     assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
     version = PostVersion.last
-    assert_equal version.hoardable_source_id, post_id
+    assert_equal version.id, post_id
     untrashed_post = version.untrash!
     assert_equal untrashed_post.attributes.without('updated_at'), attributes
     refute post.reload.trashed?
   end
 
-  it 'can trash and untrash a model multiple times, with each version creating unique post version IDs' do
+  it 'can trash and untrash a model multiple times' do
     post_id = post.id
     Array.new(3) do
       post.reload.destroy!
@@ -162,7 +162,8 @@ class TestModel < Minitest::Test
       version.untrash!
     end
     assert_equal post.reload.id, post_id
-    assert_equal PostVersion.pluck('id').uniq.count, 6
+    assert_equal PostVersion.pluck('id').uniq, [post_id]
+    assert_equal PostVersion.pluck('hoardable_version_id').uniq.count, 6
   end
 
   it 'can hook into after_reverted and after_untrashed callbacks' do
@@ -311,7 +312,7 @@ class TestModel < Minitest::Test
     post.comments.create!(body: 'Comment 1')
     post.comments.create!(body: 'Comment 2')
     post.destroy!
-    PostVersion.trashed.find_by(hoardable_source_id: post.id)
+    PostVersion.trashed.find_by(id: post.id)
   end
 
   it 'recursively creates trashed versions with shared event_uuid' do
@@ -337,8 +338,12 @@ class TestModel < Minitest::Test
   end
 
   it 'creates a version class with a foreign key type that matches the primary key' do
-    assert_equal Post.version_class.columns.find { |col| col.name == 'hoardable_source_id' }.sql_type, 'bigint'
-    assert_equal Book.version_class.columns.find { |col| col.name == 'hoardable_source_id' }.sql_type, 'uuid'
+    %w[id _version_id].each do |column_name|
+      assert_equal Post.version_class.columns.find { |col| col.name == column_name }.sql_type, 'bigint'
+    end
+    %w[id _version_id].each do |column_name|
+      assert_equal Book.version_class.columns.find { |col| col.name == column_name }.sql_type, 'uuid'
+    end
   end
 
   it 'can make versions of resources with UUID primary keys' do
@@ -351,7 +356,7 @@ class TestModel < Minitest::Test
     assert_equal book.versions.last.title, original_title
     assert_equal book.at(datetime).title, original_title
     book.destroy!
-    untrashed_book = BookVersion.trashed.find_by(hoardable_source_id: book_id).untrash!
+    untrashed_book = BookVersion.trashed.find_by(id: book_id).untrash!
     assert_equal untrashed_book.title, new_title
     assert_equal untrashed_book.id, book_id
   end

@@ -18,7 +18,7 @@ module Hoardable
 
     def hoardable_source_ids(ids)
       ids.map do |id|
-        version_class.where(hoardable_source_id: id).select(primary_key).ids[0] || id
+        version_class.where(primary_key => id).select(primary_key).ids[0] || id
       end
     end
   end

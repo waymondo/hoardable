@@ -13,8 +13,8 @@ module Hoardable
     delegate :version_class, to: :source_record
 
     def insert_hoardable_version(operation, &block)
-      version = version_class.insert(initialize_version_attributes(operation), returning: :id)
-      version_id = version[0]['id']
+      version = version_class.insert(initialize_version_attributes(operation), returning: :_version_id)
+      version_id = version[0]['_version_id']
       source_record.instance_variable_set('@hoardable_version', version_class.find(version_id))
       source_record.run_callbacks(:versioned, &block)
     end
@@ -23,20 +23,10 @@ module Hoardable
       Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query('SELECT gen_random_uuid();')[0][0]
     end
 
-    def hoardable_version_source_id
-      @hoardable_version_source_id ||= query_hoardable_version_source_id
-    end
-
-    def query_hoardable_version_source_id
-      primary_key = source_record.class.primary_key
-      version_class.where(primary_key => source_record.read_attribute(primary_key)).pluck('hoardable_source_id')[0]
-    end
-
     def initialize_version_attributes(operation)
-      source_record.attributes_before_type_cast.without('id').merge(
+      source_record.attributes_before_type_cast.merge(
         source_record.changes.transform_values { |h| h[0] },
         {
-          'hoardable_source_id' => source_record.id,
           '_event_uuid' => find_or_initialize_hoardable_event_uuid,
           '_operation' => operation,
           '_data' => initialize_hoardable_data.merge(changes: source_record.changes),

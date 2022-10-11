@@ -15,12 +15,12 @@ module Hoardable
       private
 
       def hoardable_scope
-        if Hoardable.instance_variable_get('@at') &&
-           (hoardable_source_id = @association.owner.hoardable_source_id)
-          @association.scope.rewhere(@association.reflection.foreign_key => hoardable_source_id)
-        else
+        # if Hoardable.instance_variable_get('@at') &&
+        #    (hoardable_source_id = @association.owner.hoardable_source_id)
+        #   @association.scope.rewhere(@association.reflection.foreign_key => hoardable_source_id)
+        # else
           @association.scope
-        end
+        # end
       end
     end
     private_constant :HasManyExtension

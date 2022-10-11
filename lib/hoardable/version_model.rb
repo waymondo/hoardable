@@ -15,15 +15,25 @@ module Hoardable
       end
     end
 
+    # This corrects the lookup of {hoardable_source} by using the actual ID column instead of
+    # reading the +primary_key+ column.
+    #
+    # @!visibility private
+    def id
+      read_attribute_before_type_cast('id')
+    end
+
     included do
+      self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
+      self.primary_key = '_version_id'
+
       # A +version+ belongs to it’s parent +ActiveRecord+ source.
       belongs_to(
         :hoardable_source,
+        foreign_key: :id,
         inverse_of: :versions,
         class_name: superclass.model_name
       )
-
-      self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
       alias_attribute :hoardable_operation, :_operation
@@ -113,24 +123,16 @@ module Hoardable
       _data&.dig('changes')
     end
 
-    # Returns the ID of the {SourceModel} that created this {VersionModel}
-    def hoardable_source_id
-      read_attribute('hoardable_source_id')
-    end
-
     private
 
     def insert_untrashed_source
       superscope = self.class.superclass.unscoped
-      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_source_id))
-      superscope.find(hoardable_source_id)
+      superscope.insert(hoardable_source_attributes)
+      superscope.find(id)
     end
 
     def hoardable_source_attributes
-      @hoardable_source_attributes ||=
-        attributes_before_type_cast
-        .without('hoardable_source_id')
-        .reject { |k, _v| k.start_with?('_') }
+      @hoardable_source_attributes ||= attributes_before_type_cast.reject { |k, _v| k.start_with?('_') }
     end
   end
 end

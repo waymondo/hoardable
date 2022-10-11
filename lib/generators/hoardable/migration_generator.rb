@@ -26,6 +26,14 @@ module Hoardable
       def singularized_table_name
         @singularized_table_name ||= table_name.singularize
       end
+
+      def version_id_sequence
+        if foreign_key_type == 'uuid'
+          'gen_random_uuid()'
+        else
+          "nextval('#{table_name}_id_seq'::regclass)"
+        end
+      end
     end
   end
 end
