@@ -98,6 +98,10 @@ module Hoardable
       version.is_a?(version_class) ? version.revert! : self
     end
 
+    def hoardable_id
+      read_attribute('hoardable_id')
+    end
+
     delegate :version_class, to: :class
 
     private

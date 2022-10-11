@@ -467,7 +467,6 @@ class TestModel < Minitest::Test
   end
 
   it 'can return hoardable records via a has many through relationship' do
-    skip
     post = Post.create!(user: user, title: 'Title')
     comment = post.comments.create!(body: 'Comment')
     comment.likes.create!
@@ -483,7 +482,6 @@ class TestModel < Minitest::Test
       comment = post.comments.first
       assert_equal Like.all.size, 2
       assert_equal comment.likes.size, 2
-      # TODO: this does not work yet
       assert_equal post.likes.size, 2
     end
   end
