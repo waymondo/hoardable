@@ -15,10 +15,11 @@ module Hoardable
       private
 
       def hoardable_scope
-        if Hoardable.instance_variable_get('@at') &&
-           (hoardable_id = @association.owner.hoardable_id)
+        if Hoardable.instance_variable_get('@at') && (hoardable_id = @association.owner.hoardable_id)
           if @association.reflection.is_a?(ActiveRecord::Reflection::ThroughReflection)
-            @association.reflection.source_reflection.instance_variable_set('@active_record_primary_key', 'hoardable_id')
+            @association.reflection.source_reflection.instance_variable_set(
+              '@active_record_primary_key', 'hoardable_id'
+            )
           end
           @association.scope.rewhere(@association.reflection.foreign_key => hoardable_id)
         else
