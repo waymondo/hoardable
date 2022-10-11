@@ -11,14 +11,14 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
   def shared_post_assertions
     assert_migration 'db/migrate/create_post_versions.rb' do |migration|
       assert_match(/create_table :post_versions/, migration)
-      assert_match(/t.bigint :hoardable_source_id/, migration)
+      assert_match(/:hoardable_id, :bigint/, migration)
     end
   end
 
   def shared_book_assertions(foreign_key_type = 'uuid')
     assert_migration 'db/migrate/create_book_versions.rb' do |migration|
       assert_match(/create_table :book_versions/, migration)
-      assert_match("t.#{foreign_key_type} :hoardable_source_id", migration)
+      assert_match(":hoardable_id, :#{foreign_key_type}", migration)
     end
   end
 
@@ -56,7 +56,7 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
     run_generator ['ActionText::RichText']
     assert_migration 'db/migrate/create_action_text_rich_text_versions.rb' do |migration|
       assert_match(/create_table :action_text_rich_text_versions/, migration)
-      assert_match('t.bigint :hoardable_source_id', migration)
+      assert_match(':hoardable_id, :bigint', migration)
     end
   end
 end

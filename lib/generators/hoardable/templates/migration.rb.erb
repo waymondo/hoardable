@@ -2,12 +2,13 @@
 
 class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
+    add_column :<%= table_name %>, :hoardable_id, :<%= foreign_key_type %>
+    add_index :<%= table_name %>, :hoardable_id
     create_table :<%= singularized_table_name %>_versions, id: false, options: 'INHERITS (<%= table_name %>)' do |t|
       t.jsonb :_data
       t.tsrange :_during, null: false
       t.uuid :_event_uuid, null: false, index: true
       t.column :_operation, :hoardable_operation, null: false, index: true
-      t.<%= foreign_key_type %> :hoardable_source_id, null: false, index: true
     end
     reversible do |dir|
       dir.up do
@@ -16,6 +17,9 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
             CREATE TRIGGER <%= singularized_table_name %>_versions_prevent_update
               BEFORE UPDATE ON <%= singularized_table_name %>_versions FOR EACH ROW
               EXECUTE PROCEDURE hoardable_version_prevent_update();
+            CREATE TRIGGER <%= table_name %>_set_hoardable_id
+              BEFORE INSERT ON <%= table_name %> FOR EACH ROW
+              EXECUTE PROCEDURE hoardable_source_set_id();
           SQL
         )
       end
@@ -24,6 +28,8 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
           <<~SQL
             DROP TRIGGER <%= singularized_table_name %>_versions_prevent_update
               ON <%= singularized_table_name %>_versions;
+            DROP TRIGGER <%= table_name %>_set_hoardable_id
+              ON <%= table_name %>;
           SQL
         )
       end
@@ -31,7 +37,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     add_index(:<%= singularized_table_name %>_versions, :id, unique: true)
     add_index(
       :<%= singularized_table_name %>_versions,
-      %i[_during hoardable_source_id],
+      %i[_during hoardable_id],
       name: 'idx_<%= singularized_table_name %>_versions_temporally'
     )
   end

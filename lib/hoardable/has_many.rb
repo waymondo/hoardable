@@ -5,7 +5,7 @@ module Hoardable
   module HasMany
     extend ActiveSupport::Concern
 
-    # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_source_id+ as
+    # An +ActiveRecord+ extension that allows looking up {VersionModel}s by +hoardable_id+ as
     # if they were {SourceModel}s when using {Hoardable#at}.
     module HasManyExtension
       def scope
@@ -16,8 +16,8 @@ module Hoardable
 
       def hoardable_scope
         if Hoardable.instance_variable_get('@at') &&
-           (hoardable_source_id = @association.owner.hoardable_source_id)
-          @association.scope.rewhere(@association.reflection.foreign_key => hoardable_source_id)
+           (hoardable_id = @association.owner.hoardable_id)
+          @association.scope.rewhere(@association.reflection.foreign_key => hoardable_id)
         else
           @association.scope
         end

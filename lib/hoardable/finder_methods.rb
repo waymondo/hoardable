@@ -7,18 +7,18 @@ module Hoardable
   # with the class method +hoardable+.
   module FinderMethods
     def find_one(id)
-      super(hoardable_source_ids([id])[0])
+      super(hoardable_ids([id])[0])
     end
 
     def find_some(ids)
-      super(hoardable_source_ids(ids))
+      super(hoardable_ids(ids))
     end
 
     private
 
-    def hoardable_source_ids(ids)
+    def hoardable_ids(ids)
       ids.map do |id|
-        version_class.where(hoardable_source_id: id).select(primary_key).ids[0] || id
+        version_class.where(hoardable_id: id).select(primary_key).ids[0] || id
       end
     end
   end
