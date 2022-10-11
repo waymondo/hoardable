@@ -6,7 +6,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
       t.jsonb :_data
       t.tsrange :_during, null: false
       t.uuid :_event_uuid, null: false, index: true
-      t.enum :_operation, enum_type: 'hoardable_operation', null: false, index: true
+      t.column :_operation, :hoardable_operation, null: false, index: true
       t.<%= foreign_key_type %> :hoardable_source_id, null: false, index: true
     end
     reversible do |dir|
