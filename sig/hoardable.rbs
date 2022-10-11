@@ -8,6 +8,7 @@ module Hoardable
   HOARDABLE_CALLBACKS_ENABLED: ^(untyped) -> untyped
   HOARDABLE_SAVE_TRASH: ^(untyped) -> untyped
   HOARDABLE_VERSION_UPDATES: ^(untyped) -> untyped
+  SUPPORTS_ENCRYPTED_ACTION_TEXT: untyped
   self.@context: Hash[untyped, untyped]
   self.@config: untyped
   self.@at: nil
@@ -17,12 +18,15 @@ module Hoardable
   def self.at: (untyped datetime) -> untyped
   def self.logger: -> untyped
 
+  class Engine
+  end
+
   module FinderMethods
     def find_one: (untyped id) -> untyped
     def find_some: (untyped ids) -> untyped
 
     private
-    def hoardable_source_ids: ([untyped] ids) -> Array[untyped]
+    def hoardable_ids: ([untyped] ids) -> Array[untyped]
   end
 
   module Scopes
@@ -44,15 +48,13 @@ module Hoardable
   end
 
   class DatabaseClient
-    @hoardable_version_source_id: untyped
-
     attr_reader source_record: SourceModel
     def initialize: (SourceModel source_record) -> void
     def insert_hoardable_version: (untyped operation) -> untyped
+    def source_primary_key: -> untyped
     def find_or_initialize_hoardable_event_uuid: -> untyped
-    def hoardable_version_source_id: -> untyped
-    def query_hoardable_version_source_id: -> untyped
     def initialize_version_attributes: (untyped operation) -> untyped
+    def source_attributes_without_primary_key: -> untyped
     def initialize_temporal_range: -> Range
     def initialize_hoardable_data: -> untyped
     def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
@@ -71,7 +73,7 @@ module Hoardable
     def at: (untyped datetime) -> SourceModel?
     def version_at: (untyped datetime) -> untyped
     def revert_to!: (untyped datetime) -> SourceModel?
-    def hoardable_source_id: -> untyped
+    def hoardable_id: -> untyped
 
     private
     def hoardable_client: -> DatabaseClient
@@ -82,18 +84,16 @@ module Hoardable
   end
 
   module VersionModel
-    @hoardable_source_attributes: untyped
-
     def revert!: -> untyped
     def untrash!: -> untyped
     def changes: -> untyped
-    def hoardable_source_id: -> untyped
 
     private
     def insert_untrashed_source: -> untyped
     def hoardable_source_attributes: -> untyped
 
     public
+    def version_class: -> VersionModel
     def scope_attributes: -> untyped
   end
 
@@ -108,14 +108,14 @@ module Hoardable
   end
 
   module Associations
-    @hoardable_association_overrider: Overrider
+    include HasRichText
+    include BelongsTo
+    include HasOne
+    include HasMany
+  end
 
-    def belongs_to: (*untyped args) -> nil
-    def has_one: (*untyped args) -> nil
+  module HasMany
     def has_many: (*untyped args) -> untyped
-
-    private
-    def hoardable_association_overrider: -> Overrider
 
     module HasManyExtension
       @scope: untyped
@@ -126,14 +126,21 @@ module Hoardable
       private
       def hoardable_scope: -> untyped
     end
+  end
 
-    class Overrider
-      attr_reader klass: Associations
-      def initialize: (Associations klass) -> void
-      def override_belongs_to: (untyped name) -> untyped
-      def override_has_one: (untyped name) -> untyped
-      def override_has_many: (untyped name) -> untyped
-    end
+  module BelongsTo
+    def belongs_to: (*untyped args) -> nil
+
+    private
+    def hoardable_override_belongs_to: (untyped name) -> untyped
+  end
+
+  module HasOne
+    def has_one: (*untyped args) -> nil
+  end
+
+  module HasRichText
+    def has_rich_text: (untyped name, ?encrypted: false, ?hoardable: false) -> nil
   end
 
   class MigrationGenerator
@@ -141,7 +148,7 @@ module Hoardable
 
     def create_versions_table: -> untyped
     def foreign_key_type: -> String
-    def migration_template_name: -> String
+    def primary_key: -> String
     def singularized_table_name: -> untyped
   end
 
@@ -149,5 +156,13 @@ module Hoardable
     def create_initializer_file: -> untyped
     def create_migration_file: -> untyped
     def self.next_migration_number: (untyped dir) -> untyped
+  end
+
+  class RichText
+    include Model
+  end
+
+  class EncryptedRichText
+    include Model
   end
 end
