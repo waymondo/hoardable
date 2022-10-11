@@ -45,7 +45,7 @@ module Hoardable
       # Returns only trashed +versions+ that are currently orphans.
       scope :trashed, lambda {
         left_outer_joins(:hoardable_source)
-          .where(superclass.table_name => { id: nil })
+          .where(superclass.table_name => { superclass.primary_key => nil })
           .where(_operation: 'delete')
       }
 
@@ -86,7 +86,7 @@ module Hoardable
 
       transaction do
         hoardable_source.tap do |reverted|
-          reverted.update!(hoardable_source_attributes.without('id'))
+          reverted.update!(hoardable_source_attributes.without(self.class.superclass.primary_key))
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
         end
@@ -125,13 +125,12 @@ module Hoardable
 
     def insert_untrashed_source
       superscope = self.class.superclass.unscoped
-      superscope.insert(hoardable_source_attributes.merge('id' => hoardable_id))
+      superscope.insert(hoardable_source_attributes.merge(superscope.primary_key => hoardable_id))
       superscope.find(hoardable_id)
     end
 
     def hoardable_source_attributes
-      @hoardable_source_attributes ||=
-        attributes_before_type_cast.without(self.class.column_names - self.class.superclass.column_names)
+      attributes_before_type_cast.without(self.class.column_names - self.class.superclass.column_names)
     end
   end
 end

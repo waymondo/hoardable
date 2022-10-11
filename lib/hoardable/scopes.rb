@@ -62,7 +62,7 @@ module Hoardable
       scope :at, lambda { |datetime|
         raise(CreatedAtColumnMissingError, @klass.table_name) unless @klass.column_names.include?('created_at')
 
-        include_versions.where(id: version_class.at(datetime).select('id')).or(
+        include_versions.where(id: version_class.at(datetime).select(@klass.primary_key)).or(
           exclude_versions
             .where("#{table_name}.created_at < ?", datetime)
             .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime))

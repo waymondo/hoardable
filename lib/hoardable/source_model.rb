@@ -60,7 +60,7 @@ module Hoardable
     #
     # @return [Boolean]
     def trashed?
-      !self.class.exists?(id: id)
+      !self.class.exists?(self.class.primary_key => id)
     end
 
     # Returns a boolean of whether the record is actually a +version+ cast as an instance of the

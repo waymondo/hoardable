@@ -44,6 +44,12 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
+  create_table :tags, id: false do |t|
+    t.string :name
+    t.integer :primary_id, null: false, primary_key: true
+    t.timestamps
+  end
+
   create_table :comments do |t|
     t.text :body
     t.bigint :post_id, null: false, index: true
@@ -121,10 +127,14 @@ end
 
 run_install_migration
 generate_versions_table('Post')
+generate_versions_table('User')
 generate_versions_table('Comment')
 generate_versions_table('Book')
 generate_versions_table('Library')
 generate_versions_table('Bookmark')
 generate_versions_table('Like')
 generate_versions_table('Profile')
+generate_versions_table('Tag')
 generate_versions_table('ActionText::RichText')
+
+ActiveRecord::Base.descendants.each(&:reset_column_information)

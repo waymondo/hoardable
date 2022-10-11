@@ -96,6 +96,11 @@ class Book < ActiveRecord::Base
   belongs_to :library
 end
 
+class Tag < ActiveRecord::Base
+  include Hoardable::Model
+  self.primary_key = 'primary_id'
+end
+
 class Library < ActiveRecord::Base
   include Hoardable::Model
   has_many :books, dependent: :destroy

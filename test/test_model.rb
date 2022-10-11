@@ -65,6 +65,14 @@ class TestModel < Minitest::Test
     assert_instance_of Hoardable::PostVersion, post.versions.first
   end
 
+  it 'can assign hoardable_id when primary key is different' do
+    tag = Tag.create!(name: 'tug')
+    tag.update!(name: 'tag')
+    tag_version = tag.versions.last
+    assert_equal tag_version.hoardable_id, tag.id
+    refute_equal tag_version.id, tag.id
+  end
+
   it 'can create multiple versions, and knows how to query at' do
     post
     datetime1 = DateTime.now

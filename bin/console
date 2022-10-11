@@ -1,9 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'active_support/concern'
-require 'active_record'
-require 'hoardable'
 require 'irb'
+require_relative '../test/test_helper'
+
 IRB.start(__FILE__)

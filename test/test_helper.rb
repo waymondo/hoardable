@@ -4,7 +4,6 @@ ENV['RAILS_ENV'] ||= 'test'
 
 require 'bundler/setup'
 require 'debug'
-require 'active_support/concern'
 require 'rails'
 require 'minitest/autorun'
 require 'minitest/spec'
@@ -35,5 +34,3 @@ Rails.initialize!
 
 require_relative 'support/models'
 require_relative 'support/database'
-
-ActiveRecord::Base.descendants.each(&:reset_column_information)

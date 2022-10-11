@@ -23,6 +23,12 @@ module Hoardable
         'bigint'
       end
 
+      def primary_key
+        options[:primary_key] || class_name.singularize.constantize.primary_key
+      rescue StandardError
+        'id'
+      end
+
       def singularized_table_name
         @singularized_table_name ||= table_name.singularize
       end

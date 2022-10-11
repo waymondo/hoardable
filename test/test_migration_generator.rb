@@ -59,4 +59,11 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
       assert_match(':hoardable_id, :bigint', migration)
     end
   end
+
+  it 'generates unique index that matches primary key' do
+    run_generator ['Tag']
+    assert_migration 'db/migrate/create_tag_versions.rb' do |migration|
+      assert_match(':tag_versions, :primary_id, unique: true', migration)
+    end
+  end
 end

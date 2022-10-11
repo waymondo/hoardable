@@ -13,10 +13,14 @@ module Hoardable
     delegate :version_class, to: :source_record
 
     def insert_hoardable_version(operation, &block)
-      version = version_class.insert(initialize_version_attributes(operation), returning: :id)
-      version_id = version[0]['id']
+      version = version_class.insert(initialize_version_attributes(operation), returning: source_primary_key.to_sym)
+      version_id = version[0][source_primary_key]
       source_record.instance_variable_set('@hoardable_version', version_class.find(version_id))
       source_record.run_callbacks(:versioned, &block)
+    end
+
+    def source_primary_key
+      source_record.class.primary_key
     end
 
     def find_or_initialize_hoardable_event_uuid
@@ -24,7 +28,7 @@ module Hoardable
     end
 
     def initialize_version_attributes(operation)
-      source_record.attributes_before_type_cast.without('id').merge(
+      source_attributes_without_primary_key.merge(
         source_record.changes.transform_values { |h| h[0] },
         {
           'hoardable_id' => source_record.id,
@@ -34,6 +38,10 @@ module Hoardable
           '_during' => initialize_temporal_range
         }
       )
+    end
+
+    def source_attributes_without_primary_key
+      source_record.attributes_before_type_cast.without(source_primary_key)
     end
 
     def initialize_temporal_range

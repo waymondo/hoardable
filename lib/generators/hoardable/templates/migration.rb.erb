@@ -34,7 +34,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
         )
       end
     end
-    add_index(:<%= singularized_table_name %>_versions, :id, unique: true)
+    add_index(:<%= singularized_table_name %>_versions, :<%= primary_key %>, unique: true)
     add_index(
       :<%= singularized_table_name %>_versions,
       %i[_during hoardable_id],
