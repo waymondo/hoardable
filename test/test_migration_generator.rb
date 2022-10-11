@@ -66,4 +66,11 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
       assert_match(':tag_versions, :primary_id, unique: true', migration)
     end
   end
+
+  it 'seeds hoardable_id during migration' do
+    tag = Tag.create!(name: 'one')
+    assert_nil tag.hoardable_id
+    run_generator ['Tag']
+    refute_nil tag.reload.hoardable_id
+  end
 end

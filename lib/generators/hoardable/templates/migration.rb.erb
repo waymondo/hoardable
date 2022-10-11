@@ -14,6 +14,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
       dir.up do
         execute(
           <<~SQL
+            UPDATE <%= table_name %> SET hoardable_id = <%= primary_key %>;
             CREATE TRIGGER <%= singularized_table_name %>_versions_prevent_update
               BEFORE UPDATE ON <%= singularized_table_name %>_versions FOR EACH ROW
               EXECUTE PROCEDURE hoardable_version_prevent_update();
@@ -34,6 +35,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
         )
       end
     end
+    change_column_null :<%= table_name %>, :hoardable_id, false
     add_index(:<%= singularized_table_name %>_versions, :<%= primary_key %>, unique: true)
     add_index(
       :<%= singularized_table_name %>_versions,
