@@ -14,6 +14,7 @@ module Hoardable
         end
         return unless hoardable
 
+        'ActionText::RichText'.constantize # forces ActionText::RichText to load if it has not
         reflection_options = reflections["rich_text_#{name}"].options
         reflection_options[:class_name] = reflection_options[:class_name].sub(/ActionText/, 'Hoardable')
       end
