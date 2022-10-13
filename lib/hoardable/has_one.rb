@@ -15,12 +15,23 @@ module Hoardable
 
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
-            return super unless (at = Hoardable.instance_variable_get('@at'))
+            reflection = _reflections['#{name}']
+            return if reflection.klass.name.match?(/^ActionText/)
 
-            super&.version_at(at) ||
-              _reflections['profile'].klass.where(_reflections['profile'].foreign_key => id).first
+            super&.at(hoardable_at_timestamp) ||
+              reflection.klass.at(hoardable_at_timestamp).find_by(reflection.foreign_key => hoardable_id)
           end
         RUBY
+      end
+    end
+
+    included do
+      private
+
+      def hoardable_at_timestamp
+        Hoardable.instance_variable_get('@at') || updated_at
+      rescue NameError
+        raise(UpdatedAtColumnMissingError, self.class.table_name)
       end
     end
   end
