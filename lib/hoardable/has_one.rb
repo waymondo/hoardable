@@ -16,7 +16,7 @@ module Hoardable
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
             reflection = _reflections['#{name}']
-            return if reflection.klass.name.match?(/^ActionText/)
+            return super if reflection.klass.name.match?(/^ActionText/)
 
             super&.at(hoardable_at_timestamp) ||
               reflection.klass.at(hoardable_at_timestamp).find_by(reflection.foreign_key => hoardable_id)
