@@ -46,6 +46,7 @@ module Hoardable
 
     included do
       include Associations
+      attr_readonly :hoardable_id
       define_model_callbacks :versioned, only: :after
       define_model_callbacks :reverted, only: :after
       define_model_callbacks :untrashed, only: :after

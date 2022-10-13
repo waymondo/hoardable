@@ -21,6 +21,9 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
             CREATE TRIGGER <%= table_name %>_set_hoardable_id
               BEFORE INSERT ON <%= table_name %> FOR EACH ROW
               EXECUTE PROCEDURE hoardable_source_set_id();
+            CREATE TRIGGER <%= table_name %>_prevent_update_hoardable_id
+              BEFORE UPDATE ON <%= table_name %> FOR EACH ROW
+              EXECUTE PROCEDURE hoardable_prevent_update_id();
           SQL
         )
       end
@@ -30,6 +33,8 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
             DROP TRIGGER <%= singularized_table_name %>_versions_prevent_update
               ON <%= singularized_table_name %>_versions;
             DROP TRIGGER <%= table_name %>_set_hoardable_id
+              ON <%= table_name %>;
+            DROP TRIGGER <%= table_name %>_prevent_update_hoardable_id
               ON <%= table_name %>;
           SQL
         )

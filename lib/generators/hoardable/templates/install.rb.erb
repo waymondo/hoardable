@@ -13,6 +13,7 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
           END IF;
         END
         $$;
+
         CREATE OR REPLACE FUNCTION hoardable_source_set_id() RETURNS trigger
           LANGUAGE plpgsql AS
         $$
@@ -31,6 +32,16 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
           NEW.hoardable_id = _id;
           RETURN NEW;
         END;$$;
+
+        CREATE OR REPLACE FUNCTION hoardable_prevent_update_id() RETURNS trigger
+          LANGUAGE plpgsql AS
+        $$BEGIN
+          IF NEW.hoardable_id <> OLD.hoardable_id THEN
+            RAISE EXCEPTION 'hoardable id cannot be updated';
+          END IF;
+          RETURN NEW;
+        END;$$;
+
         CREATE OR REPLACE FUNCTION hoardable_version_prevent_update() RETURNS trigger
           LANGUAGE plpgsql AS
         $$BEGIN
@@ -46,6 +57,7 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
         DROP TYPE IF EXISTS hoardable_operation;
         DROP FUNCTION IF EXISTS hoardable_version_prevent_update();
         DROP FUNCTION IF EXISTS hoardable_source_set_id();
+        DROP FUNCTION IF EXISTS hoardable_prevent_update_id();
       SQL
     )
   end

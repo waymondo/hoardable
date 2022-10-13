@@ -112,6 +112,16 @@ class TestModel < Minitest::Test
     assert_raises(Hoardable::Error) { post.revert_to!(DateTime.now + 1.day) }
   end
 
+  it 'cannot change hoardable_id' do
+    post.update!(hoardable_id: 123)
+    assert_equal post.reload.hoardable_id, post.id
+    assert_raises(ActiveRecord::ActiveRecordError) { post.update_column(:hoardable_id, 123) }
+    assert_equal post.reload.hoardable_id, post.id
+    assert_raises(ActiveRecord::StatementInvalid) do
+      post.class.connection.execute('UPDATE posts SET hoardable_id = 123')
+    end
+  end
+
   it 'creates a version that is aware of relationships on parent model' do
     update_post
     version = post.versions.first
