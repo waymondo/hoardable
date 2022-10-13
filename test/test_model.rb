@@ -554,6 +554,16 @@ class TestModel < Minitest::Test
     end
   end
 
+  it 'can access rich text record through version' do
+    post = PostWithRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
+    post.update!(content: '<div>Goodbye Cruel World</div>')
+    post.update!(title: 'New Title')
+    post.update!(content: '<div>Ahh, Welcome Back</div>')
+    assert_equal post.versions.first.content.body.to_plain_text, 'Hello World'
+    assert_equal post.versions.second.content.body.to_plain_text, 'Goodbye Cruel World'
+    assert_equal post.versions.third.content.body.to_plain_text, 'Goodbye Cruel World'
+  end
+
   if ActiveRecord.version >= ::Gem::Version.new('7.0')
     it 'creates encrypted rich text record for versions' do
       post = PostWithEncryptedRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)

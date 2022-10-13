@@ -15,4 +15,16 @@ module Hoardable
       )
     end
   end
+
+  # An error to be raised when 'updated_at' columns are missing for {Hoardable::Model}s.
+  class UpdatedAtColumnMissingError < Error
+    def initialize(source_table_name)
+      super(
+        <<~LOG
+          '#{source_table_name}' does not have an 'updated_at' column, so Hoardable cannot look up
+          associated record versions with it. Add an 'updated_at' column to '#{source_table_name}'.
+        LOG
+      )
+    end
+  end
 end
