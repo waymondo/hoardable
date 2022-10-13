@@ -37,6 +37,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     end
     change_column_null :<%= table_name %>, :hoardable_id, false
     add_index :<%= singularized_table_name %>_versions, :<%= primary_key %>, unique: true
+    add_index :<%= singularized_table_name %>_versions, :hoardable_id
     add_index :<%= singularized_table_name %>_versions, :_during
   end
 end
