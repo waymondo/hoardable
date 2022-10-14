@@ -577,19 +577,34 @@ class TestModel < Minitest::Test
       end
       assert post.content.encrypted_attribute?('body')
     end
+  end
 
-    it 'returns correct polymoprhic association via temporal has one relationship' do
-      user = User.create!(name: 'Joe Schmoe', bio: '<div>Bio</div>')
-      post = PostWithRichText.create!(title: 'Title', content: '<div>Content</div>', user: user)
-      datetime = DateTime.now
-      user.update!(bio: '<div>Still Bio</div>')
-      post.update!(content: '<div>Still Content</div>')
-      assert_equal post.id, user.id
-      assert_equal post.versions.last.content.to_plain_text, 'Content'
-      assert_equal user.versions.last.bio.to_plain_text, 'Bio'
-      assert_equal post.at(datetime).content.to_plain_text, 'Content'
-      assert_equal user.at(datetime).bio.to_plain_text, 'Bio'
-    end
+  it 'returns correct polymoprhic association via temporal has one relationship' do
+    user = User.create!(name: 'Joe Schmoe', bio: '<div>Bio</div>')
+    post = PostWithRichText.create!(title: 'Title', content: '<div>Content</div>', user: user)
+    datetime = DateTime.now
+    user.update!(bio: '<div>Still Bio</div>')
+    post.update!(content: '<div>Still Content</div>')
+    assert_equal post.id, user.id
+    assert_equal post.versions.last.content.to_plain_text, 'Content'
+    assert_equal user.versions.last.bio.to_plain_text, 'Bio'
+    assert_equal post.at(datetime).content.to_plain_text, 'Content'
+    assert_equal user.at(datetime).bio.to_plain_text, 'Bio'
+  end
+
+  it 'returns correct rich text for model with multiple rich texts' do
+    post = PostWithRichText.create!(
+      title: 'Title',
+      content: '<div>Content</div>',
+      description: '<div>Description</div>',
+      user: user
+    )
+    datetime = DateTime.now
+    post.update!(content: '<div>New Content</div>', description: '<div>New Description</div>')
+    assert_equal post.at(datetime).content.to_plain_text, 'Content'
+    assert_equal post.at(datetime).description.to_plain_text, 'Description'
+    assert_equal post.versions.last.content.to_plain_text, 'Content'
+    assert_equal post.versions.last.description.to_plain_text, 'Description'
   end
 
   it 'does not create versions without hoardable keyword' do

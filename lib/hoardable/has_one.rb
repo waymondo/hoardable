@@ -18,25 +18,12 @@ module Hoardable
             reflection = _reflections['#{name}']
             return super if reflection.klass.name.match?(/^ActionText/)
 
-            super&.at(hoardable_at_timestamp) ||
-              reflection.klass.at(hoardable_at_timestamp).find_by(
-                {
-                  reflection.type => self.class.name.sub(/Version$/, ''),
-                  reflection.foreign_key => hoardable_id
-                }.reject { |key, _| key.blank? }
+            super&.at(hoardable_client.has_one_at_timestamp) ||
+              reflection.klass.at(hoardable_client.has_one_at_timestamp).find_by(
+                hoardable_client.has_one_find_conditions(reflection)
               )
           end
         RUBY
-      end
-    end
-
-    included do
-      private
-
-      def hoardable_at_timestamp
-        Hoardable.instance_variable_get('@at') || updated_at
-      rescue NameError
-        raise(UpdatedAtColumnMissingError, self.class.table_name)
       end
     end
   end

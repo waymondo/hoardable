@@ -40,6 +40,20 @@ module Hoardable
       )
     end
 
+    def has_one_find_conditions(reflection)
+      {
+        reflection.type => source_record.class.name.sub(/Version$/, ''),
+        reflection.foreign_key => source_record.hoardable_id,
+        'name' => (reflection.name.to_s.sub(/^rich_text_/, '') if reflection.class_name.match?(/RichText$/))
+      }.reject { |k, v| k.nil? || v.nil? }
+    end
+
+    def has_one_at_timestamp
+      Hoardable.instance_variable_get('@at') || source_record.updated_at
+    rescue NameError
+      raise(UpdatedAtColumnMissingError, source_record.class.table_name)
+    end
+
     def source_attributes_without_primary_key
       source_record.attributes_before_type_cast.without(source_primary_key)
     end
