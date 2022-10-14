@@ -34,7 +34,7 @@ module Hoardable
   end.freeze
   private_constant :HOARDABLE_VERSION_UPDATES
 
-  SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new('7.0')
+  SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new('7.0.4')
   private_constant :SUPPORTS_ENCRYPTED_ACTION_TEXT
 
   @context = {}
