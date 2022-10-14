@@ -19,7 +19,12 @@ module Hoardable
             return super if reflection.klass.name.match?(/^ActionText/)
 
             super&.at(hoardable_at_timestamp) ||
-              reflection.klass.at(hoardable_at_timestamp).find_by(reflection.foreign_key => hoardable_id)
+              reflection.klass.at(hoardable_at_timestamp).find_by(
+                {
+                  reflection.type => self.class.name.sub(/Version$/, ''),
+                  reflection.foreign_key => hoardable_id
+                }.reject { |key, _| key.blank? }
+              )
           end
         RUBY
       end

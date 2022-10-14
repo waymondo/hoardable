@@ -64,6 +64,7 @@ class User < ActiveRecord::Base
   include Hoardable::Model
   has_many :posts
   has_one :profile, hoardable: true
+  has_rich_text :bio, hoardable: true
 end
 
 class Profile < ActiveRecord::Base

@@ -577,6 +577,19 @@ class TestModel < Minitest::Test
       end
       assert post.content.encrypted_attribute?('body')
     end
+
+    it 'returns correct polymoprhic association via temporal has one relationship' do
+      user = User.create!(name: 'Joe Schmoe', bio: '<div>Bio</div>')
+      post = PostWithRichText.create!(title: 'Title', content: '<div>Content</div>', user: user)
+      datetime = DateTime.now
+      user.update!(bio: '<div>Still Bio</div>')
+      post.update!(content: '<div>Still Content</div>')
+      assert_equal post.id, user.id
+      assert_equal post.versions.last.content.to_plain_text, 'Content'
+      assert_equal user.versions.last.bio.to_plain_text, 'Bio'
+      assert_equal post.at(datetime).content.to_plain_text, 'Content'
+      assert_equal user.at(datetime).bio.to_plain_text, 'Bio'
+    end
   end
 
   it 'does not create versions without hoardable keyword' do
