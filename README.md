@@ -390,7 +390,7 @@ class Post < ActiveRecord::Base
 end
 ```
 
-## Action Text
+### Action Text
 
 Hoardable provides support for ActiveRecord models with `has_rich_text`. First, you must create a
 temporal table for `ActionText::RichText`:
@@ -422,6 +422,18 @@ Hoardable.at(datetime) do
   post.content.to_plain_text # => 'Hello World'
 end
 ```
+
+### Known Gotchas
+
+#### Rails Fixtures
+
+Rails uses a method called
+[`disable_referential_integrity`](https://github.com/rails/rails/blob/06e9fbd954ab113108a7982357553fdef285bff1/activerecord/lib/active_record/connection_adapters/postgresql/referential_integrity.rb#L7)
+when inserting fixtures into the database. This disables PostgreSQL triggers, which Hoardable relies
+on for assigning `hoardable_id` from the primary key’s value. If you would still like to use
+fixtures, you must specify the primary key’s value and `hoardable_id` to the same identifier value
+in the fixture. This is not an issue with fixture replacement libraries like `factory_girl` or
+[`world_factory`](https://github.com/FutureProofRetail/world_factory) however.
 
 ## Gem Comparison
 
