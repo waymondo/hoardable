@@ -36,11 +36,8 @@ bin/rails g hoardable:install
 bin/rails db:migrate
 ```
 
-This will generate a PostgreSQL function and an initiailzer.
-
-_Note:_ It is recommended to set `config.active_record.schema_format = :sql` in `application.rb`, so
-that the function and triggers in the migrations that prevent updates to the versions table get
-captured in your schema.
+This will generate PostgreSQL functions, an initiailzer, and set `config.active_record.schema_format
+= :sql` in `application.rb`.
 
 ### Model Installation
 

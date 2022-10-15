@@ -26,6 +26,10 @@ module Hoardable
       migration_template 'install.rb.erb', 'db/migrate/install_hoardable.rb'
     end
 
+    def change_schema_format_to_sql
+      application 'config.active_record.schema_format = :sql'
+    end
+
     def self.next_migration_number(dir)
       ::ActiveRecord::Generators::Base.next_migration_number(dir)
     end
