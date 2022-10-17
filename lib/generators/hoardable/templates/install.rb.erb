@@ -3,7 +3,7 @@
 class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def up
     execute(
-      <<~SQL
+      <<~SQL.squish
         DO $$
         BEGIN
           IF NOT EXISTS (
@@ -51,9 +51,10 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
       SQL
     )
   end
+
   def down
     execute(
-      <<~SQL
+      <<~SQL.squish
         DROP TYPE IF EXISTS hoardable_operation;
         DROP FUNCTION IF EXISTS hoardable_version_prevent_update();
         DROP FUNCTION IF EXISTS hoardable_source_set_id();
