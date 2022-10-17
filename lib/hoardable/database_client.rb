@@ -55,7 +55,15 @@ module Hoardable
     end
 
     def source_attributes_without_primary_key
-      source_record.attributes_before_type_cast.without(source_primary_key)
+      source_record.attributes_before_type_cast.without(source_primary_key).merge(
+        source_record.class.select(refreshable_column_names).find(source_record.id).slice(refreshable_column_names)
+      )
+    end
+
+    def refreshable_column_names
+      @refreshable_column_names ||= source_record.class.columns.select(&:default_function).reject do |column|
+        column.name == source_primary_key
+      end.map(&:name)
     end
 
     def initialize_temporal_range

@@ -21,6 +21,7 @@ end
 ActiveRecord::Schema.define do
   create_table :posts do |t|
     t.text :body
+    t.string :uuid, null: false, default: -> { 'gen_random_uuid()' }
     t.string :title, null: false
     t.string :status, default: 'draft'
     t.bigint :user_id, null: false, index: true
