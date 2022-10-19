@@ -91,6 +91,7 @@ class TestModel < Minitest::Test
     assert_equal post.trashed?, true
     assert_equal post.at(datetime4).title, 'Revert'
     assert_nil PostVersion.at(datetime4).find_by(hoardable_id: post.id)
+    assert_nil post.at(nil)
   end
 
   it 'can revert to version at a datetime' do

@@ -75,6 +75,8 @@ module Hoardable
     #
     # @param datetime [DateTime, Time]
     def at(datetime)
+      return if datetime.nil?
+
       version_at(datetime) || (self if created_at < datetime)
     end
 
