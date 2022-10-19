@@ -17,11 +17,10 @@ module Hoardable
           def #{name}
             reflection = _reflections['#{name}']
             return super if reflection.klass.name.match?(/^ActionText/)
+            return super unless (timestamp = hoardable_client.has_one_at_timestamp)
 
-            super&.at(hoardable_client.has_one_at_timestamp) ||
-              reflection.klass.at(hoardable_client.has_one_at_timestamp).find_by(
-                hoardable_client.has_one_find_conditions(reflection)
-              )
+            super&.at(timestamp) ||
+              reflection.klass.at(timestamp).find_by(hoardable_client.has_one_find_conditions(reflection))
           end
         RUBY
       end

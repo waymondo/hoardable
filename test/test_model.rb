@@ -91,7 +91,7 @@ class TestModel < Minitest::Test
     assert_equal post.trashed?, true
     assert_equal post.at(datetime4).title, 'Revert'
     assert_nil PostVersion.at(datetime4).find_by(hoardable_id: post.id)
-    assert_nil post.at(nil)
+    assert_equal post.at(nil).title, 'Revert'
   end
 
   it 'can revert to version at a datetime' do
@@ -563,6 +563,12 @@ class TestModel < Minitest::Test
     assert_equal post.versions.first.content.body.to_plain_text, 'Hello World'
     assert_equal post.versions.second.content.body.to_plain_text, 'Goodbye Cruel World'
     assert_equal post.versions.third.content.body.to_plain_text, 'Goodbye Cruel World'
+  end
+
+  it 'returns proper rich text when unpersisted and given invalid datetime' do
+    post = PostWithRichText.new
+    assert_equal post.at(DateTime.now).content.to_plain_text, ''
+    assert_equal post.at(nil).content.to_plain_text, ''
   end
 
   if ActiveRecord.version >= ::Gem::Version.new('7.0')
