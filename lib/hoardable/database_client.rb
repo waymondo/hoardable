@@ -62,6 +62,8 @@ module Hoardable
 
     def generated_column_names
       @generated_column_names ||= source_record.class.columns.select(&:virtual?).map(&:name)
+    rescue NoMethodError
+      []
     end
 
     def refreshable_column_names

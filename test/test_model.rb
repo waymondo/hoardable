@@ -34,7 +34,7 @@ class TestModel < Minitest::Test
     version = post.versions.first
     assert_equal version.status, 'draft'
     assert_equal version.title, 'Headline'
-    assert_equal version.lowercase_title, 'headline'
+    assert_equal version.lowercase_title, 'headline' if SUPPORTS_VIRTUAL_COLUMNS
   end
 
   it 'uses current db version and not the current ruby attribute value for version' do
@@ -572,7 +572,7 @@ class TestModel < Minitest::Test
     assert_equal post.at(nil).content.to_plain_text, ''
   end
 
-  if ActiveRecord.version >= ::Gem::Version.new('7.0')
+  if SUPPORTS_ENCRYPTED_ACTION_TEXT
     it 'creates encrypted rich text record for versions' do
       post = PostWithEncryptedRichText.create!(title: 'Title', content: '<div>Hello World</div>', user: user)
       datetime = DateTime.now
