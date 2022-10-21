@@ -27,13 +27,14 @@ class TestModel < Minitest::Test
     assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
   end
 
-  it 'creates a version with previous state' do
+  it 'creates a version with previous state and generated columns' do
     assert_equal post.versions.size, 0
     update_post
     assert_equal post.reload.versions.size, 1
     version = post.versions.first
     assert_equal version.status, 'draft'
     assert_equal version.title, 'Headline'
+    assert_equal version.lowercase_title, 'headline'
   end
 
   it 'uses current db version and not the current ruby attribute value for version' do
@@ -156,7 +157,7 @@ class TestModel < Minitest::Test
     update_post
     version = post.versions.first
     version.revert!
-    assert_equal post.attributes.without('updated_at'), attributes
+    assert_equal post.reload.attributes.without('updated_at'), attributes
     refute_equal post.updated_at, attributes['updated_at']
   end
 

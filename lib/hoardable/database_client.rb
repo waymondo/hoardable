@@ -55,14 +55,18 @@ module Hoardable
     end
 
     def source_attributes_without_primary_key
-      source_record.attributes_before_type_cast.without(source_primary_key).merge(
+      source_record.attributes_before_type_cast.without(source_primary_key, *generated_column_names).merge(
         source_record.class.select(refreshable_column_names).find(source_record.id).slice(refreshable_column_names)
       )
     end
 
+    def generated_column_names
+      @generated_column_names ||= source_record.class.columns.select(&:virtual?).map(&:name)
+    end
+
     def refreshable_column_names
       @refreshable_column_names ||= source_record.class.columns.select(&:default_function).reject do |column|
-        column.name == source_primary_key
+        column.name == source_primary_key || column.name.in?(generated_column_names)
       end.map(&:name)
     end
 

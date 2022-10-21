@@ -23,6 +23,7 @@ ActiveRecord::Schema.define do
     t.text :body
     t.string :uuid, null: false, default: -> { 'gen_random_uuid()' }
     t.string :title, null: false
+    t.virtual :lowercase_title, type: :string, as: 'lower(title)', stored: true
     t.string :status, default: 'draft'
     t.bigint :user_id, null: false, index: true
     t.timestamps

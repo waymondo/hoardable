@@ -130,7 +130,10 @@ module Hoardable
     end
 
     def hoardable_source_attributes
-      attributes_before_type_cast.without(self.class.column_names - self.class.superclass.column_names)
+      attributes_before_type_cast.without(
+        (self.class.column_names - self.class.superclass.column_names) +
+        self.class.columns.select(&:virtual?).map(&:name)
+      )
     end
   end
 end
