@@ -66,6 +66,15 @@ class TestModel < Minitest::Test
     assert_instance_of Hoardable::PostVersion, post.versions.first
   end
 
+  it 'works with serialized attributes' do
+    user = User.create!(name: 'Joe Schmoe', preferences: { alerts: 'on' })
+    user.update!(preferences: { alerts: 'off' })
+    assert_equal user.versions.last.preferences, { 'alerts' => 'on' }
+    user.destroy!
+    user.versions.last.untrash!
+    assert_equal user.reload.preferences, { 'alerts' => 'off' }
+  end
+
   it 'can assign hoardable_id when primary key is different' do
     tag = Tag.create!(name: 'tug')
     tag.update!(name: 'tag')
