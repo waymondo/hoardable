@@ -65,6 +65,7 @@ ActiveRecord::Schema.define do
 
   create_table :users do |t|
     t.string :name, null: false
+    t.text :preferences, default: '{}'
     t.timestamps
   end
 

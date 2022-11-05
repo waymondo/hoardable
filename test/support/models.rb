@@ -66,6 +66,7 @@ class User < ActiveRecord::Base
   has_many :posts
   has_one :profile, hoardable: true
   has_rich_text :bio, hoardable: true
+  serialize :preferences, JSON
 end
 
 class Profile < ActiveRecord::Base

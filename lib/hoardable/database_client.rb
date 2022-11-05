@@ -55,7 +55,7 @@ module Hoardable
     end
 
     def source_attributes_without_primary_key
-      source_record.attributes_before_type_cast.without(source_primary_key, *generated_column_names).merge(
+      source_record.attributes.without(source_primary_key, *generated_column_names).merge(
         source_record.class.select(refreshable_column_names).find(source_record.id).slice(refreshable_column_names)
       )
     end
