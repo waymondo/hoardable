@@ -307,7 +307,9 @@ end
 If a model-level option exists, it will use that. Otherwise, it will fall back to the global `Hoardable`
 config.
 
-### Relationships
+## Relationships
+
+### Belongs To Trashable
 
 Sometimes you’ll have a record that belongs to a parent record that you’ll trash. Now the child record’s
 foreign key will point to the non-existent trashed version of the parent. If you would like to have
@@ -321,10 +323,11 @@ class Comment
 end
 ```
 
-Sometimes you'll have a Hoardable record that `has_many` other Hoardable records and you will want
-to know the state of both the parent record and the children at a cetain point in time. You
-accomplish this by adding `hoardable: true` to the `has_many` relationship and using the
-`Hoardable.at` method:
+### Hoardable Has Many & Has One
+
+Sometimes you'll have a Hoardable record that `has_one` or `has_many` other Hoardable records and you will
+want to know the state of both the parent record and the children at a cetain point in time. You accomplish
+this by adding `hoardable: true` to the `has_many` relationship and using the `Hoardable.at` method:
 
 ```ruby
 class Post
@@ -363,6 +366,11 @@ a database trigger won’t allow you to.
 
 If you are ever unsure if a Hoardable record is a source record or a version, you can be sure by calling
 `version?` on it. If you want to get the true original source record ID, you can call `hoardable_id`.
+
+_Note:_ `Hoardable.at` is still very experimental and is potentially not very performant for querying large
+data sets.
+
+### Cascading Untrashing
 
 Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and if you untrash the parent
 record, you’ll want to also untrash the children. Whenever a hoardable version is created in a database
@@ -417,9 +425,9 @@ Hoardable.at(datetime) do
 end
 ```
 
-### Known Gotchas
+## Known Gotchas
 
-#### Rails Fixtures
+### Rails Fixtures
 
 Rails uses a method called
 [`disable_referential_integrity`](https://github.com/rails/rails/blob/06e9fbd954ab113108a7982357553fdef285bff1/activerecord/lib/active_record/connection_adapters/postgresql/referential_integrity.rb#L7)
