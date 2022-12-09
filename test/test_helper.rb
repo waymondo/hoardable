@@ -32,8 +32,8 @@ end
 
 Rails.initialize!
 
-SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new('7.0.4')
-SUPPORTS_VIRTUAL_COLUMNS = ActiveRecord.version >= ::Gem::Version.new('7.0.0')
+SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= Gem::Version.new('7.0.4')
+SUPPORTS_VIRTUAL_COLUMNS = ActiveRecord.version >= Gem::Version.new('7.0.0')
 
 require_relative 'support/models'
 require_relative 'support/database'
