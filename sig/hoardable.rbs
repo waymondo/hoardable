@@ -1,6 +1,6 @@
 module Hoardable
   VERSION: String
-  DATA_KEYS: [:meta, :whodunit, :note, :event_uuid]
+  DATA_KEYS: [:meta, :whodunit, :event_uuid]
   CONFIG_KEYS: [:enabled, :version_updates, :save_trash]
   VERSION_CLASS_SUFFIX: String
   VERSION_TABLE_SUFFIX: String
@@ -57,7 +57,7 @@ module Hoardable
     def source_attributes_without_primary_key: -> untyped
     def initialize_temporal_range: -> Range
     def initialize_hoardable_data: -> untyped
-    def assign_hoardable_context: (:event_uuid | :meta | :note | :whodunit key) -> nil
+    def assign_hoardable_context: (:event_uuid | :meta | :whodunit key) -> nil
     def unset_hoardable_version_and_event_uuid: -> nil
     def previous_temporal_tsrange_end: -> untyped
     def hoardable_source_epoch: -> untyped
