@@ -73,7 +73,7 @@ module Hoardable
     private
 
     def tableoid
-      connection.execute("SELECT oid FROM pg_class WHERE relname = '#{table_name}'")[0]['oid']
+      @tableoid ||= connection.execute("SELECT oid FROM pg_class WHERE relname = '#{table_name}'")[0]['oid']
     end
   end
 end

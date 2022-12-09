@@ -292,13 +292,11 @@ class TestModel < Minitest::Test
     Current.user = nil
   end
 
-  it 'tracks note and meta' do
-    note = 'Oopsie'
+  it 'tracks meta' do
     meta = { 'foo' => 'bar' }
-    Hoardable.with(note: note, meta: meta) do
+    Hoardable.with(meta: meta) do
       update_post
       version = post.versions.first
-      assert_equal version.hoardable_note, note
       assert_equal version.hoardable_meta, meta
     end
   end
