@@ -31,6 +31,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'activesupport', '>= 6.1', '< 8'
   spec.add_dependency 'railties', '>= 6.1', '< 8'
 
-  spec.add_dependency 'fx', '>= 0.8', '< 1'
+  spec.add_dependency 'fx', '>= 0', '< 1'
   spec.add_dependency 'pg', '>= 1', '< 2'
 end
