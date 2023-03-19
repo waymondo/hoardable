@@ -8,6 +8,7 @@ module Hoardable
   class InstallGenerator < Rails::Generators::Base
     source_root File.expand_path('templates', __dir__)
     include Rails::Generators::Migration
+    delegate :supports_schema_enums?, to: :class
 
     def create_initializer_file
       create_file(
@@ -39,10 +40,8 @@ module Hoardable
       end
     end
 
-    no_tasks do
-      def supports_schema_enums?
-        ActiveRecord.version >= ::Gem::Version.new('7.0.0')
-      end
+    def self.supports_schema_enums?
+      ActiveRecord.version >= ::Gem::Version.new('7.0.0')
     end
 
     def self.next_migration_number(dir)
