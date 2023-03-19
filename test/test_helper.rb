@@ -27,7 +27,7 @@ class Dummy < Rails::Application
   config.eager_load = false
   config.active_storage.service_configurations = {}
   config.paths['config/database'] = ['test/config/database.yml']
-  config.paths['db/migrate'] = ['tmp/db/migrate']
+  config.paths['db/migrate'] = ['tmp/db/migrate'] if Hoardable::SUPPORTS_VIRTUAL_COLUMNS
   config.active_record.encryption&.key_derivation_salt = SecureRandom.hex
   config.active_record.encryption&.primary_key = SecureRandom.hex
 end
