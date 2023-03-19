@@ -311,7 +311,7 @@ class TestModel < Minitest::Test
     post
     assert user.posts.exists?
     post.destroy!
-    assert user.posts.size.zero?
+    assert user.posts.empty?
     user_with_trashed_posts = UserWithTrashedPosts.find(user.id)
     assert user_with_trashed_posts.posts.exists?
   end

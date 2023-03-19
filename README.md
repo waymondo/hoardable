@@ -1,6 +1,6 @@
 # Hoardable ![gem version](https://img.shields.io/gem/v/hoardable?style=flat-square)
 
-Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for versioning
+Hoardable is an ActiveRecord extension for Ruby 2.7+, Rails 6.1+, and PostgreSQL that allows for versioning
 and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern where each
@@ -34,8 +34,8 @@ bin/rails g hoardable:install
 bin/rails db:migrate
 ```
 
-This will generate PostgreSQL functions, an initiailzer, and set `config.active_record.schema_format = :sql`
-in `application.rb`.
+This will generate PostgreSQL functions, an enum and an initiailzer. It will also set
+`config.active_record.schema_format = :sql` in `application.rb` if you are using Rails < 7.
 
 ### Model Installation
 

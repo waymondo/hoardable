@@ -12,6 +12,7 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
     assert_migration 'db/migrate/create_post_versions.rb' do |migration|
       assert_match(/create_table :post_versions/, migration)
       assert_match(/:hoardable_id, :bigint/, migration)
+      assert_match(/create_trigger :posts_set_hoardable_id, on: :posts/, migration)
     end
   end
 
