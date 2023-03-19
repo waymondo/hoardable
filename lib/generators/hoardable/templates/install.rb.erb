@@ -1,65 +1,34 @@
 # frozen_string_literal: true
 
 class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
-  def up
-    execute(
-      <<~SQL.squish
-        DO $$
-        BEGIN
-          IF NOT EXISTS (
-            SELECT 1 FROM pg_type t WHERE t.typname = 'hoardable_operation'
-          ) THEN
-            CREATE TYPE hoardable_operation AS ENUM ('update', 'delete', 'insert');
-          END IF;
-        END
-        $$;
+  def change
+    create_function :hoardable_prevent_update_id
+    create_function :hoardable_source_set_id
+    create_function :hoardable_version_prevent_update
+    <% if supports_schema_enums? %>
+    create_enum :hoardable_operation, %w[update delete insert]
+    <% else %>
+    reversible do |dir|
+      dir.up do
+        execute(
+          <<~SQL.squish
+            DO $$
+            BEGIN
+              IF NOT EXISTS (
+                SELECT 1 FROM pg_type t WHERE t.typname = 'hoardable_operation'
+              ) THEN
+                CREATE TYPE hoardable_operation AS ENUM ('update', 'delete', 'insert');
+              END IF;
+            END
+            $$;
+          SQL
+        )
+      end
 
-        CREATE OR REPLACE FUNCTION hoardable_source_set_id() RETURNS trigger
-          LANGUAGE plpgsql AS
-        $$
-        DECLARE
-          _pk information_schema.constraint_column_usage.column_name%TYPE;
-          _id _pk%TYPE;
-        BEGIN
-          SELECT c.column_name
-            FROM information_schema.table_constraints t
-            JOIN information_schema.constraint_column_usage c
-            ON c.constraint_name = t.constraint_name
-            WHERE c.table_name = TG_TABLE_NAME AND t.constraint_type = 'PRIMARY KEY'
-            LIMIT 1
-            INTO _pk;
-          EXECUTE format('SELECT $1.%I', _pk) INTO _id USING NEW;
-          NEW.hoardable_id = _id;
-          RETURN NEW;
-        END;$$;
-
-        CREATE OR REPLACE FUNCTION hoardable_prevent_update_id() RETURNS trigger
-          LANGUAGE plpgsql AS
-        $$BEGIN
-          IF NEW.hoardable_id <> OLD.hoardable_id THEN
-            RAISE EXCEPTION 'hoardable id cannot be updated';
-          END IF;
-          RETURN NEW;
-        END;$$;
-
-        CREATE OR REPLACE FUNCTION hoardable_version_prevent_update() RETURNS trigger
-          LANGUAGE plpgsql AS
-        $$BEGIN
-          RAISE EXCEPTION 'updating a version is not allowed';
-          RETURN NEW;
-        END;$$;
-      SQL
-    )
-  end
-
-  def down
-    execute(
-      <<~SQL.squish
-        DROP TYPE IF EXISTS hoardable_operation;
-        DROP FUNCTION IF EXISTS hoardable_version_prevent_update();
-        DROP FUNCTION IF EXISTS hoardable_source_set_id();
-        DROP FUNCTION IF EXISTS hoardable_prevent_update_id();
-      SQL
-    )
+      dir.down do
+        execute('DROP TYPE IF EXISTS hoardable_operation;')
+      end
+    end
+    <% end %>
   end
 end

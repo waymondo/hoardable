@@ -22,12 +22,27 @@ module Hoardable
       )
     end
 
+    def change_schema_format_to_sql
+      return if supports_schema_enums?
+
+      application 'config.active_record.schema_format = :sql'
+    end
+
     def create_migration_file
       migration_template 'install.rb.erb', 'db/migrate/install_hoardable.rb'
     end
 
-    def change_schema_format_to_sql
-      application 'config.active_record.schema_format = :sql'
+    def create_functions
+      Dir.glob(File.join(__dir__, 'functions', '*.sql')).each do |file_path|
+        file_name = file_path.match(%r{([^/]+)\.sql})[1]
+        template file_path, "db/functions/#{file_name}_v01.sql"
+      end
+    end
+
+    no_tasks do
+      def supports_schema_enums?
+        ActiveRecord.version >= ::Gem::Version.new('7.0.0')
+      end
     end
 
     def self.next_migration_number(dir)

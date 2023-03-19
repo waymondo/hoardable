@@ -34,8 +34,8 @@ bin/rails g hoardable:install
 bin/rails db:migrate
 ```
 
-This will generate PostgreSQL functions, an initiailzer, and set `config.active_record.schema_format = :sql`
-in `application.rb`.
+This will generate PostgreSQL functions, an enum and an initiailzer. It will also set
+`config.active_record.schema_format = :sql` in `application.rb` if you are using Rails < 7.
 
 ### Model Installation
 
