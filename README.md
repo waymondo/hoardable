@@ -1,6 +1,6 @@
 # Hoardable ![gem version](https://img.shields.io/gem/v/hoardable?style=flat-square)
 
-Hoardable is an ActiveRecord extension for Ruby 2.6+, Rails 6.1+, and PostgreSQL that allows for versioning
+Hoardable is an ActiveRecord extension for Ruby 2.7+, Rails 6.1+, and PostgreSQL that allows for versioning
 and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern where each
