@@ -326,7 +326,7 @@ end
 ### Hoardable Has Many & Has One
 
 Sometimes you'll have a Hoardable record that `has_one` or `has_many` other Hoardable records and you will
-want to know the state of both the parent record and the children at a cetain point in time. You accomplish
+want to know the state of both the parent record and the children at a certain point in time. You accomplish
 this by adding `hoardable: true` to the `has_many` relationship and using the `Hoardable.at` method:
 
 ```ruby
