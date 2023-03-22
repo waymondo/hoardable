@@ -105,7 +105,7 @@ module Hoardable
     initializer 'hoardable.action_text' do
       ActiveSupport.on_load(:action_text_rich_text) do
         require_relative 'rich_text'
-        # require_relative 'encrypted_rich_text' if SUPPORTS_ENCRYPTED_ACTION_TEXT
+        require_relative 'encrypted_rich_text' if SUPPORTS_ENCRYPTED_ACTION_TEXT
       end
     end
   end
