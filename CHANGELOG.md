@@ -1,3 +1,7 @@
+## 0.14.2
+
+- Fixes an eager loading issue regarding `ActionText::EncryptedRichText`
+
 ## 0.14.0
 
 - *Breaking Change* - Support for Ruby 2.6 is dropped
