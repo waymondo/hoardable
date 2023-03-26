@@ -6,8 +6,8 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     add_index :<%= table_name %>, :hoardable_id
     create_table(
       :<%= singularized_table_name %>_versions,
-      primary_key: {<%= primary_key %>: :<%= foreign_key_type %>},
-      options: 'INHERITS (<%= table_name %>)'
+      id: false, 
+      options: 'INHERITS (<%= table_name %>)',
     ) do |t|
       t.jsonb :_data
       t.tsrange :_during, null: false
@@ -16,6 +16,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     end
     reversible do |dir|
       dir.up do
+        execute('ALTER TABLE <%= singularized_table_name %>_versions ADD PRIMARY KEY (<%= primary_key %>);')
         execute('UPDATE <%= table_name %> SET hoardable_id = <%= primary_key %>;')
       end
     end
