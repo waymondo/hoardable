@@ -1,3 +1,7 @@
+## 0.14.3
+
+- The migration template is updated to make the primary key on the versions table its actual primary key.
+
 ## 0.14.2
 
 - Fixes an eager loading issue regarding `ActionText::EncryptedRichText`

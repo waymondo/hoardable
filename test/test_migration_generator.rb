@@ -10,7 +10,7 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
 
   def shared_post_assertions
     assert_migration 'db/migrate/create_post_versions.rb' do |migration|
-      assert_match(/create_table :post_versions/, migration)
+      assert_match(/create_table\(\n(\s)*:post_versions/, migration)
       assert_match(/:hoardable_id, :bigint/, migration)
       assert_match(/create_trigger :posts_set_hoardable_id, on: :posts/, migration)
     end
@@ -18,7 +18,7 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
 
   def shared_book_assertions(foreign_key_type = 'uuid')
     assert_migration 'db/migrate/create_book_versions.rb' do |migration|
-      assert_match(/create_table :book_versions/, migration)
+      assert_match(/create_table\(\n(\s)*:book_versions/, migration)
       assert_match(":hoardable_id, :#{foreign_key_type}", migration)
     end
   end
@@ -56,15 +56,8 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
   it 'generates migration with namespaced model name' do
     run_generator ['ActionText::RichText']
     assert_migration 'db/migrate/create_action_text_rich_text_versions.rb' do |migration|
-      assert_match(/create_table :action_text_rich_text_versions/, migration)
+      assert_match(/create_table\(\n(\s)*:action_text_rich_text_versions/, migration)
       assert_match(':hoardable_id, :bigint', migration)
-    end
-  end
-
-  it 'generates unique index that matches primary key' do
-    run_generator ['Tag']
-    assert_migration 'db/migrate/create_tag_versions.rb' do |migration|
-      assert_match(':tag_versions, :primary_id, unique: true', migration)
     end
   end
 

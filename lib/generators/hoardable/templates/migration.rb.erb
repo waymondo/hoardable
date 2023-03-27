@@ -4,7 +4,11 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
   def change
     add_column :<%= table_name %>, :hoardable_id, :<%= foreign_key_type %>
     add_index :<%= table_name %>, :hoardable_id
-    create_table :<%= singularized_table_name %>_versions, id: false, options: 'INHERITS (<%= table_name %>)' do |t|
+    create_table(
+      :<%= singularized_table_name %>_versions,
+      id: false, 
+      options: 'INHERITS (<%= table_name %>)',
+    ) do |t|
       t.jsonb :_data
       t.tsrange :_during, null: false
       t.uuid :_event_uuid, null: false, index: true
@@ -12,6 +16,8 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     end
     reversible do |dir|
       dir.up do
+        execute('ALTER TABLE <%= singularized_table_name %>_versions ADD PRIMARY KEY (<%= primary_key %>);')
+        # remove the following line if you plan on seeding +hoardable_id+ outside the migration
         execute('UPDATE <%= table_name %> SET hoardable_id = <%= primary_key %>;')
       end
     end
