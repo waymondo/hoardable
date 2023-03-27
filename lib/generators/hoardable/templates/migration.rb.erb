@@ -17,6 +17,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     reversible do |dir|
       dir.up do
         execute('ALTER TABLE <%= singularized_table_name %>_versions ADD PRIMARY KEY (<%= primary_key %>);')
+        # remove the following line if you plan on seeding +hoardable_id+ outside the migration
         execute('UPDATE <%= table_name %> SET hoardable_id = <%= primary_key %>;')
       end
     end
