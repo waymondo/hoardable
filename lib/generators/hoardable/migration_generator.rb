@@ -36,7 +36,7 @@ module Hoardable
     no_tasks do
       def foreign_key_type
         options[:foreign_key_type] ||
-          class_name.singularize.constantize.columns.find { |col| col.name == 'id' }.sql_type
+          class_name.singularize.constantize.columns.find { |col| col.name == primary_key }.sql_type
       rescue StandardError
         'bigint'
       end
