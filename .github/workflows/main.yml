@@ -25,7 +25,7 @@ jobs:
         ports:
           - 5432:5432
 
-    strategy:    
+    strategy:
       matrix:
         ruby:
           - 3.2
@@ -47,6 +47,7 @@ jobs:
       - name: Run the default task
         env:
           RAILS_ENV: test
+          RAILS_VERSION: ${{ matrix.rails }}
           POSTGRES_USER: postgres
           PGPASSWORD: password
           POSTGRES_PASSWORD: password

@@ -2,7 +2,6 @@
 
 source 'https://rubygems.org'
 
-gem 'benchmark-ips'
 gem 'debug'
 gem 'minitest'
 gem 'rails', "~> #{ENV.fetch("RAILS_VERSION", "7.1")}"
