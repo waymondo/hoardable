@@ -107,7 +107,7 @@ ActiveRecord::Schema.define do
 
   create_table :action_text_rich_texts do |t|
     t.string :name, null: false
-    t.text       :body, size: :long
+    t.text :body
     t.references :record, null: false, polymorphic: true, index: false, type: :bigint
 
     t.timestamps
