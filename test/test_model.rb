@@ -507,9 +507,9 @@ class TestModel < Minitest::Test
       post = Post.find(post_id)
       assert_equal post.comments.pluck('body'), ['Comment']
       comment = post.comments.first
-      assert_equal Like.all.size, 2
-      assert_equal comment.likes.size, 2
-      assert_equal post.likes.size, 2
+      assert_equal 2, Like.all.size
+      assert_equal 2, comment.likes.size
+      assert_equal 2, post.likes.size
     end
   end
 

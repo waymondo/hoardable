@@ -13,13 +13,6 @@ module Hoardable
       def version_class
         self
       end
-
-      # This is needed to omit the pseudo row of 'tableoid' when using +ActiveRecord+’s +insert+.
-      #
-      # @!visibility private
-      def scope_attributes
-        super.without('tableoid')
-      end
     end
 
     included do

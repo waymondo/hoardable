@@ -6,18 +6,7 @@ module Hoardable
   module Scopes
     extend ActiveSupport::Concern
 
-    TABLEOID_AREL_CONDITIONS = lambda do |arel_table, condition|
-      arel_table[:tableoid].send(
-        condition,
-        Arel::Nodes::NamedFunction.new('CAST', [Arel::Nodes::Quoted.new(arel_table.name).as('regclass')])
-      )
-    end.freeze
-    private_constant :TABLEOID_AREL_CONDITIONS
-
     included do
-      # @!visibility private
-      attr_writer :tableoid
-
       # By default {Hoardable} only returns instances of the parent table, and not the +versions+ in
       # the inherited table. This can be bypassed by using the {.include_versions} scope or wrapping
       # the code in a `Hoardable.at(datetime)` block.
@@ -35,7 +24,7 @@ module Hoardable
       #
       # Returns +versions+ along with instances of the source models, all cast as instances of the
       # source model’s class.
-      scope :include_versions, -> { unscope(where: [:tableoid]) }
+      scope :include_versions, -> { unscope(:from) }
 
       # @!scope class
       # @!method versions
@@ -43,7 +32,7 @@ module Hoardable
       #
       # Returns only +versions+ of the parent +ActiveRecord+ class, cast as instances of the source
       # model’s class.
-      scope :versions, -> { include_versions.where(TABLEOID_AREL_CONDITIONS.call(arel_table, :not_eq)) }
+      scope :versions, -> { from("ONLY #{version_class.table_name}") }
 
       # @!scope class
       # @!method exclude_versions
@@ -51,7 +40,7 @@ module Hoardable
       #
       # Excludes +versions+ of the parent +ActiveRecord+ class. This is included by default in the
       # source model’s +default_scope+.
-      scope :exclude_versions, -> { where(TABLEOID_AREL_CONDITIONS.call(arel_table, :eq)) }
+      scope :exclude_versions, -> { from("ONLY #{table_name}") }
 
       # @!scope class
       # @!method at
@@ -60,20 +49,20 @@ module Hoardable
       # Returns instances of the source model and versions that were valid at the supplied
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at, lambda { |datetime|
-        raise(CreatedAtColumnMissingError, @klass.table_name) unless @klass.column_names.include?('created_at')
+        raise(CreatedAtColumnMissingError, table_name) unless column_names.include?('created_at')
 
-        include_versions.where(id: version_class.at(datetime).select(@klass.primary_key)).or(
-          exclude_versions
-            .where("#{table_name}.created_at < ?", datetime)
-            .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime))
+        from(
+          Arel::Nodes::As.new(
+            Arel::Nodes::Union.new(
+              include_versions.where(id: version_class.at(datetime).select(primary_key)).arel,
+              exclude_versions
+                .where("#{table_name}.created_at < ?", datetime)
+                .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime)).arel,
+            ),
+            arel_table
+          )
         ).hoardable
       }
-    end
-
-    private
-
-    def tableoid
-      @tableoid ||= connection.execute("SELECT oid FROM pg_class WHERE relname = '#{table_name}'")[0]['oid']
     end
   end
 end
