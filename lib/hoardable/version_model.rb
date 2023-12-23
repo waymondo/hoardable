@@ -79,7 +79,7 @@ module Hoardable
 
       transaction do
         hoardable_source.tap do |reverted|
-          reverted.reload.update!(hoardable_source_attributes.without(self.class.superclass.primary_key))
+          reverted.reload.update!(hoardable_source_attributes.without(self.class.superclass.primary_key, 'hoardable_id'))
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
         end

@@ -67,8 +67,8 @@ class TestModel < Minitest::Test
   end
 
   it 'works with serialized attributes' do
-    user = User.create!(name: 'Joe Schmoe', preferences: { alerts: 'on' })
-    user.update!(preferences: { alerts: 'off' })
+    user = User.create!(name: 'Joe Schmoe', preferences: { 'alerts' => 'on' })
+    user.update!(preferences: { 'alerts' => 'off' })
     assert_equal user.versions.last.preferences, { 'alerts' => 'on' }
     user.destroy!
     user.versions.last.untrash!
@@ -124,10 +124,13 @@ class TestModel < Minitest::Test
   end
 
   it 'cannot change hoardable_id' do
-    post.update!(hoardable_id: 123)
     assert_equal post.reload.hoardable_id, post.id
+    if ActiveRecord.version >= Gem::Version.new('7.1')
+      assert_raises ActiveRecord::ReadonlyAttributeError do
+        post.update!(hoardable_id: 123)
+      end
+    end
     assert_raises(ActiveRecord::ActiveRecordError) { post.update_column(:hoardable_id, 123) }
-    assert_equal post.reload.hoardable_id, post.id
     assert_raises(ActiveRecord::StatementInvalid) do
       post.class.connection.execute('UPDATE posts SET hoardable_id = 123')
     end

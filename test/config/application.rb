@@ -8,4 +8,5 @@ class Dummy < Rails::Application
   config.paths['db/migrate'] = ['tmp/db/migrate']
   config.active_record.encryption&.key_derivation_salt = SecureRandom.hex
   config.active_record.encryption&.primary_key = SecureRandom.hex
+  config.active_record.yaml_column_permitted_classes = [ActiveSupport::HashWithIndifferentAccess]
 end
