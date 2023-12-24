@@ -36,9 +36,6 @@ bin/rails g hoardable:install
 bin/rails db:migrate
 ```
 
-This will generate PostgreSQL functions, an enum and an initiailzer. It will also set
-`config.active_record.schema_format = :sql` in `application.rb` if you are using Rails < 7.
-
 ### Model Installation
 
 You must include `Hoardable::Model` into an ActiveRecord model that you would like to hoard versions
@@ -510,8 +507,6 @@ proprietary JSON format directly on the database row of the record itself. If do
 deletion.
 
 ## Contributing
-
-This gem still quite new and very open to feedback.
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/waymondo/hoardable.
 
