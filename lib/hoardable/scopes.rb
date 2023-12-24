@@ -56,7 +56,7 @@ module Hoardable
             Arel::Nodes::Union.new(
               include_versions.where(id: version_class.at(datetime).select(primary_key)).arel,
               exclude_versions
-                .where("#{table_name}.created_at < ?", datetime)
+                .where(created_at: ..datetime)
                 .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime)).arel,
             ),
             arel_table
