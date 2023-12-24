@@ -22,7 +22,7 @@ require 'active_model/railtie'
 require 'active_record/railtie'
 require 'action_text/engine'
 
-require 'config/application'
+require_relative 'config/application'
 Rails.initialize!
 
 SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= Gem::Version.new('7.0.4')

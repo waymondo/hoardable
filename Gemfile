@@ -3,8 +3,10 @@
 source 'https://rubygems.org'
 
 gem 'debug'
-gem 'minitest'
-gem 'rails', "~> #{ENV.fetch("RAILS_VERSION", "7.1")}"
-gem 'rake'
+if ENV['RAILS_VERSION']
+  gem 'rails', "~> #{ENV.fetch("RAILS_VERSION")}"
+else
+  gem 'rails'
+end
 
 gemspec
