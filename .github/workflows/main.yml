@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
-        env: 
+        env:
           RAILS_VERSION: ${{ matrix.rails }}
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -47,10 +47,9 @@ jobs:
       - name: Run the default task
         env:
           RAILS_ENV: test
-          RUBY_VERSION: ${{ matrix.ruby }}
           RAILS_VERSION: ${{ matrix.rails }}
           POSTGRES_USER: postgres
           PGPASSWORD: password
           POSTGRES_PASSWORD: password
         run: |
-          bundle exec rake
+          rake
