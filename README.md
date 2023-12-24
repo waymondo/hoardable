@@ -8,10 +8,10 @@ where each row of a table contains data along with one or more time ranges. In t
 each database row has a time range that represents the row’s valid time range - hence
 "uni-temporal".
 
-[Table inheritance](https://www.postgresql.org/docs/14/ddl-inherit.html) is a feature of PostgreSQL
-that allows a table to inherit all columns of a parent table. The descendant table’s schema will
-stay in sync with its parent. If a new column is added to or removed from the parent, the schema
-change is reflected on its descendants.
+[Table inheritance](https://www.postgresql.org/docs/current/ddl-inherit.html) is a feature of
+PostgreSQL that allows a table to inherit all columns of a parent table. The descendant table’s
+schema will stay in sync with its parent. If a new column is added to or removed from the parent,
+the schema change is reflected on its descendants.
 
 With these concepts combined, `hoardable` offers a model versioning and soft deletion system for
 Rails. Versions of records are stored in separate, inherited tables along with their valid time
@@ -143,11 +143,12 @@ Including `Hoardable::Model` into your source model modifies its default scope t
 query the parent table:
 
 ```ruby
-Post.where(state: :draft).to_sql # => SELECT posts.* FROM posts WHERE posts.tableoid = CAST('posts' AS regclass) AND posts.status = 'draft'
+Post.where(state: :draft).to_sql # => SELECT posts.* FROM ONLY posts WHERE posts.status = 'draft'
 ```
 
-_*Note*:_ If you are executing raw SQL, you will need to include this clause if you do not wish to
-return versions in the results.
+_*Note*:_ If you are executing raw SQL, you will need to include the `ONLY` keyword you see above to
+the select statement if you do not wish to return versions in the results. Learn more about table
+inheritance in [the PostgreSQL documentation](https://www.postgresql.org/docs/current/ddl-inherit.html).
 
 Since a `PostVersion` is an `ActiveRecord` class, you can query them like another model resource:
 
