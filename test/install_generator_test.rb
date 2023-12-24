@@ -16,13 +16,13 @@ class InstallGeneratorTest < Rails::Generators::TestCase
       else
         assert_match(
           /CREATE TYPE hoardable_operation AS ENUM \('update', 'delete', 'insert'\);/,
-          migration,
+          migration
         )
       end
     end
     assert_file(
       "db/functions/hoardable_source_set_id_v01.sql",
-      /CREATE OR REPLACE FUNCTION hoardable_source_set_id\(\) RETURNS trigger/,
+      /CREATE OR REPLACE FUNCTION hoardable_source_set_id\(\) RETURNS trigger/
     )
   end
 end

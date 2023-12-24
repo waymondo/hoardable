@@ -17,10 +17,12 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
-  create_table :libraries,
-               if_not_exists: true,
-               id: :uuid,
-               default: -> { "gen_random_uuid()" } do |t|
+  create_table(
+    :libraries,
+    if_not_exists: true,
+    id: :uuid,
+    default: -> { "gen_random_uuid()" }
+  ) do |t|
     t.string :name, null: false
     t.timestamps
   end
@@ -78,7 +80,7 @@ ActiveRecord::Schema.define do
     t.index(
       %i[record_type record_id name blob_id],
       name: :index_active_storage_attachments_uniqueness,
-      unique: true,
+      unique: true
     )
     t.foreign_key :active_storage_blobs, column: :blob_id
   end
@@ -86,9 +88,11 @@ ActiveRecord::Schema.define do
   create_table :active_storage_variant_records, if_not_exists: true do |t|
     t.belongs_to :blob, null: false, index: false, type: :bigint
     t.string :variation_digest, null: false
-    t.index %i[blob_id variation_digest],
-            name: :index_active_storage_variant_records_uniqueness,
-            unique: true
+    t.index(
+      %i[blob_id variation_digest],
+      name: :index_active_storage_variant_records_uniqueness,
+      unique: true
+    )
     t.foreign_key :active_storage_blobs, column: :blob_id
   end
 
@@ -99,9 +103,11 @@ ActiveRecord::Schema.define do
 
     t.timestamps
 
-    t.index %i[record_type record_id name],
-            name: "index_action_text_rich_texts_uniqueness",
-            unique: true
+    t.index(
+      %i[record_type record_id name],
+      name: "index_action_text_rich_texts_uniqueness",
+      unique: true
+    )
   end
 end
 
@@ -112,7 +118,7 @@ def generate_versions_table(table_name)
   Rails::Generators.invoke(
     "hoardable:migration",
     [table_name, "--quiet"],
-    destination_root: tmp_dir,
+    destination_root: tmp_dir
   )
   Dir[File.join(tmp_dir, "db/migrate/*.rb")].sort.each { |file| require file }
   "Create#{table_name.delete(":").singularize}Versions".constantize.migrate(:up)

@@ -354,7 +354,7 @@ class TestModel < Minitest::Test
     assert_equal(
       trashed_post.hoardable_event_uuid,
       trashed_comments.first.hoardable_event_uuid,
-      trashed_comments.second.hoardable_event_uuid,
+      trashed_comments.second.hoardable_event_uuid
     )
   end
 
@@ -527,7 +527,7 @@ class TestModel < Minitest::Test
       assert_equal(post.reload.comment_ids, [comment1.id, comment3.id, comment2.versions.last.id])
       assert_equal(
         post.reload.comments.map(&:hoardable_id),
-        [comment1.id, comment3.id, comment2.id],
+        [comment1.id, comment3.id, comment2.id]
       )
     end
     assert_equal(post.reload.comment_ids, post.reload.comments.map(&:hoardable_id))
@@ -578,7 +578,7 @@ class TestModel < Minitest::Test
         PostWithEncryptedRichText.create!(
           title: "Title",
           content: "<div>Hello World</div>",
-          user: user,
+          user: user
         )
       datetime = DateTime.now
       post.update!(content: "<div>Goodbye Cruel World</div>")
@@ -609,7 +609,7 @@ class TestModel < Minitest::Test
         title: "Title",
         content: "<div>Content</div>",
         description: "<div>Description</div>",
-        user: user,
+        user: user
       )
     datetime = DateTime.now
     post.update!(content: "<div>New Content</div>", description: "<div>New Description</div>")
@@ -624,7 +624,7 @@ class TestModel < Minitest::Test
       PostWithUnhoardableRichText.create!(
         title: "Title",
         content: "<div>Hello World</div>",
-        user: user,
+        user: user
       )
     assert_instance_of ActionText::RichText, post.content
     assert_raises(StandardError) { post.content.versions }

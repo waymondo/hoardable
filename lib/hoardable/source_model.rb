@@ -52,7 +52,7 @@ module Hoardable
         dependent: nil,
         class_name: version_class.to_s,
         inverse_of: :hoardable_source,
-        foreign_key: :hoardable_id,
+        foreign_key: :hoardable_id
       )
     end
 

@@ -13,23 +13,25 @@ module Hoardable
       :foreign_key_type,
       type: :string,
       optional: true,
-      desc: "explictly set / override the foreign key type of the versions table",
+      desc: "explictly set / override the foreign key type of the versions table"
     )
 
     def create_versions_table
-      migration_template "migration.rb.erb",
-                         "db/migrate/create_#{singularized_table_name}_versions.rb"
+      migration_template(
+        "migration.rb.erb",
+        "db/migrate/create_#{singularized_table_name}_versions.rb"
+      )
     end
 
     def create_triggers
       {
         versions_prevent_update: singularized_table_name,
         set_hoardable_id: table_name,
-        prevent_update_hoardable_id: table_name,
+        prevent_update_hoardable_id: table_name
       }.each do |(trigger_name, trigger_table_name)|
         template(
           "../triggers/#{trigger_name}.sql",
-          "db/triggers/#{trigger_table_name}_#{trigger_name}_v01.sql",
+          "db/triggers/#{trigger_table_name}_#{trigger_name}_v01.sql"
         )
       end
     end

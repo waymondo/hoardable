@@ -60,12 +60,12 @@ module Hoardable
                 exclude_versions
                   .where(created_at: ..datetime)
                   .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime))
-                  .arel,
+                  .arel
               ),
-              arel_table,
-            ),
+              arel_table
+            )
           ).hoardable
-        end,
+        end
       )
     end
   end

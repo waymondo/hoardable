@@ -21,7 +21,7 @@ module Hoardable
         :hoardable_source,
         inverse_of: :versions,
         foreign_key: :hoardable_id,
-        class_name: superclass.model_name,
+        class_name: superclass.model_name
       )
 
       self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
@@ -42,10 +42,10 @@ module Hoardable
         lambda do
           left_outer_joins(:hoardable_source).where(
             superclass.table_name => {
-              superclass.primary_key => nil,
-            },
+              superclass.primary_key => nil
+            }
           ).where(_operation: "delete")
-        end,
+        end
       )
 
       # @!scope class
@@ -86,7 +86,7 @@ module Hoardable
       transaction do
         hoardable_source.tap do |reverted|
           reverted.reload.update!(
-            hoardable_source_attributes.without(self.class.superclass.primary_key, "hoardable_id"),
+            hoardable_source_attributes.without(self.class.superclass.primary_key, "hoardable_id")
           )
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
@@ -131,7 +131,7 @@ module Hoardable
     def hoardable_source_attributes
       attributes.without(
         (self.class.column_names - self.class.superclass.column_names) +
-          self.class.columns.select(&:virtual?).map(&:name),
+          self.class.columns.select(&:virtual?).map(&:name)
       )
     end
   end

@@ -21,7 +21,7 @@ module Hoardable
         define_method("trashed_#{name}") do
           source_reflection = reflections[name.to_s]
           source_reflection.version_class.trashed.only_most_recent.find_by(
-            hoardable_id: source_reflection.foreign_key,
+            hoardable_id: source_reflection.foreign_key
           )
         end
 

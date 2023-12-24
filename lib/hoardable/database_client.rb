@@ -16,7 +16,7 @@ module Hoardable
       version =
         version_class.insert(
           initialize_version_attributes(operation),
-          returning: source_primary_key.to_sym,
+          returning: source_primary_key.to_sym
         )
       version_id = version[0][source_primary_key]
       source_record.instance_variable_set("@hoardable_version", version_class.find(version_id))
@@ -28,13 +28,9 @@ module Hoardable
     end
 
     def find_or_initialize_hoardable_event_uuid
-      Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query(
-        "SELECT gen_random_uuid();",
-      )[
-        0
-      ][
-        0
-      ]
+      Thread.current[:hoardable_event_uuid] ||= (
+        ActiveRecord::Base.connection.query("SELECT gen_random_uuid();")[0][0]
+      )
     end
 
     def initialize_version_attributes(operation)
@@ -45,8 +41,8 @@ module Hoardable
           "_event_uuid" => find_or_initialize_hoardable_event_uuid,
           "_operation" => operation,
           "_data" => initialize_hoardable_data.merge(changes: source_record.changes),
-          "_during" => initialize_temporal_range,
-        },
+          "_during" => initialize_temporal_range
+        }
       )
     end
 
@@ -55,9 +51,7 @@ module Hoardable
         reflection.type => source_record.class.name.sub(/Version$/, ""),
         reflection.foreign_key => source_record.hoardable_id,
         "name" =>
-          (
-            reflection.name.to_s.sub(/^rich_text_/, "") if reflection.class_name.match?(/RichText$/)
-          ),
+          (reflection.name.to_s.sub(/^rich_text_/, "") if reflection.class_name.match?(/RichText$/))
       }.reject { |k, v| k.nil? || v.nil? }
     end
 
@@ -76,7 +70,7 @@ module Hoardable
             .class
             .select(refreshable_column_names)
             .find(source_record.id)
-            .slice(refreshable_column_names),
+            .slice(refreshable_column_names)
         )
     end
 

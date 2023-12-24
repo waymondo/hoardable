@@ -29,7 +29,7 @@ module Hoardable
       def has_many(*args, &block)
         options = args.extract_options!
         options[:extend] = Array(options[:extend]).push(HasManyExtension) if options.delete(
-          :hoardable,
+          :hoardable
         )
         super(*args, **options, &block)
 
