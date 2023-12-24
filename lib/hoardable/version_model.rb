@@ -13,13 +13,6 @@ module Hoardable
       def version_class
         self
       end
-
-      # This is needed to omit the pseudo row of 'tableoid' when using +ActiveRecord+’s +insert+.
-      #
-      # @!visibility private
-      def scope_attributes
-        super.without('tableoid')
-      end
     end
 
     included do
@@ -86,7 +79,9 @@ module Hoardable
 
       transaction do
         hoardable_source.tap do |reverted|
-          reverted.reload.update!(hoardable_source_attributes.without(self.class.superclass.primary_key))
+          reverted.reload.update!(
+            hoardable_source_attributes.without(self.class.superclass.primary_key, 'hoardable_id')
+          )
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
         end
@@ -132,7 +127,7 @@ module Hoardable
     def hoardable_source_attributes
       attributes.without(
         (self.class.column_names - self.class.superclass.column_names) +
-        (SUPPORTS_VIRTUAL_COLUMNS ? self.class.columns.select(&:virtual?).map(&:name) : [])
+        self.class.columns.select(&:virtual?).map(&:name)
       )
     end
   end

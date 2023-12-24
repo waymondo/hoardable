@@ -37,9 +37,6 @@ module Hoardable
   SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new('7.0.4')
   private_constant :SUPPORTS_ENCRYPTED_ACTION_TEXT
 
-  SUPPORTS_VIRTUAL_COLUMNS = ActiveRecord.version >= ::Gem::Version.new('7.0.0')
-  private_constant :SUPPORTS_VIRTUAL_COLUMNS
-
   @context = {}
   @config = CONFIG_KEYS.to_h do |key|
     [key, true]

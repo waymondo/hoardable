@@ -30,14 +30,7 @@ module Hoardable
   end
 
   module Scopes
-    TABLEOID_AREL_CONDITIONS: Proc
     self.@klass: bot
-
-    private
-    def tableoid: -> untyped
-
-    public
-    attr_writer tableoid: untyped
   end
 
   class Error < StandardError

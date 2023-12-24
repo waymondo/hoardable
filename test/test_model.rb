@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require 'helper'
 
 class TestModel < Minitest::Test
   extend Minitest::Spec::DSL
 
-  before { truncate_db }
+  before do
+    ActiveRecord::Base.connection.tables.each do |table|
+      ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
+    end
+  end
 
   let(:user) { User.create!(name: 'Justin') }
 
@@ -34,7 +38,7 @@ class TestModel < Minitest::Test
     version = post.versions.first
     assert_equal version.status, 'draft'
     assert_equal version.title, 'Headline'
-    assert_equal version.lowercase_title, 'headline' if SUPPORTS_VIRTUAL_COLUMNS
+    assert_equal version.lowercase_title, 'headline'
   end
 
   it 'uses current db version and not the current ruby attribute value for version' do
@@ -67,8 +71,8 @@ class TestModel < Minitest::Test
   end
 
   it 'works with serialized attributes' do
-    user = User.create!(name: 'Joe Schmoe', preferences: { alerts: 'on' })
-    user.update!(preferences: { alerts: 'off' })
+    user = User.create!(name: 'Joe Schmoe', preferences: { 'alerts' => 'on' })
+    user.update!(preferences: { 'alerts' => 'off' })
     assert_equal user.versions.last.preferences, { 'alerts' => 'on' }
     user.destroy!
     user.versions.last.untrash!
@@ -124,10 +128,13 @@ class TestModel < Minitest::Test
   end
 
   it 'cannot change hoardable_id' do
-    post.update!(hoardable_id: 123)
     assert_equal post.reload.hoardable_id, post.id
+    if ActiveRecord.version >= Gem::Version.new('7.1')
+      assert_raises ActiveRecord::ReadonlyAttributeError do
+        post.update!(hoardable_id: 123)
+      end
+    end
     assert_raises(ActiveRecord::ActiveRecordError) { post.update_column(:hoardable_id, 123) }
-    assert_equal post.reload.hoardable_id, post.id
     assert_raises(ActiveRecord::StatementInvalid) do
       post.class.connection.execute('UPDATE posts SET hoardable_id = 123')
     end
@@ -507,9 +514,9 @@ class TestModel < Minitest::Test
       post = Post.find(post_id)
       assert_equal post.comments.pluck('body'), ['Comment']
       comment = post.comments.first
-      assert_equal Like.all.size, 2
-      assert_equal comment.likes.size, 2
-      assert_equal post.likes.size, 2
+      assert_equal 2, Like.all.size
+      assert_equal 2, comment.likes.size
+      assert_equal 2, post.likes.size
     end
   end
 

@@ -5,30 +5,6 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
     create_function :hoardable_prevent_update_id
     create_function :hoardable_source_set_id
     create_function :hoardable_version_prevent_update
-    <% if supports_schema_enums? %>
     create_enum :hoardable_operation, %w[update delete insert]
-    <% else %>
-    reversible do |dir|
-      dir.up do
-        execute(
-          <<~SQL.squish
-            DO $$
-            BEGIN
-              IF NOT EXISTS (
-                SELECT 1 FROM pg_type t WHERE t.typname = 'hoardable_operation'
-              ) THEN
-                CREATE TYPE hoardable_operation AS ENUM ('update', 'delete', 'insert');
-              END IF;
-            END
-            $$;
-          SQL
-        )
-      end
-
-      dir.down do
-        execute('DROP TYPE IF EXISTS hoardable_operation;')
-      end
-    end
-    <% end %>
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require 'helper'
 
 class InstallGeneratorTest < Rails::Generators::TestCase
   tests Hoardable::InstallGenerator

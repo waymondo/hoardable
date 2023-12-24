@@ -1,79 +1,61 @@
 # frozen_string_literal: true
 
-ActiveRecord::Schema.verbose = false
-
-def enable_sql_log
-  ActiveRecord::Base.logger = Logger.new($stdout)
-end
-
-def truncate_db
-  ActiveRecord::Base.connection.tables.each do |table|
-    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
-  end
-end
-
-ActiveRecord::Base.connection.tables.each do |table|
-  next unless ActiveRecord::Base.connection.table_exists?(table)
-
-  ActiveRecord::Base.connection.drop_table(table, force: :cascade)
-end
-
 ActiveRecord::Schema.define do
-  create_table :posts do |t|
+  create_table :posts, if_not_exists: true do |t|
     t.text :body
     t.string :uuid, null: false, default: -> { 'gen_random_uuid()' }
     t.string :title, null: false
-    t.virtual :lowercase_title, type: :string, as: 'lower(title)', stored: true if SUPPORTS_VIRTUAL_COLUMNS
+    t.virtual :lowercase_title, type: :string, as: 'lower(title)', stored: true
     t.string :status, default: 'draft'
     t.bigint :user_id, null: false, index: true
     t.timestamps
   end
 
-  create_table :profiles do |t|
+  create_table :profiles, if_not_exists: true do |t|
     t.string :email, null: false
     t.bigint :user_id, null: false, index: true
     t.timestamps
   end
 
-  create_table :libraries, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
+  create_table :libraries, if_not_exists: true, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
     t.string :name, null: false
     t.timestamps
   end
 
-  create_table :books, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
+  create_table :books, if_not_exists: true, id: :uuid, default: -> { 'gen_random_uuid()' } do |t|
     t.string :title, null: false
     t.uuid :library_id, null: false, index: true
     t.timestamps
   end
 
-  create_table :tags, id: false do |t|
+  create_table :tags, if_not_exists: true, id: false do |t|
     t.string :name
     t.integer :primary_id, null: false, primary_key: true
     t.timestamps
   end
 
-  create_table :comments do |t|
+  create_table :comments, if_not_exists: true do |t|
     t.text :body
     t.bigint :post_id, null: false, index: true
     t.timestamps
   end
 
-  create_table :likes do |t|
+  create_table :likes, if_not_exists: true do |t|
     t.bigint :comment_id, null: false, index: true
     t.timestamps
   end
 
-  create_table :users do |t|
+  create_table :users, if_not_exists: true do |t|
     t.string :name, null: false
     t.text :preferences, default: '{}'
     t.timestamps
   end
 
-  create_table :bookmarks do |t|
+  create_table :bookmarks, if_not_exists: true do |t|
     t.string :name, null: false
   end
 
-  create_table :active_storage_blobs do |t|
+  create_table :active_storage_blobs, if_not_exists: true do |t|
     t.string   :key, null: false
     t.string   :filename, null: false
     t.string   :content_type
@@ -85,7 +67,7 @@ ActiveRecord::Schema.define do
     t.index [:key], unique: true
   end
 
-  create_table :active_storage_attachments do |t|
+  create_table :active_storage_attachments, if_not_exists: true do |t|
     t.string     :name,     null: false
     t.references :record,   null: false, polymorphic: true, index: false, type: :bigint
     t.references :blob,     null: false, type: :bigint
@@ -98,16 +80,16 @@ ActiveRecord::Schema.define do
     t.foreign_key :active_storage_blobs, column: :blob_id
   end
 
-  create_table :active_storage_variant_records do |t|
+  create_table :active_storage_variant_records, if_not_exists: true do |t|
     t.belongs_to :blob, null: false, index: false, type: :bigint
     t.string :variation_digest, null: false
     t.index %i[blob_id variation_digest], name: :index_active_storage_variant_records_uniqueness, unique: true
     t.foreign_key :active_storage_blobs, column: :blob_id
   end
 
-  create_table :action_text_rich_texts do |t|
+  create_table :action_text_rich_texts, if_not_exists: true do |t|
     t.string :name, null: false
-    t.text       :body, size: :long
+    t.text :body
     t.references :record, null: false, polymorphic: true, index: false, type: :bigint
 
     t.timestamps
@@ -117,6 +99,9 @@ ActiveRecord::Schema.define do
 end
 
 def generate_versions_table(table_name)
+  version_table_name = "#{table_name.delete(':').underscore}_versions"
+  return if ActiveRecord::Base.connection.table_exists?(version_table_name)
+
   Rails::Generators.invoke('hoardable:migration', [table_name, '--quiet'], destination_root: tmp_dir)
   Dir[File.join(tmp_dir, 'db/migrate/*.rb')].sort.each { |file| require file }
   "Create#{table_name.delete(':').singularize}Versions".constantize.migrate(:up)
