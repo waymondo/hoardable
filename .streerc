@@ -1,2 +1,2 @@
---print-width=109
---plugins=plugin/trailing_comma,plugin/single_quotes
+--print-width=100
+--plugins=plugin/trailing_comma

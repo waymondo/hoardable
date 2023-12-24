@@ -14,9 +14,12 @@ module Hoardable
 
     def insert_hoardable_version(operation, &block)
       version =
-        version_class.insert(initialize_version_attributes(operation), returning: source_primary_key.to_sym)
+        version_class.insert(
+          initialize_version_attributes(operation),
+          returning: source_primary_key.to_sym,
+        )
       version_id = version[0][source_primary_key]
-      source_record.instance_variable_set('@hoardable_version', version_class.find(version_id))
+      source_record.instance_variable_set("@hoardable_version", version_class.find(version_id))
       source_record.run_callbacks(:versioned, &block)
     end
 
@@ -26,7 +29,7 @@ module Hoardable
 
     def find_or_initialize_hoardable_event_uuid
       Thread.current[:hoardable_event_uuid] ||= ActiveRecord::Base.connection.query(
-        'SELECT gen_random_uuid();',
+        "SELECT gen_random_uuid();",
       )[
         0
       ][
@@ -38,25 +41,28 @@ module Hoardable
       source_attributes_without_primary_key.merge(
         source_record.changes.transform_values { |h| h[0] },
         {
-          'hoardable_id' => source_record.id,
-          '_event_uuid' => find_or_initialize_hoardable_event_uuid,
-          '_operation' => operation,
-          '_data' => initialize_hoardable_data.merge(changes: source_record.changes),
-          '_during' => initialize_temporal_range,
+          "hoardable_id" => source_record.id,
+          "_event_uuid" => find_or_initialize_hoardable_event_uuid,
+          "_operation" => operation,
+          "_data" => initialize_hoardable_data.merge(changes: source_record.changes),
+          "_during" => initialize_temporal_range,
         },
       )
     end
 
     def has_one_find_conditions(reflection)
       {
-        reflection.type => source_record.class.name.sub(/Version$/, ''),
+        reflection.type => source_record.class.name.sub(/Version$/, ""),
         reflection.foreign_key => source_record.hoardable_id,
-        'name' => (reflection.name.to_s.sub(/^rich_text_/, '') if reflection.class_name.match?(/RichText$/)),
+        "name" =>
+          (
+            reflection.name.to_s.sub(/^rich_text_/, "") if reflection.class_name.match?(/RichText$/)
+          ),
       }.reject { |k, v| k.nil? || v.nil? }
     end
 
     def has_one_at_timestamp
-      Hoardable.instance_variable_get('@at') || source_record.updated_at
+      Hoardable.instance_variable_get("@at") || source_record.updated_at
     rescue NameError
       raise(UpdatedAtColumnMissingError, source_record.class.table_name)
     end
@@ -86,7 +92,9 @@ module Hoardable
           .class
           .columns
           .select(&:default_function)
-          .reject { |column| column.name == source_primary_key || column.name.in?(generated_column_names) }
+          .reject do |column|
+            column.name == source_primary_key || column.name.in?(generated_column_names)
+          end
           .map(&:name)
     end
 
@@ -105,18 +113,18 @@ module Hoardable
     end
 
     def unset_hoardable_version_and_event_uuid
-      source_record.instance_variable_set('@hoardable_version', nil)
+      source_record.instance_variable_set("@hoardable_version", nil)
       return if source_record.class.connection.transaction_open?
 
       Thread.current[:hoardable_event_uuid] = nil
     end
 
     def previous_temporal_tsrange_end
-      source_record.versions.only_most_recent.pluck('_during').first&.end
+      source_record.versions.only_most_recent.pluck("_during").first&.end
     end
 
     def hoardable_source_epoch
-      return source_record.created_at if source_record.class.column_names.include?('created_at')
+      return source_record.created_at if source_record.class.column_names.include?("created_at")
 
       raise CreatedAtColumnMissingError, source_record.class.table_name
     end

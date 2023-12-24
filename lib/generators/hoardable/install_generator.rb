@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require 'rails/generators'
+require "rails/generators"
 
 module Hoardable
   # Generates an initializer file for {Hoardable} configuration and a migration with a PostgreSQL
   # function.
   class InstallGenerator < Rails::Generators::Base
-    source_root File.expand_path('templates', __dir__)
+    source_root File.expand_path("templates", __dir__)
     include Rails::Generators::Migration
 
     def create_initializer_file
-      create_file('config/initializers/hoardable.rb', <<~TEXT)
+      create_file("config/initializers/hoardable.rb", <<~TEXT)
           # Hoardable configuration defaults are below. Learn more at https://github.com/waymondo/hoardable#configuration
           #
           # Hoardable.enabled = true
@@ -20,12 +20,12 @@ module Hoardable
     end
 
     def create_migration_file
-      migration_template 'install.rb.erb', 'db/migrate/install_hoardable.rb'
+      migration_template "install.rb.erb", "db/migrate/install_hoardable.rb"
     end
 
     def create_functions
       Dir
-        .glob(File.join(__dir__, 'functions', '*.sql'))
+        .glob(File.join(__dir__, "functions", "*.sql"))
         .each do |file_path|
           file_name = file_path.match(%r{([^/]+)\.sql})[1]
           template file_path, "db/functions/#{file_name}_v01.sql"
