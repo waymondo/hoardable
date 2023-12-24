@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require 'active_model/railtie'
+require 'active_record/railtie'
+require 'action_text/engine'
+
 class Dummy < Rails::Application
   config.load_defaults Rails::VERSION::STRING.to_f
   config.eager_load = false

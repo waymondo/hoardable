@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require 'helper'
 
 class MigrationGeneratorTest < Rails::Generators::TestCase
   extend Minitest::Spec::DSL

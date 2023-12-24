@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require 'helper'
 
 class TestModel < Minitest::Test
   extend Minitest::Spec::DSL
 
-  before { truncate_db }
+  before do
+    ActiveRecord::Base.connection.tables.each do |table|
+      ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
+    end
+  end
 
   let(:user) { User.create!(name: 'Justin') }
 
@@ -34,7 +38,7 @@ class TestModel < Minitest::Test
     version = post.versions.first
     assert_equal version.status, 'draft'
     assert_equal version.title, 'Headline'
-    assert_equal version.lowercase_title, 'headline' if SUPPORTS_VIRTUAL_COLUMNS
+    assert_equal version.lowercase_title, 'headline'
   end
 
   it 'uses current db version and not the current ruby attribute value for version' do

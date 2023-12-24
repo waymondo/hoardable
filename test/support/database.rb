@@ -1,23 +1,11 @@
 # frozen_string_literal: true
 
-ActiveRecord::Schema.verbose = false
-
-def enable_sql_log
-  ActiveRecord::Base.logger = Logger.new($stdout)
-end
-
-def truncate_db
-  ActiveRecord::Base.connection.tables.each do |table|
-    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
-  end
-end
-
 ActiveRecord::Schema.define do
   create_table :posts, if_not_exists: true do |t|
     t.text :body
     t.string :uuid, null: false, default: -> { 'gen_random_uuid()' }
     t.string :title, null: false
-    t.virtual :lowercase_title, type: :string, as: 'lower(title)', stored: true if SUPPORTS_VIRTUAL_COLUMNS
+    t.virtual :lowercase_title, type: :string, as: 'lower(title)', stored: true
     t.string :status, default: 'draft'
     t.bigint :user_id, null: false, index: true
     t.timestamps
@@ -111,6 +99,9 @@ ActiveRecord::Schema.define do
 end
 
 def generate_versions_table(table_name)
+  version_table_name = "#{table_name.delete(':').underscore}_versions"
+  return if ActiveRecord::Base.connection.table_exists?(version_table_name)
+
   Rails::Generators.invoke('hoardable:migration', [table_name, '--quiet'], destination_root: tmp_dir)
   Dir[File.join(tmp_dir, 'db/migrate/*.rb')].sort.each { |file| require file }
   "Create#{table_name.delete(':').singularize}Versions".constantize.migrate(:up)

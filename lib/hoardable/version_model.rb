@@ -127,7 +127,7 @@ module Hoardable
     def hoardable_source_attributes
       attributes.without(
         (self.class.column_names - self.class.superclass.column_names) +
-        (SUPPORTS_VIRTUAL_COLUMNS ? self.class.columns.select(&:virtual?).map(&:name) : [])
+        self.class.columns.select(&:virtual?).map(&:name)
       )
     end
   end
