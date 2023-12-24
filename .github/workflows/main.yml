@@ -33,7 +33,7 @@ jobs:
           - "3.2"
         rails: 
           - "7.0"
-          # - "7.1"
+          - "7.1"
 
     steps:
       - uses: actions/checkout@v4

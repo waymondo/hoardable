@@ -3,6 +3,7 @@
 - *Breaking Change* - Support for Ruby 2.7 and Rails 6.1 is dropped
 - *Breaking Change* - The default scoping clause that controls the inherited table SQL construction
   changes from a where clause using `tableoid`s to using `FROM ONLY`.
+- fixes an issue for Rails 7.1 regarding accessing version table columns through aliased attributes
 
 ## 0.14.3
 

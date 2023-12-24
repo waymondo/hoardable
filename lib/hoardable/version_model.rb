@@ -27,9 +27,12 @@ module Hoardable
       self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
-      alias_attribute :hoardable_operation, :_operation
-      alias_attribute :hoardable_event_uuid, :_event_uuid
-      alias_attribute :hoardable_during, :_during
+
+      [:operation, :event_uuid, :during].each do |symbol|
+        define_method("hoardable_#{symbol}") do
+          public_send("_#{symbol}")
+        end
+      end
 
       # @!scope class
       # @!method trashed
