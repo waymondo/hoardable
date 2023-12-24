@@ -10,14 +10,16 @@ Rake::TestTask.new(:test) do |t|
   t.test_files = FileList["test/**/test_*.rb"]
 end
 
+SOURCE_FILES = %w[**/*.rb Rakefile Gemfile bin/console]
+
 SyntaxTree::Rake::CheckTask.new(:check) do |t|
-  t.source_files = "**/*.rb"
+  t.source_files = SOURCE_FILES
   t.print_width = 100
   t.ignore_files = "vendor/**/*.rb"
 end
 
 SyntaxTree::Rake::WriteTask.new(:write) do |t|
-  t.source_files = "**/*.rb"
+  t.source_files = SOURCE_FILES
   t.print_width = 100
 end
 
