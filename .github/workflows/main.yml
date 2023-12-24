@@ -47,6 +47,7 @@ jobs:
       - name: Run the default task
         env:
           RAILS_ENV: test
+          RUBY_VERSION: ${{ matrix.ruby }}
           RAILS_VERSION: ${{ matrix.rails }}
           POSTGRES_USER: postgres
           PGPASSWORD: password
