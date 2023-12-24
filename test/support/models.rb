@@ -20,22 +20,22 @@ end
 module Hoardable
   class Post < ::ActiveRecord::Base
     include Hoardable::Model
-    self.table_name = "posts"
+    self.table_name = 'posts'
     belongs_to :user
   end
 end
 
 class UnversionablePost < ActiveRecord::Base
   include Hoardable::Model
-  self.table_name = "posts"
+  self.table_name = 'posts'
   belongs_to :user
 
-  after_versioned { raise StandardError, "readonly" }
+  after_versioned { raise StandardError, 'readonly' }
 end
 
 class PostWithRichText < ActiveRecord::Base
   include Hoardable::Model
-  self.table_name = "posts"
+  self.table_name = 'posts'
   belongs_to :user
   has_rich_text :content, hoardable: true
   has_rich_text :description, hoardable: true
@@ -43,14 +43,14 @@ end
 
 class PostWithEncryptedRichText < ActiveRecord::Base
   include Hoardable::Model
-  self.table_name = "posts"
+  self.table_name = 'posts'
   belongs_to :user
   has_rich_text :content, encrypted: true, hoardable: true
 end
 
 class PostWithUnhoardableRichText < ActiveRecord::Base
   include Hoardable::Model
-  self.table_name = "posts"
+  self.table_name = 'posts'
   belongs_to :user
   has_rich_text :content
 end
@@ -80,8 +80,8 @@ class Like < ActiveRecord::Base
 end
 
 class UserWithTrashedPosts < ActiveRecord::Base
-  self.table_name = "users"
-  has_many :posts, -> { include_versions }, foreign_key: "user_id"
+  self.table_name = 'users'
+  has_many :posts, -> { include_versions }, foreign_key: 'user_id'
 end
 
 class Current < ActiveSupport::CurrentAttributes
@@ -95,7 +95,7 @@ end
 
 class Tag < ActiveRecord::Base
   include Hoardable::Model
-  self.primary_key = "primary_id"
+  self.primary_key = 'primary_id'
 end
 
 class Library < ActiveRecord::Base

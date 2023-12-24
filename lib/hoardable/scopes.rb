@@ -11,7 +11,7 @@ module Hoardable
       # the inherited table. This can be bypassed by using the {.include_versions} scope or wrapping
       # the code in a `Hoardable.at(datetime)` block.
       default_scope do
-        (hoardable_at = Hoardable.instance_variable_get("@at")) ? at(hoardable_at) : exclude_versions
+        (hoardable_at = Hoardable.instance_variable_get('@at')) ? at(hoardable_at) : exclude_versions
       end
 
       # @!scope class
@@ -46,7 +46,7 @@ module Hoardable
       # +datetime+ or +time+, all cast as instances of the source model.
       scope :at,
             lambda { |datetime|
-              raise(CreatedAtColumnMissingError, table_name) unless column_names.include?("created_at")
+              raise(CreatedAtColumnMissingError, table_name) unless column_names.include?('created_at')
 
               from(
                 Arel::Nodes::As.new(

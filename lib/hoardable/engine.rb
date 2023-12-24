@@ -10,13 +10,13 @@ module Hoardable
   # README} for more.
   CONFIG_KEYS = %i[enabled version_updates save_trash].freeze
 
-  VERSION_CLASS_SUFFIX = "Version"
+  VERSION_CLASS_SUFFIX = 'Version'
   private_constant :VERSION_CLASS_SUFFIX
 
   VERSION_TABLE_SUFFIX = "_#{VERSION_CLASS_SUFFIX.tableize}"
   private_constant :VERSION_TABLE_SUFFIX
 
-  DURING_QUERY = "_during @> ?::timestamp"
+  DURING_QUERY = '_during @> ?::timestamp'
   private_constant :DURING_QUERY
 
   HOARDABLE_CALLBACKS_ENABLED =
@@ -33,7 +33,7 @@ module Hoardable
     proc { |source_model| source_model.class.hoardable_config[:version_updates] }.freeze
   private_constant :HOARDABLE_VERSION_UPDATES
 
-  SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new("7.0.4")
+  SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new('7.0.4')
   private_constant :SUPPORTS_ENCRYPTED_ACTION_TEXT
 
   @context = {}
@@ -88,10 +88,10 @@ module Hoardable
   class Engine < ::Rails::Engine
     isolate_namespace Hoardable
 
-    initializer "hoardable.action_text" do
+    initializer 'hoardable.action_text' do
       ActiveSupport.on_load(:action_text_rich_text) do
-        require_relative "rich_text"
-        require_relative "encrypted_rich_text" if SUPPORTS_ENCRYPTED_ACTION_TEXT
+        require_relative 'rich_text'
+        require_relative 'encrypted_rich_text' if SUPPORTS_ENCRYPTED_ACTION_TEXT
       end
     end
   end

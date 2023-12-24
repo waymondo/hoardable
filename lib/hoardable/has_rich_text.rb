@@ -15,7 +15,7 @@ module Hoardable
         return unless hoardable
 
         reflection_options = reflections["rich_text_#{name}"].options
-        reflection_options[:class_name] = reflection_options[:class_name].sub(/^ActionText/, "Hoardable")
+        reflection_options[:class_name] = reflection_options[:class_name].sub(/^ActionText/, 'Hoardable')
       end
     end
   end

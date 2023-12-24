@@ -43,7 +43,7 @@ module Hoardable
                 superclass.table_name => {
                   superclass.primary_key => nil,
                 },
-              ).where(_operation: "delete")
+              ).where(_operation: 'delete')
             }
 
       # @!scope class
@@ -58,7 +58,7 @@ module Hoardable
       # @return [ActiveRecord<Object>]
       #
       # Returns +versions+ that were trashed at the supplied +datetime+ or +time+.
-      scope :trashed_at, ->(datetime) { where(_operation: "insert").where(DURING_QUERY, datetime) }
+      scope :trashed_at, ->(datetime) { where(_operation: 'insert').where(DURING_QUERY, datetime) }
 
       # @!scope class
       # @!method with_hoardable_event_uuid
@@ -73,18 +73,18 @@ module Hoardable
       # @return [ActiveRecord<Object>]
       #
       # Returns a limited +ActiveRecord+ scope of only the most recent version.
-      scope :only_most_recent, -> { limit(1).reorder("UPPER(_during) DESC") }
+      scope :only_most_recent, -> { limit(1).reorder('UPPER(_during) DESC') }
     end
 
     # Reverts the parent +ActiveRecord+ instance to the saved attributes of this +version+. Raises
     # an error if the version is trashed.
     def revert!
-      raise(Error, "Version is trashed, cannot revert") unless hoardable_operation == "update"
+      raise(Error, 'Version is trashed, cannot revert') unless hoardable_operation == 'update'
 
       transaction do
         hoardable_source.tap do |reverted|
           reverted.reload.update!(
-            hoardable_source_attributes.without(self.class.superclass.primary_key, "hoardable_id"),
+            hoardable_source_attributes.without(self.class.superclass.primary_key, 'hoardable_id'),
           )
           reverted.instance_variable_set(:@hoardable_version, self)
           reverted.run_callbacks(:reverted)
@@ -95,13 +95,13 @@ module Hoardable
     # Inserts a trashed +version+ back into its parent +ActiveRecord+ table with its original
     # primary key. Raises an error if the version is not trashed.
     def untrash!
-      raise(Error, "Version is not trashed, cannot untrash") unless hoardable_operation == "delete"
+      raise(Error, 'Version is not trashed, cannot untrash') unless hoardable_operation == 'delete'
 
       transaction do
         insert_untrashed_source.tap do |untrashed|
           untrashed
-            .send("hoardable_client")
-            .insert_hoardable_version("insert") do
+            .send('hoardable_client')
+            .insert_hoardable_version('insert') do
               untrashed.instance_variable_set(:@hoardable_version, self)
               untrashed.run_callbacks(:untrashed)
             end
@@ -115,7 +115,7 @@ module Hoardable
     # {https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes changes} that
     # were present during version creation.
     def changes
-      _data&.dig("changes")
+      _data&.dig('changes')
     end
 
     private

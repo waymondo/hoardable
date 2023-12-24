@@ -32,11 +32,11 @@ module Hoardable
       include Scopes
 
       around_update(if: [HOARDABLE_CALLBACKS_ENABLED, HOARDABLE_VERSION_UPDATES]) do |_, block|
-        hoardable_client.insert_hoardable_version("update", &block)
+        hoardable_client.insert_hoardable_version('update', &block)
       end
 
       around_destroy(if: [HOARDABLE_CALLBACKS_ENABLED, HOARDABLE_SAVE_TRASH]) do |_, block|
-        hoardable_client.insert_hoardable_version("delete", &block)
+        hoardable_client.insert_hoardable_version('delete', &block)
       end
 
       before_destroy(if: HOARDABLE_CALLBACKS_ENABLED, unless: HOARDABLE_SAVE_TRASH) { versions.delete_all }
@@ -46,7 +46,7 @@ module Hoardable
       # Returns all +versions+ in ascending order of their temporal timeframes.
       has_many(
         :versions,
-        -> { order("UPPER(_during) ASC") },
+        -> { order('UPPER(_during) ASC') },
         dependent: nil,
         class_name: version_class.to_s,
         inverse_of: :hoardable_source,
@@ -84,7 +84,7 @@ module Hoardable
     #
     # @param datetime [DateTime, Time]
     def version_at(datetime)
-      raise(Error, "Future state cannot be known") if datetime.future?
+      raise(Error, 'Future state cannot be known') if datetime.future?
 
       versions.at(datetime).limit(1).first
     end
@@ -100,7 +100,7 @@ module Hoardable
     end
 
     def hoardable_id
-      read_attribute("hoardable_id")
+      read_attribute('hoardable_id')
     end
 
     delegate :version_class, to: :class
