@@ -13,7 +13,7 @@ end
 SyntaxTree::Rake::CheckTask.new(:check) do |t|
   t.source_files = "**/*.rb"
   t.print_width = 100
-  # t.ignore_files = "vendor/**/*.rb"
+  t.ignore_files = "vendor/**/*.rb"
 end
 
 SyntaxTree::Rake::WriteTask.new(:write) do |t|
