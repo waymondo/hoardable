@@ -9,4 +9,8 @@ Rake::TestTask.new(:test) do |t|
   t.test_files = FileList['test/**/test_*.rb']
 end
 
+task :pre_commit do
+  `typeprof lib/hoardable.rb && stree write "**/*.rb"`
+end
+
 task default: %i[test]

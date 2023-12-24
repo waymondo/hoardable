@@ -11,11 +11,7 @@ module Hoardable
       # the inherited table. This can be bypassed by using the {.include_versions} scope or wrapping
       # the code in a `Hoardable.at(datetime)` block.
       default_scope do
-        if (hoardable_at = Hoardable.instance_variable_get('@at'))
-          at(hoardable_at)
-        else
-          exclude_versions
-        end
+        (hoardable_at = Hoardable.instance_variable_get("@at")) ? at(hoardable_at) : exclude_versions
       end
 
       # @!scope class
@@ -48,21 +44,23 @@ module Hoardable
       #
       # Returns instances of the source model and versions that were valid at the supplied
       # +datetime+ or +time+, all cast as instances of the source model.
-      scope :at, lambda { |datetime|
-        raise(CreatedAtColumnMissingError, table_name) unless column_names.include?('created_at')
+      scope :at,
+            lambda { |datetime|
+              raise(CreatedAtColumnMissingError, table_name) unless column_names.include?("created_at")
 
-        from(
-          Arel::Nodes::As.new(
-            Arel::Nodes::Union.new(
-              include_versions.where(id: version_class.at(datetime).select(primary_key)).arel,
-              exclude_versions
-                .where(created_at: ..datetime)
-                .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime)).arel,
-            ),
-            arel_table
-          )
-        ).hoardable
-      }
+              from(
+                Arel::Nodes::As.new(
+                  Arel::Nodes::Union.new(
+                    include_versions.where(id: version_class.at(datetime).select(primary_key)).arel,
+                    exclude_versions
+                      .where(created_at: ..datetime)
+                      .where.not(id: version_class.select(:hoardable_id).where(DURING_QUERY, datetime))
+                      .arel,
+                  ),
+                  arel_table,
+                ),
+              ).hoardable
+            }
     end
   end
 end

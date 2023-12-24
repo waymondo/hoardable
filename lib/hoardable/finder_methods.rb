@@ -17,9 +17,7 @@ module Hoardable
     private
 
     def hoardable_ids(ids)
-      ids.map do |id|
-        version_class.where(hoardable_id: id).select(primary_key).ids[0] || id
-      end
+      ids.map { |id| version_class.where(hoardable_id: id).select(primary_key).ids[0] || id }
     end
   end
 end
