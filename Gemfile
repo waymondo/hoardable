@@ -3,8 +3,8 @@
 source 'https://rubygems.org'
 
 gem 'debug'
-if ENV['RAILS_VERSION']
-  gem 'rails', "~> #{ENV.fetch("RAILS_VERSION")}"
+if (rails_version = ENV['RAILS_VERSION'])
+  gem 'rails', "~> #{rails_version}.0"
 else
   gem 'rails'
 end
