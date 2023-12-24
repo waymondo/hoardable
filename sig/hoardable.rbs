@@ -1,3 +1,10 @@
+# TypeProf 0.21.9
+
+# Global variables
+$thor_runner: false
+$trace: false
+
+# Classes
 module Hoardable
   VERSION: String
   DATA_KEYS: [:meta, :whodunit, :event_uuid]
@@ -18,7 +25,7 @@ module Hoardable
   def self.at: (untyped datetime) -> untyped
   def self.logger: -> untyped
 
-  class Engine
+  class Engine < Rails::Engine
   end
 
   module FinderMethods
@@ -30,7 +37,7 @@ module Hoardable
   end
 
   module Scopes
-    self.@klass: bot
+    extend ActiveSupport::Concern
   end
 
   class Error < StandardError
@@ -40,14 +47,25 @@ module Hoardable
     def initialize: (untyped source_table_name) -> void
   end
 
+  class UpdatedAtColumnMissingError < Error
+    def initialize: (untyped source_table_name) -> void
+  end
+
   class DatabaseClient
+    @generated_column_names: untyped
+    @refreshable_column_names: untyped
+
     attr_reader source_record: SourceModel
     def initialize: (SourceModel source_record) -> void
     def insert_hoardable_version: (untyped operation) -> untyped
     def source_primary_key: -> untyped
     def find_or_initialize_hoardable_event_uuid: -> untyped
     def initialize_version_attributes: (untyped operation) -> untyped
+    def has_one_find_conditions: (untyped reflection) -> Hash[String, nil]
+    def has_one_at_timestamp: -> untyped
     def source_attributes_without_primary_key: -> untyped
+    def generated_column_names: -> Array[untyped]
+    def refreshable_column_names: -> untyped
     def initialize_temporal_range: -> Range
     def initialize_hoardable_data: -> untyped
     def assign_hoardable_context: (:event_uuid | :meta | :whodunit key) -> nil
@@ -57,6 +75,7 @@ module Hoardable
   end
 
   module SourceModel
+    extend ActiveSupport::Concern
     include Scopes
     @hoardable_client: DatabaseClient
 
@@ -77,6 +96,8 @@ module Hoardable
   end
 
   module VersionModel
+    extend ActiveSupport::Concern
+
     def revert!: -> untyped
     def untrash!: -> untyped
     def changes: -> untyped
@@ -87,10 +108,10 @@ module Hoardable
 
     public
     def version_class: -> VersionModel
-    def scope_attributes: -> untyped
   end
 
   module Model
+    extend ActiveSupport::Concern
     include VersionModel
     include SourceModel
     include Associations
@@ -101,6 +122,7 @@ module Hoardable
   end
 
   module Associations
+    extend ActiveSupport::Concern
     include HasRichText
     include BelongsTo
     include HasOne
@@ -108,6 +130,8 @@ module Hoardable
   end
 
   module HasMany
+    extend ActiveSupport::Concern
+
     def has_many: (*untyped args) -> untyped
 
     module HasManyExtension
@@ -122,6 +146,8 @@ module Hoardable
   end
 
   module BelongsTo
+    extend ActiveSupport::Concern
+
     def belongs_to: (*untyped args) -> nil
 
     private
@@ -129,25 +155,31 @@ module Hoardable
   end
 
   module HasOne
+    extend ActiveSupport::Concern
+
     def has_one: (*untyped args) -> nil
   end
 
   module HasRichText
+    extend ActiveSupport::Concern
+
     def has_rich_text: (untyped name, ?encrypted: false, ?hoardable: false) -> nil
   end
 
-  class MigrationGenerator
+  class MigrationGenerator < ActiveRecord::Generators::Base
     @singularized_table_name: untyped
 
     def create_versions_table: -> untyped
+    def create_triggers: -> {versions_prevent_update: untyped, set_hoardable_id: untyped, prevent_update_hoardable_id: untyped}
     def foreign_key_type: -> String
     def primary_key: -> String
     def singularized_table_name: -> untyped
   end
 
-  class InstallGenerator
+  class InstallGenerator < Rails::Generators::Base
     def create_initializer_file: -> untyped
     def create_migration_file: -> untyped
+    def create_functions: -> Array[String]
     def self.next_migration_number: (untyped dir) -> untyped
   end
 

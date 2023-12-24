@@ -8,5 +8,7 @@ if (rails_version = ENV['RAILS_VERSION'])
 else
   gem 'rails'
 end
+gem 'syntax_tree'
+gem 'typeprof'
 
 gemspec
