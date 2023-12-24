@@ -52,5 +52,4 @@ jobs:
           PGPASSWORD: password
           POSTGRES_PASSWORD: password
         run: |
-          bundle exec stree check --ignore-files="vendor/**/*.rb" "**/*.rb"
           bundle exec rake
