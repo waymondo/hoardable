@@ -3,6 +3,7 @@
 require "active_record"
 require "fx"
 require_relative "hoardable/version"
+require_relative "hoardable/arel_visitors"
 require_relative "hoardable/engine"
 require_relative "hoardable/finder_methods"
 require_relative "hoardable/scopes"
