@@ -1,7 +1,7 @@
 module Hoardable
   # This is a monkey patch of JOIN related {Arel::Visitors} for PostgreSQL so that they can append
   # the ONLY clause when known to be operating on a {Hoardable::Model}. Ideally, {Arel} itself would
-  # support this.
+  # provide a mechanism to support this keyword.
   module ArelVisitors
     def visit_Arel_Nodes_FullOuterJoin(o, collector)
       collector << "FULL OUTER JOIN "
