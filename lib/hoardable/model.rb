@@ -67,6 +67,7 @@ module Hoardable
             object_namespace.const_set(version_class_name, Class.new(self) { include VersionModel })
           end
           include SourceModel
+          REGISTRY.add(self)
 
           trace.disable
         end

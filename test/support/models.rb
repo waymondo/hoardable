@@ -57,7 +57,7 @@ end
 
 class User < ActiveRecord::Base
   include Hoardable::Model
-  has_many :posts
+  has_many :posts, hoardable: true
   has_one :profile, hoardable: true
   has_rich_text :bio, hoardable: true
   serialize :preferences, coder: JSON

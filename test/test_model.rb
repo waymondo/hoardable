@@ -2,26 +2,28 @@
 
 require "helper"
 
-class TestModel < Minitest::Test
-  extend Minitest::Spec::DSL
-
-  before do
+class TestModel < ActiveSupport::TestCase
+  setup do
     ActiveRecord::Base.connection.tables.each do |table|
       ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
     end
   end
 
-  let(:user) { User.create!(name: "Justin") }
+  private def user
+    @user ||= User.create!(name: "Justin")
+  end
 
-  let(:post) { Post.create!(title: "Headline", user: user) }
+  private def post
+    @post ||= Post.create!(title: "Headline", user: user)
+  end
 
-  def update_post(attributes = { title: "New Headline", status: :live })
+  private def update_post(attributes = { title: "New Headline", status: :live })
     post.update!(attributes)
     assert_equal post.status.to_sym, attributes[:status]
     assert_equal post.title, attributes[:title]
   end
 
-  it "can do the very first readme example" do
+  test "can do the very first readme example" do
     assert_equal post.versions.size, 0
     update_post
     assert_equal post.reload.versions.size, 1
@@ -31,7 +33,7 @@ class TestModel < Minitest::Test
     assert_raises(ActiveRecord::RecordNotFound) { Post.find(post.id) }
   end
 
-  it "creates a version with previous state and generated columns" do
+  test "creates a version with previous state and generated columns" do
     assert_equal post.versions.size, 0
     update_post
     assert_equal post.reload.versions.size, 1
@@ -41,7 +43,7 @@ class TestModel < Minitest::Test
     assert_equal version.lowercase_title, "headline"
   end
 
-  it "uses current db version and not the current ruby attribute value for version" do
+  test "uses current db version and not the current ruby attribute value for version" do
     post.title = "Draft Headline"
     update_post
     assert_equal post.versions.size, 1
@@ -49,7 +51,7 @@ class TestModel < Minitest::Test
     assert_equal version.title, "Headline"
   end
 
-  it "creates read-only versions that do not themselves have versions" do
+  test "creates read-only versions that do not themselves have versions" do
     update_post
     version = post.versions.first
     assert_raises(ActiveRecord::ReadOnlyRecord) { version.update!(title: "Rewriting History") }
@@ -57,20 +59,20 @@ class TestModel < Minitest::Test
     assert_raises(ActiveRecord::AssociationNotFoundError) { version.versions }
   end
 
-  it "preserves created_at timestamps, expects during tsrange is set" do
+  test "preserves created_at timestamps, expects during tsrange is set" do
     update_post
     version = post.versions.first
     assert_equal post.created_at, version.created_at
     assert version._during
   end
 
-  it "knows how to dynamically create namespaced version classes" do
+  test "knows how to dynamically create namespaced version classes" do
     post = Hoardable::Post.create!(title: "Hi", user: user)
     post.update!(title: "Bye")
     assert_instance_of Hoardable::PostVersion, post.versions.first
   end
 
-  it "works with serialized attributes" do
+  test "works with serialized attributes" do
     user = User.create!(name: "Joe Schmoe", preferences: { "alerts" => "on" })
     user.update!(preferences: { "alerts" => "off" })
     assert_equal user.versions.last.preferences, { "alerts" => "on" }
@@ -79,7 +81,7 @@ class TestModel < Minitest::Test
     assert_equal user.reload.preferences, { "alerts" => "off" }
   end
 
-  it "can assign hoardable_id when primary key is different" do
+  test "can assign hoardable_id when primary key is different" do
     tag = Tag.create!(name: "tug")
     tag.update!(name: "tag")
     tag_version = tag.versions.last
@@ -87,7 +89,7 @@ class TestModel < Minitest::Test
     refute_equal tag_version.id, tag.id
   end
 
-  it "can create multiple versions, and knows how to query at" do
+  test "can create multiple versions, and knows how to query at" do
     post
     datetime1 = DateTime.now
     update_post
@@ -108,7 +110,7 @@ class TestModel < Minitest::Test
     assert_equal post.at(nil).title, "Revert"
   end
 
-  it "can revert to version at a datetime" do
+  test "can revert to version at a datetime" do
     post
     datetime1 = DateTime.now
     update_post
@@ -123,11 +125,11 @@ class TestModel < Minitest::Test
     assert_equal post.versions.size, 3
   end
 
-  it "cannot revert to version in the future" do
+  test "cannot revert to version in the future" do
     assert_raises(Hoardable::Error) { post.revert_to!(DateTime.now + 1.day) }
   end
 
-  it "cannot change hoardable_id" do
+  test "cannot change hoardable_id" do
     assert_equal post.reload.hoardable_id, post.id
     if ActiveRecord.version >= Gem::Version.new("7.1")
       assert_raises ActiveRecord::ReadonlyAttributeError do
@@ -140,19 +142,19 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "creates a version that is aware of relationships on parent model" do
+  test "creates a version that is aware of relationships on parent model" do
     update_post
     version = post.versions.first
     assert_equal version.user, post.user
   end
 
-  it "tests version is available in callbacks" do
+  test "tests version is available in callbacks" do
     update_post
     assert post.hoardable_version_id
     assert_nil post.hoardable_version
   end
 
-  it "it can halt transaction in after_versioned hook if necessary" do
+  test "it can halt transaction in after_versioned hook if necessary" do
     post = UnversionablePost.create!(title: "Unversionable", user: user)
     assert_raises(StandardError, "readonly") { post.update!(title: "Version?") }
     post.reload
@@ -160,7 +162,7 @@ class TestModel < Minitest::Test
     assert_equal post.versions.size, 0
   end
 
-  it "it won’t persist an inserted version if the save fails" do
+  test "it won’t persist an inserted version if the save fails" do
     post
     assert_raises(ActiveRecord::RecordInvalid) { post.update!(user: nil) }
     post.reload
@@ -168,7 +170,7 @@ class TestModel < Minitest::Test
     assert_equal post.versions.size, 0
   end
 
-  it "can be reverted from previous version" do
+  test "can be reverted from previous version" do
     attributes = post.reload.attributes.without("updated_at")
     update_post
     version = post.versions.first
@@ -177,7 +179,7 @@ class TestModel < Minitest::Test
     refute_equal post.updated_at, attributes["updated_at"]
   end
 
-  it "creates a version on deletion and can be untrashed" do
+  test "creates a version on deletion and can be untrashed" do
     post_id = post.id
     attributes = post.reload.attributes.without("updated_at")
     post.destroy!
@@ -190,7 +192,7 @@ class TestModel < Minitest::Test
     refute post.reload.trashed?
   end
 
-  it "can trash and untrash a model multiple times, with each version creating unique post version IDs" do
+  test "can trash and untrash a model multiple times, with each version creating unique post version IDs" do
     post_id = post.id
     Array.new(3) do
       post.reload.destroy!
@@ -201,7 +203,7 @@ class TestModel < Minitest::Test
     assert_equal PostVersion.pluck("id").uniq.count, 6
   end
 
-  it "can hook into after_reverted and after_untrashed callbacks" do
+  test "can hook into after_reverted and after_untrashed callbacks" do
     assert_nil post.reverted
     assert_nil post.untrashed
     update_post
@@ -214,7 +216,7 @@ class TestModel < Minitest::Test
     refute_nil untrashed_post.untrashed
   end
 
-  it "raises errors when trying to revert! or untrash! when not allowed" do
+  test "raises errors when trying to revert! or untrash! when not allowed" do
     update_post
     version = post.versions.last
     assert_raises(Hoardable::Error) { version.untrash! }
@@ -223,7 +225,7 @@ class TestModel < Minitest::Test
     assert_raises(Hoardable::Error) { version.revert! }
   end
 
-  it "can query for trashed versions" do
+  test "can query for trashed versions" do
     update_post
     assert_equal PostVersion.count, 1
     assert_equal PostVersion.trashed.size, 0
@@ -236,34 +238,34 @@ class TestModel < Minitest::Test
     assert_equal PostVersion.trashed.size, 0
   end
 
-  it "does not create version on raised error" do
+  test "does not create version on raised error" do
     assert_raises(ActiveModel::UnknownAttributeError) { update_post(non_existent_attribute: "wat") }
     assert_equal post.versions.size, 0
     assert_nil post.hoardable_version
   end
 
-  it "does not create version when disabled" do
+  test "does not create version when disabled" do
     Hoardable.enabled = false
     update_post
     assert_equal post.versions.size, 0
     Hoardable.enabled = true
   end
 
-  it "does not create version when disabled within block" do
+  test "does not create version when disabled within block" do
     Hoardable.with(enabled: false) do
       update_post
       assert_equal post.versions.size, 0
     end
   end
 
-  it "does not create version when version_updates is false" do
+  test "does not create version when version_updates is false" do
     Hoardable.with(version_updates: false) do
       update_post
       assert_equal post.versions.size, 0
     end
   end
 
-  it "can opt-out of versioning on deletion" do
+  test "can opt-out of versioning on deletion" do
     Hoardable.with(save_trash: false) do
       update_post
       assert_equal post.versions.size, 1
@@ -272,7 +274,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "can disallow version_updates with Model configuration" do
+  test "can disallow version_updates with Model configuration" do
     Post.with_hoardable_config(version_updates: false) do
       update_post
       assert_equal post.versions.size, 0
@@ -285,11 +287,11 @@ class TestModel < Minitest::Test
     assert_equal version.hoardable_whodunit, user.name
   end
 
-  it "tracks whodunit as a string" do
+  test "tracks whodunit as a string" do
     Hoardable.with(whodunit: user.name) { expect_whodunit }
   end
 
-  it "tracks whodunit with a proc" do
+  test "tracks whodunit with a proc" do
     Hoardable.whodunit = -> { Current.user&.name }
     Current.user = user
     expect_whodunit
@@ -297,7 +299,7 @@ class TestModel < Minitest::Test
     Current.user = nil
   end
 
-  it "tracks meta" do
+  test "tracks meta" do
     meta = { "foo" => "bar" }
     Hoardable.with(meta: meta) do
       update_post
@@ -306,13 +308,13 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "saves the changes hash along with the version" do
+  test "saves the changes hash along with the version" do
     update_post
     version = post.versions.first
     assert_equal version.changes.keys, %w[title status updated_at]
   end
 
-  it "can unscope the tableoid clause in default scope to included versions of trashed sources" do
+  test "can unscope the tableoid clause in default scope to included versions of trashed sources" do
     post
     assert user.posts.exists?
     post.destroy!
@@ -321,7 +323,7 @@ class TestModel < Minitest::Test
     assert user_with_trashed_posts.posts.exists?
   end
 
-  it "can search for versions of resource on parent model" do
+  test "can search for versions of resource on parent model" do
     Post.create!(title: "Another Headline", user: user)
     update_post
     assert_equal Post.count, 2
@@ -333,7 +335,7 @@ class TestModel < Minitest::Test
     assert_equal Post.versions.count, 2
   end
 
-  it "a comment can still point to a trashed post" do
+  test "a comment can still point to a trashed post" do
     comment = post.comments.create!(body: "Comment 1")
     post.destroy!
     assert_equal comment.post, post
@@ -346,7 +348,7 @@ class TestModel < Minitest::Test
     PostVersion.trashed.find_by(hoardable_id: post.id)
   end
 
-  it "recursively creates trashed versions with shared event_uuid" do
+  test "recursively creates trashed versions with shared event_uuid" do
     update_post
     trashed_post = create_comments_and_destroy_post
     trashed_comments = CommentVersion.trashed.where(post_id: post.id)
@@ -358,7 +360,7 @@ class TestModel < Minitest::Test
     )
   end
 
-  it "can recursively untrash verisons with shared event_uuid" do
+  test "can recursively untrash verisons with shared event_uuid" do
     trashed_post = create_comments_and_destroy_post
     assert_equal CommentVersion.trashed.where(post_id: post.id).size, 2
     assert_equal trashed_post.comments.size, 0
@@ -368,14 +370,14 @@ class TestModel < Minitest::Test
     assert_equal untrashed_post.comments.size, 2
   end
 
-  it "creates a version class with a foreign key type that matches the primary key" do
+  test "creates a version class with a foreign key type that matches the primary key" do
     assert_equal Post.version_class.columns.find { |col| col.name == "hoardable_id" }.sql_type,
                  "bigint"
     assert_equal Book.version_class.columns.find { |col| col.name == "hoardable_id" }.sql_type,
                  "uuid"
   end
 
-  it "can make versions of resources with UUID primary keys" do
+  test "can make versions of resources with UUID primary keys" do
     original_title = "Programming 101"
     book =
       Book.create!(title: original_title, library: Library.create!(name: "Town Center Library"))
@@ -391,7 +393,7 @@ class TestModel < Minitest::Test
     assert_equal untrashed_book.id, book_id
   end
 
-  it "does not save_trash when model is configured not to" do
+  test "does not save_trash when model is configured not to" do
     library = Library.create!(name: "Lib")
     library.update!(name: "Library")
     assert_equal library.versions.size, 1
@@ -400,12 +402,12 @@ class TestModel < Minitest::Test
     assert_equal LibraryVersion.count, 0
   end
 
-  it "warns about missing created_at column" do
+  test "warns about missing created_at column" do
     bookmark = Bookmark.create!(name: "Paper")
     assert_raises(Hoardable::CreatedAtColumnMissingError) { bookmark.update!(name: "Ribbon") }
   end
 
-  it "can return all versions and trash through parent class if necessary" do
+  test "can return all versions and trash through parent class if necessary" do
     comment = post.comments.create!(body: "Comment 1")
     update_post
     datetime = Time.now
@@ -422,7 +424,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "can query the source model, including versions that were valid at a certain datetime" do
+  test "can query the source model, including versions that were valid at a certain datetime" do
     post
     datetime1 = DateTime.now
     update_post
@@ -444,7 +446,7 @@ class TestModel < Minitest::Test
     assert_equal Post.at(datetime6).pluck("title"), ["New Headline"]
   end
 
-  it "returns hoardable records at the specified time with Hoardable.at" do
+  test "returns hoardable records at the specified time with Hoardable.at" do
     comment = post.comments.create!(body: "Comment")
     datetime = DateTime.now
     comment.update!(body: "Comment Updated")
@@ -462,7 +464,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "cannot save a hoardable source record that is actually a version" do
+  test "cannot save a hoardable source record that is actually a version" do
     post
     datetime = DateTime.now
     post.update!(title: "Headline Updated")
@@ -475,7 +477,7 @@ class TestModel < Minitest::Test
     assert_equal post.reload.versions.size, 1
   end
 
-  it "can return hoardable records at a specified time with an ID of a record that is destroyed" do
+  test "can return hoardable records at a specified time with an ID of a record that is destroyed" do
     post
     datetime = DateTime.now
     post.destroy!
@@ -486,7 +488,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "can return hoardable records at a specified time with multiple IDs" do
+  test "can return hoardable records at a specified time with multiple IDs" do
     post
     post2 = Post.create!(title: "Number 2", user: user)
     datetime = DateTime.now
@@ -497,7 +499,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "can return hoardable records via a has many through relationship" do
+  test "can return hoardable records via a has many through relationship" do
     post = Post.create!(user: user, title: "Title")
     comment = post.comments.create!(body: "Comment")
     comment.likes.create!
@@ -517,7 +519,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "can returns a set of comment versions at specified time" do
+  test "can returns a set of comment versions at specified time" do
     comment1 = post.comments.create!(body: "Comment 1")
     comment2 = post.comments.create!(body: "Comment 2")
     comment3 = post.comments.create!(body: "Comment 3")
@@ -533,7 +535,7 @@ class TestModel < Minitest::Test
     assert_equal(post.reload.comment_ids, post.reload.comments.map(&:hoardable_id))
   end
 
-  it "can return hoardable results with has one relationship" do
+  test "can return hoardable results with has one relationship" do
     profile = Profile.create!(user: user, email: "email@example.com")
     datetime1 = DateTime.now
     profile.update!(email: "foo@bar.com")
@@ -546,7 +548,7 @@ class TestModel < Minitest::Test
     Hoardable.at(datetime3) { assert_nil user.profile }
   end
 
-  it "creates rich text record for versions" do
+  test "creates rich text record for versions" do
     post = PostWithRichText.create!(title: "Title", content: "<div>Hello World</div>", user: user)
     datetime = DateTime.now
     post.update!(content: "<div>Goodbye Cruel World</div>")
@@ -556,7 +558,7 @@ class TestModel < Minitest::Test
     Hoardable.at(datetime) { assert_equal post.content.to_plain_text, "Hello World" }
   end
 
-  it "can access rich text record through version" do
+  test "can access rich text record through version" do
     post = PostWithRichText.create!(title: "Title", content: "<div>Hello World</div>", user: user)
     post.update!(content: "<div>Goodbye Cruel World</div>")
     post.update!(title: "New Title")
@@ -566,14 +568,14 @@ class TestModel < Minitest::Test
     assert_equal post.versions.third.content.body.to_plain_text, "Goodbye Cruel World"
   end
 
-  it "returns proper rich text when unpersisted and given invalid datetime" do
+  test "returns proper rich text when unpersisted and given invalid datetime" do
     post = PostWithRichText.new
     assert_equal post.at(DateTime.now).content.to_plain_text, ""
     assert_equal post.at(nil).content.to_plain_text, ""
   end
 
   if SUPPORTS_ENCRYPTED_ACTION_TEXT
-    it "creates encrypted rich text record for versions" do
+    test "creates encrypted rich text record for versions" do
       post =
         PostWithEncryptedRichText.create!(
           title: "Title",
@@ -590,7 +592,7 @@ class TestModel < Minitest::Test
     end
   end
 
-  it "returns correct polymoprhic association via temporal has one relationship" do
+  test "returns correct polymoprhic association via temporal has one relationship" do
     user = User.create!(name: "Joe Schmoe", bio: "<div>Bio</div>")
     post = PostWithRichText.create!(title: "Title", content: "<div>Content</div>", user: user)
     datetime = DateTime.now
@@ -603,7 +605,7 @@ class TestModel < Minitest::Test
     assert_equal user.at(datetime).bio.to_plain_text, "Bio"
   end
 
-  it "returns correct rich text for model with multiple rich texts" do
+  test "returns correct rich text for model with multiple rich texts" do
     post =
       PostWithRichText.create!(
         title: "Title",
@@ -619,7 +621,7 @@ class TestModel < Minitest::Test
     assert_equal post.versions.last.description.to_plain_text, "Description"
   end
 
-  it "does not create versions without hoardable keyword" do
+  test "does not create versions without hoardable keyword" do
     post =
       PostWithUnhoardableRichText.create!(
         title: "Title",
@@ -628,5 +630,18 @@ class TestModel < Minitest::Test
       )
     assert_instance_of ActionText::RichText, post.content
     assert_raises(StandardError) { post.content.versions }
+  end
+
+  test "applys ONLY clause on joined relationship" do
+    assert_equal(
+      "SELECT \"users\".* FROM ONLY users INNER JOIN ONLY \"posts\" ON \"posts\".\"user_id\" = \"users\".\"id\"",
+      User.joins(:posts).to_sql
+    )
+    post
+    refute_empty user.posts
+    refute_empty User.joins(:posts)
+    post.destroy!
+    assert_empty user.posts
+    assert_empty User.joins(:posts)
   end
 end
