@@ -431,6 +431,7 @@ Then in your model include `Hoardable::Model` and provide the `hoardable: true` 
 class Post < ActiveRecord::Base
   include Hoardable::Model # or `Hoardable::Associations` if you don't need `PostVersion`
   has_rich_text :content, hoardable: true
+  # alternately, this could be `has_hoardable_rich_text :content`
 end
 ```
 

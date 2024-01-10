@@ -66,6 +66,8 @@ end
 class Profile < ActiveRecord::Base
   include Hoardable::Model
   belongs_to :user
+  has_hoardable_rich_text :life_story
+  has_hoardable_rich_text :diary, encrypted: true
 end
 
 class Comment < ActiveRecord::Base
