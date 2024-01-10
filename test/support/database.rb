@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+ActiveRecord::Schema.verbose = false
+
 ActiveRecord::Schema.define do
   create_table :posts, if_not_exists: true do |t|
     t.text :body

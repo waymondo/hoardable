@@ -6,12 +6,8 @@ module Hoardable
     extend ActiveSupport::Concern
 
     class_methods do
-      def has_rich_text(name, encrypted: false, hoardable: false)
-        if SUPPORTS_ENCRYPTED_ACTION_TEXT
-          super(name, encrypted: encrypted)
-        else
-          super(name)
-        end
+      def has_rich_text(name, hoardable: false, **opts)
+        super(name, **opts)
         return unless hoardable
 
         reflection_options = reflections["rich_text_#{name}"].options
@@ -23,6 +19,10 @@ module Hoardable
           /^ActionText/,
           "Hoardable"
         )
+      end
+
+      def has_hoardable_rich_text(name, **opts)
+        has_rich_text(name, hoardable: true, **opts)
       end
     end
   end

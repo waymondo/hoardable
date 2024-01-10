@@ -592,6 +592,23 @@ class TestModel < ActiveSupport::TestCase
     end
   end
 
+  test "has_hoardable_rich_text works" do
+    profile = Profile.create!(user: user, email: "email@example.com", life_story: "<div>woke up</div>")
+    datetime = DateTime.now
+    profile.update!(life_story: "<div>went to sleep</div>")
+    assert_equal "woke up", profile.at(datetime).life_story.to_plain_text
+  end
+
+  if SUPPORTS_ENCRYPTED_ACTION_TEXT
+    test "has_hoardable_rich_text works for encrypted rich text" do
+      profile = Profile.create!(user: user, email: "email@example.com", diary: "<div>i'm happy</div>")
+      datetime = DateTime.now
+      profile.update!(diary: "<div>i'm sad</div>")
+      assert_equal "i'm happy", profile.at(datetime).diary.to_plain_text
+      assert profile.diary.encrypted_attribute?("body")
+    end
+  end
+
   test "returns correct polymoprhic association via temporal has one relationship" do
     user = User.create!(name: "Joe Schmoe", bio: "<div>Bio</div>")
     post = PostWithRichText.create!(title: "Title", content: "<div>Content</div>", user: user)
