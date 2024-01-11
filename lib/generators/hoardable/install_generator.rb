@@ -11,12 +11,12 @@ module Hoardable
 
     def create_initializer_file
       create_file("config/initializers/hoardable.rb", <<~TEXT)
-          # Hoardable configuration defaults are below. Learn more at https://github.com/waymondo/hoardable#configuration
-          #
-          # Hoardable.enabled = true
-          # Hoardable.version_updates = true
-          # Hoardable.save_trash = true
-        TEXT
+        # Hoardable configuration defaults are below. Learn more at https://github.com/waymondo/hoardable#configuration
+        #
+        # Hoardable.enabled = true
+        # Hoardable.version_updates = true
+        # Hoardable.save_trash = true
+      TEXT
     end
 
     def create_migration_file
