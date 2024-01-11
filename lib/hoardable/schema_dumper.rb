@@ -9,6 +9,8 @@ module Hoardable
     def tables(stream)
       super
       dump_inherited_tables(stream)
+      empty_line(stream)
+      triggers(stream)
     end
 
     private def dump_inherited_tables(stream)

@@ -18,11 +18,13 @@ class TestSchemaDumper < ActiveSupport::TestCase
     assert_match("create_table \"posts\", force: :cascade do |t|\n", output)
   end
 
-  test "it dumps versioned table after inherited table" do
+  test "it dumps inherited table after parent table, and trigger after both" do
     output = dump_table_schema("post_versions", "posts")
     assert posts_index = output.index(/create_table "posts"/)
     assert post_versions_index = output.index(/create_table "post_versions"/)
+    assert post_versions_trigger_index = output.index(/create_trigger :post_versions_prevent_update/)
     assert post_versions_index > posts_index
+    assert post_versions_trigger_index > post_versions_index
   end
 
   private def dump_table_schema(*table_names)

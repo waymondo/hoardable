@@ -6,7 +6,8 @@
 - Fixes an issue for Rails 7.1 regarding accessing version table columns through aliased attributes
 - Fixes an issue where `Hoardable::RichText` couldn’t be loaded if `ActionText::RichText` wasn’t yet
   loaded
-- Supports dumping `INHERITS (table_name)` options to `schema.rb`
+- Supports dumping `INHERITS (table_name)` options to `schema.rb` and ensures the inherited tables
+  are dumped after their parents
 
 ## 0.14.3
 

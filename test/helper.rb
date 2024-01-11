@@ -9,7 +9,6 @@ require "minitest/autorun"
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "hoardable"
-require "fx"
 
 def tmp_dir
   File.expand_path("../tmp", __dir__)
