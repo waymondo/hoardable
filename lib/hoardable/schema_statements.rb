@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Hoardable
   module SchemaStatements
     def table_options(table_name)
@@ -11,7 +13,7 @@ module Hoardable
     private def parent_table_names(table_name)
       scope = quoted_scope(table_name, type: "BASE TABLE")
 
-      query_values(<<~SQL.presence, "SCHEMA")
+      query_values(<<~SQL.presence, "SCHEMA").presence
         SELECT parent.relname
         FROM pg_catalog.pg_inherits i
           JOIN pg_catalog.pg_class child ON i.inhrelid = child.oid
