@@ -100,6 +100,7 @@ module Hoardable
 
     initializer "hoardable.schema_statements" do
       ActiveSupport.on_load(:active_record_postgresqladapter) do
+        ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaDumper.prepend(SchemaDumper)
         ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaStatements.prepend(SchemaStatements)
       end
     end

@@ -24,5 +24,10 @@ module Hoardable
           AND n.nspname = #{scope[:schema]}
       SQL
     end
+
+    def inherited_table?(table_name)
+      parent_table_names(table_name).present?
+    end
   end
+  private_constant :SchemaStatements
 end
