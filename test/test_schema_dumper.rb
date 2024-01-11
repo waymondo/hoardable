@@ -22,7 +22,9 @@ class TestSchemaDumper < ActiveSupport::TestCase
     output = dump_table_schema("post_versions", "posts")
     assert posts_index = output.index(/create_table "posts"/)
     assert post_versions_index = output.index(/create_table "post_versions"/)
-    assert post_versions_trigger_index = output.index(/create_trigger :post_versions_prevent_update/)
+    assert(
+      post_versions_trigger_index = output.index(/create_trigger :post_versions_prevent_update/)
+    )
     assert post_versions_index > posts_index
     assert post_versions_trigger_index > post_versions_index
   end

@@ -14,8 +14,7 @@ module Hoardable
     end
 
     private def dump_inherited_tables(stream)
-      sorted_tables =
-        @connection.tables.filter { |table| @connection.inherited_table?(table) }.sort
+      sorted_tables = @connection.tables.filter { |table| @connection.inherited_table?(table) }.sort
       sorted_tables.each do |table_name|
         table(table_name, stream)
         foreign_keys(table_name, stream)
