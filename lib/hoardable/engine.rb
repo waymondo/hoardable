@@ -97,5 +97,11 @@ module Hoardable
         require_relative "encrypted_rich_text" if SUPPORTS_ENCRYPTED_ACTION_TEXT
       end
     end
+
+    initializer "hoardable.schema_statements" do
+      ActiveSupport.on_load(:active_record_postgresqladapter) do
+        ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaStatements.prepend(SchemaStatements)
+      end
+    end
   end
 end
