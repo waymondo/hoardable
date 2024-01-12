@@ -32,6 +32,12 @@ module Hoardable
         end
     end
 
+    no_tasks do
+      def postgres_version
+        ActiveRecord::Base.connection.select_value("SELECT VERSION()").match(/[0-9]{1,2}([,.][0-9]{1,2})?/)[0].to_f
+      end
+    end
+
     def self.next_migration_number(dir)
       ::ActiveRecord::Generators::Base.next_migration_number(dir)
     end
