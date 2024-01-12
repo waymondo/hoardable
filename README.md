@@ -1,6 +1,6 @@
 # Hoardable ![gem version](https://img.shields.io/gem/v/hoardable?style=flat-square)
 
-Hoardable is an ActiveRecord extension for Ruby 3+, Rails 7+, and PostgreSQL that allows for
+Hoardable is an ActiveRecord extension for Ruby 3+, Rails 7+, and PostgreSQL 9+ that allows for
 versioning and soft-deletion of records through the use of _uni-temporal inherited tables_.
 
 [Temporal tables](https://en.wikipedia.org/wiki/Temporal_database) are a database design pattern
@@ -9,15 +9,13 @@ each database row has a time range that represents the row’s valid time range 
 "uni-temporal".
 
 [Table inheritance](https://www.postgresql.org/docs/current/ddl-inherit.html) is a feature of
-PostgreSQL that allows a table to inherit all columns of a parent table. The descendant table’s
-schema will stay in sync with its parent. If a new column is added to or removed from the parent,
-the schema change is reflected on its descendants.
+PostgreSQL that allows one table to inherit all columns from a parent. The descendant table’s schema
+will stay in sync with its parent; if a new column is added to or removed from the parent, the
+schema change is reflected on its descendants.
 
 With these concepts combined, `hoardable` offers a model versioning and soft deletion system for
 Rails. Versions of records are stored in separate, inherited tables along with their valid time
-ranges and contextual data. Compared to other Rails-oriented versioning systems, this gem strives to
-be more explicit and obvious on the lower database level, while still familiar and convenient to use
-within Ruby on Rails.
+ranges and contextual data.
 
 [👉 Documentation](https://www.rubydoc.info/gems/hoardable)
 
@@ -26,7 +24,7 @@ within Ruby on Rails.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'hoardable'
+gem "hoardable"
 ```
 
 Run `bundle install`, and then run:
@@ -36,10 +34,9 @@ bin/rails g hoardable:install
 bin/rails db:migrate
 ```
 
-### Model Installation
+### Model installation
 
-You must include `Hoardable::Model` into an ActiveRecord model that you would like to hoard versions
-of:
+Include `Hoardable::Model` into an ActiveRecord model you would like to hoard versions of:
 
 ```ruby
 class Post < ActiveRecord::Base
@@ -48,24 +45,15 @@ class Post < ActiveRecord::Base
 end
 ```
 
-Then, run the generator command to create a database migration and migrate it:
+Run the generator command to create a database migration and migrate it:
 
 ```
 bin/rails g hoardable:migration Post
 bin/rails db:migrate
 ```
 
-By default, it will guess the foreign key type for the `_versions` table based on the primary key of
-the model specified in the migration generator above. If you want/need to specify this explicitly,
-you can do so:
-
-```
-bin/rails g hoardable:migration Post --foreign-key-type uuid
-```
-
 _*Note*:_ Creating an inherited table does not inherit the indexes from the parent table. If you
-need to query versions often, you should add appropriate indexes to the `_versions` tables. See
-[here](https://github.com/waymondo/hoardable/issues/30) for more info.
+need to query versions often, you should add appropriate indexes to the `_versions` tables.
 
 ## Usage
 
@@ -119,38 +107,61 @@ original primary key.
 
 ```ruby
 post = Post.create!(title: "Title")
-post.id # => 1
 post.destroy!
 post.versions.size # => 1
 Post.find(post.id) # raises ActiveRecord::RecordNotFound
 trashed_post = post.versions.trashed.last
-trashed_post.id # => 2
 trashed_post.untrash!
 Post.find(post.id) # #<Post>
 ```
 
-_*Note*:_ You will notice above that both `posts` and `post_versions` pull from the same ID
-sequence. This allows for uniquely identifying source records and versions when results are mixed
-together. Both a source record and versions have an automatically managed `hoardable_id` that always
-represents the primary key value of the original source record.
+Source and version records pull from the same ID sequence. This allows for uniquely identifying
+records from each other. Both source record and version have an automatically managed `hoardable_id`
+attribute that always represents the primary key value of the original source record:
 
-### Querying and Temporal Lookup
+```ruby
+post = Post.create!(title: "Title")
+post.id # => 1
+post.hoardable_id # => 1
+post.version? # => false
+post.update!(title: "New Title")
+version = post.reload.versions.last
+version.id # => 2
+version.hoardable_id # => 1
+version.version? # => true
+```
 
-Including `Hoardable::Model` into your source model modifies its default scope to make sure you only
-query the parent table:
+### Querying and temporal lookup
+
+Including `Hoardable::Model` into your source model modifies `default_scope` to make sure you only
+ever query the parent table and not the inherited ones:
 
 ```ruby
 Post.where(state: :draft).to_sql # => SELECT posts.* FROM ONLY posts WHERE posts.status = 'draft'
 ```
 
-_*Note*:_ If you are executing raw SQL, you will need to include the `ONLY` keyword you see above to
-the select statement if you do not wish to return versions in the results. Learn more about table
-inheritance in [the PostgreSQL documentation](https://www.postgresql.org/docs/current/ddl-inherit.html).
+Note the `FROM ONLY` above. If you are executing raw SQL, you will need to include the `ONLY`
+keyword if you do not wish to return versions in your results. This includes `JOIN`-ing on this
+table as well.
+
+```ruby
+User.joins(:posts).to_sql # => SELECT users.* FROM users INNER JOIN ONLY posts ON posts.user_id = users.id
+```
+
+Learn more about table inheritance in [the PostgreSQL documentation](https://www.postgresql.org/docs/current/ddl-inherit.html).
 
 Since a `PostVersion` is an `ActiveRecord` class, you can query them like another model resource:
 
 ```ruby
 post.versions.where(state: :draft)
+```
+
+By default, `hoardable` will keep copies of records you have destroyed. You can query them
+specifically with:
+
+```ruby
+PostVersion.trashed.where(user_id: user.id)
+Post.version_class.trashed.where(user_id: user.id) # <- same as above
 ```
 
 If you want to look-up the version of a record at a specific time, you can use the `.at` method:
@@ -169,24 +180,13 @@ Post.at(1.day.ago) # => [#<Post>, #<Post>]
 ```
 
 This will return an ActiveRecord scoped query of all `Post` and `PostVersion` records that were
-valid at that time, all cast as instances of `Post`.
+valid at that time, all cast as instances of `Post`. Updates to the versions table are forbidden in
+this case by a database trigger.
 
-There is also an `at` method on `Hoardable` itself for more complex and experimental temporal
-resource querying. See [Relationships](#relationships) for more.
+There is also `Hoardable.at` for more complex and experimental temporal resource querying. See
+[Relationships](#relationships) for more.
 
-By default, `hoardable` will keep copies of records you have destroyed. You can query them
-specifically with:
-
-```ruby
-PostVersion.trashed.where(user_id: user.id)
-Post.version_class.trashed.where(user_id: user.id) # <- same as above
-```
-
-_*Note*:_ A `Version` is not created upon initial source model creation. To accurately track the
-beginning of the first temporal period, you will need to ensure the source model table has a
-`created_at` timestamp column. If this is missing, an error will be raised.
-
-### Tracking Contextual Data
+### Tracking contextual data
 
 You’ll often want to track contextual data about the creation of a version. There are 2 options that
 can be provided for tracking this:
@@ -194,8 +194,7 @@ can be provided for tracking this:
 - `:whodunit` - an identifier for who/what is responsible for creating the version
 - `:meta` - any other contextual information you’d like to store along with the version
 
-This information is stored in a `jsonb` column. Each key’s value can be in the format of your
-choosing.
+This information is stored in a `jsonb` column. Each value can be the data type of your choosing.
 
 One convenient way to assign contextual data to these is by defining a proc in an initializer, i.e.:
 
@@ -210,16 +209,7 @@ Current.set(user: User.find(123)) do
 end
 ```
 
-You can also set these context values manually as well:
-
-```ruby
-Hoardable.meta = {note: "reverting due to accidental deletion"}
-post.update!(title: "We’re back!")
-Hoardable.meta = nil
-post.reload.versions.last.hoardable_meta['note'] # => "reverting due to accidental deletion"
-```
-
-A more useful pattern would be to use `Hoardable.with` to set the context around a block. For
+Another useful pattern would be to use `Hoardable.with` to set the context around a block. For
 example, you could have the following in your `ApplicationController`:
 
 ```ruby
@@ -229,31 +219,27 @@ class ApplicationController < ActionController::Base
   private
 
   def use_hoardable_context
-    Hoardable.with(whodunit: current_user.id, meta: {request_uuid: request.uuid}) do
+    Hoardable.with(whodunit: current_user.id, meta: { request_uuid: request.uuid }) do
       yield
     end
-    # `Hoardable.whodunit` and `Hoardable.meta` are back to nil or their previously set values
   end
 end
 ```
 
-`hoardable` will also automatically capture the ActiveRecord
-[changes](https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes) hash, the
-`operation` that cause the version (`update` or `delete`), and it will also tag all versions created
-in the same database transaction with a shared and unique `event_uuid` for that transaction. These
-values are available as:
+[ActiveRecord changes](https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes)
+are also automatically captured along with the `operation` that caused the version (`update` or
+`delete`). These values are available as:
 
 ```ruby
-version.changes
-version.hoardable_operation
-version.hoardable_event_uuid
+version.changes # => { "title"=> ["Title", "New Title"] }
+version.hoardable_operation # => "update"
 ```
 
 ### Model Callbacks
 
 Sometimes you might want to do something with a version after it gets inserted to the database. You
 can access it in `after_versioned` callbacks on the source record as `hoardable_version`. These
-happen within `ActiveRecord`’s `.save`, which is enclosed in an ActiveRecord transaction.
+happen within `ActiveRecord#save`'s transaction.
 
 There are also `after_reverted` and `after_untrashed` callbacks available as well, which are called
 on the source record after a version is reverted or untrashed.
@@ -286,9 +272,9 @@ end
 The configurable options are:
 
 ```ruby
-Hoardable.enabled # => default true
-Hoardable.version_updates # => default true
-Hoardable.save_trash # => default true
+Hoardable.enabled # => true
+Hoardable.version_updates # => true
+Hoardable.save_trash # => true
 ```
 
 `Hoardable.enabled` globally controls whether versions will be ever be created.
@@ -299,7 +285,7 @@ Hoardable.save_trash # => default true
 When this is set to `false`, all versions of a source record will be deleted when the record is
 destroyed.
 
-If you would like to temporarily set a config setting, you can use `Hoardable.with`:
+If you would like to temporarily set a config value, you can use `Hoardable.with`:
 
 ```ruby
 Hoardable.with(enabled: false) do
@@ -325,12 +311,11 @@ Comment.with_hoardable_config(version_updates: true) do
 end
 ```
 
-If a model-level option exists, it will use that. Otherwise, it will fall back to the global
-`Hoardable` config.
+Model-level configuration overrides global configuration.
 
 ## Relationships
 
-### Belongs To Trashable
+### `belongs_to`
 
 Sometimes you’ll have a record that belongs to a parent record that you’ll trash. Now the child
 record’s foreign key will point to the non-existent trashed version of the parent. If you would like
@@ -338,17 +323,28 @@ to have `belongs_to` resolve to the trashed parent model in this case, you can g
 `trashable: true`:
 
 ```ruby
+class Post
+  include Hoardable::Model
+  has_many :comments, dependent: nil
+end
+
 class Comment
   include Hoardable::Associations # <- This includes is not required if this model already includes `Hoardable::Model`
   belongs_to :post, trashable: true
 end
+
+post = Post.create!(title: "Title")
+comment = post.comments.create!(body: "Comment")
+post.destroy!
+comment.post # => #<PostVersion>
 ```
 
-### Hoardable Has Many & Has One
+### `has_many` & `has_one`
 
-Sometimes you'll have a Hoardable record that `has_one` or `has_many` other Hoardable records and you will
-want to know the state of both the parent record and the children at a certain point in time. You accomplish
-this by adding `hoardable: true` to the `has_many` relationship and using the `Hoardable.at` method:
+Sometimes you'll have a Hoardable record that `has_one` or `has_many` other Hoardable records and
+you’ll want to know the state of both the parent record and the children at a certain point in time.
+You can accomplish this by adding `hoardable: true` to the `has_many` relationship and using the
+`Hoardable.at` method:
 
 ```ruby
 class Post
@@ -364,6 +360,7 @@ post = Post.create!(title: "Title")
 comment1 = post.comments.create!(body: "Comment")
 comment2 = post.comments.create!(body: "Comment")
 datetime = DateTime.current
+
 comment2.destroy!
 post.update!(title: "New Title")
 post_id = post.id # 1
@@ -372,37 +369,31 @@ Hoardable.at(datetime) do
   post = Post.find(post_id)
   post.title # => "Title"
   post.comments.size # => 2
-  post.id # => 2
   post.version? # => true
+  post.id # => 2
   post.hoardable_id # => 1
 end
 ```
 
-You’ll notice above that the `post` within the `#at` block is actually a temporal `post_version`,
-since it has been subsequently updated and has a different id - it is reified as a `post` for the
-purposes of your business logic (serialization, rendering views, exporting, etc). Don’t fret - you
-will not be able to commit any updates to the version, even though it is masquerading as a `Post`
-because a database trigger won’t allow it.
-
-If you are ever unsure if a Hoardable record is a source record or a version, you can be sure by
-calling `version?` on it. If you want to get the true original source record ID, you can call
-`hoardable_id`.
-
-_*Note*:_ `Hoardable.at` is still very experimental and is potentially not performant for querying
-large data sets.
+_*Note*:_ `Hoardable.at` is experimental and potentially not performant for querying very large data
+sets.
 
 ### Cascading Untrashing
 
 Sometimes you’ll trash something that `has_many :children, dependent: :destroy` and if you untrash
-the parent record, you’ll want to also untrash the children. Whenever a hoardable version is created
-in a database transaction, it will create or re-use a unique event UUID for the current database
-transaction and tag all versions created with it. That way, when you `untrash!` a record, you could
-find and `untrash!` records that were trashed with it:
+the parent record, you’ll want to also untrash the children. Whenever a hoardable versions are
+created, it will share a unique event UUID for all other versions created in the same database
+transaction. That way, when you `untrash!` a record, you could find and `untrash!` records that were
+trashed with it:
 
 ```ruby
+class Comment < ActiveRecord::Base
+  include Hoardable::Model
+end
+
 class Post < ActiveRecord::Base
   include Hoardable::Model
-  has_many :comments, hoardable: true, dependent: :destroy # `Comment` also includes `Hoardable::Model`
+  has_many :comments, hoardable: true, dependent: :destroy
 
   after_untrashed do
     Comment
@@ -430,8 +421,7 @@ Then in your model include `Hoardable::Model` and provide the `hoardable: true` 
 ```ruby
 class Post < ActiveRecord::Base
   include Hoardable::Model # or `Hoardable::Associations` if you don't need `PostVersion`
-  has_rich_text :content, hoardable: true
-  # alternately, this could be `has_hoardable_rich_text :content`
+  has_rich_text :content, hoardable: true # or `has_hoardable_rich_text :content`
 end
 ```
 
@@ -448,19 +438,18 @@ Hoardable.at(datetime) do
 end
 ```
 
-## Known Gotchas
+## Known gotchas
 
-### Rails Fixtures
+### Rails fixtures
 
 Rails uses a method called
 [`disable_referential_integrity`](https://github.com/rails/rails/blob/06e9fbd954ab113108a7982357553fdef285bff1/activerecord/lib/active_record/connection_adapters/postgresql/referential_integrity.rb#L7)
 when inserting fixtures into the database. This disables PostgreSQL triggers, which Hoardable relies
 on for assigning `hoardable_id` from the primary key’s value. If you would still like to use
 fixtures, you must specify the primary key’s value and `hoardable_id` to the same identifier value
-in the fixture. This is not an issue with fixture replacement libraries like `factory_bot` or
-[`world_factory`](https://github.com/FutureProofRetail/world_factory) however.
+in the fixture.
 
-## Gem Comparison
+## Gem comparison
 
 #### [`paper_trail`](https://github.com/paper-trail-gem/paper_trail)
 
@@ -513,5 +502,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/waymon
 
 ## License
 
-The gem is available as open source under the terms of the [MIT
-License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
