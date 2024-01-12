@@ -34,7 +34,12 @@ module Hoardable
 
     no_tasks do
       def postgres_version
-        ActiveRecord::Base.connection.select_value("SELECT VERSION()").match(/[0-9]{1,2}([,.][0-9]{1,2})?/)[0].to_f
+        ActiveRecord::Base
+          .connection
+          .select_value("SELECT VERSION()")
+          .match(/[0-9]{1,2}([,.][0-9]{1,2})?/)[
+          0
+        ].to_f
       end
     end
 
