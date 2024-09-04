@@ -84,6 +84,8 @@ end
 class UserWithTrashedPosts < ActiveRecord::Base
   self.table_name = "users"
   has_many :posts, -> { include_versions }, foreign_key: "user_id"
+
+  has_one :bio, class_name: "Profile", foreign_key: "user_id"
 end
 
 class Current < ActiveSupport::CurrentAttributes

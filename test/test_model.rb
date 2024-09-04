@@ -663,4 +663,11 @@ class TestModel < ActiveSupport::TestCase
     assert_empty user.posts
     assert_empty User.joins(:posts)
   end
+
+  test "applys ONLY clause on joined relationship with aliased name" do
+    assert_equal(
+      "SELECT \"users\".* FROM \"users\" INNER JOIN ONLY \"profiles\" \"bio\" ON \"bio\".\"user_id\" = \"users\".\"id\" WHERE \"bio\".\"id\" = 999",
+      UserWithTrashedPosts.joins(:bio).where(bio: {id: 999}).to_sql
+    )
+  end
 end
