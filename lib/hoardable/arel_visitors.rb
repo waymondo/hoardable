@@ -40,10 +40,16 @@ module Hoardable
     end
 
     private def hoardable_maybe_add_only(o, collector)
-      return unless o.left.instance_variable_get("@klass").in?(Hoardable::REGISTRY)
-      return if Hoardable.instance_variable_get("@at")
+      left = o.left
 
-      collector << "ONLY "
+      if left.is_a?(Arel::Nodes::TableAlias)
+        hoardable_maybe_add_only(left, collector)
+      else
+        return unless left.instance_variable_get("@klass").in?(Hoardable::REGISTRY)
+        return if Hoardable.instance_variable_get("@at")
+
+        collector << "ONLY "
+      end
     end
   end
 end
