@@ -38,6 +38,11 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
     shared_post_assertions
   end
 
+  it "supports using a model with a custom table_name" do
+    run_generator ["Hoardable::Post"]
+    shared_post_assertions
+  end
+
   it "generates book migration with pluralized resource" do
     run_generator ["books"]
     shared_book_assertions
