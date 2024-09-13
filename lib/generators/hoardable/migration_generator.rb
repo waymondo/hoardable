@@ -37,6 +37,12 @@ module Hoardable
     end
 
     no_tasks do
+      def table_name
+        class_name.singularize.constantize.table_name
+      rescue StandardError
+        super
+      end
+
       def foreign_key_type
         options[:foreign_key_type] ||
           class_name.singularize.constantize.columns.find { |col| col.name == primary_key }.sql_type
