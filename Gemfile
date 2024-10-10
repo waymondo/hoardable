@@ -4,7 +4,7 @@ source "https://rubygems.org"
 
 gem "debug"
 if (rails_version = ENV["RAILS_VERSION"])
-  gem "rails", "~> #{rails_version}.0"
+  gem "rails", "~> #{rails_version}"
 else
   gem "rails"
 end

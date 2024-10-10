@@ -32,7 +32,9 @@ class TestSchemaDumper < ActiveSupport::TestCase
   private def dump_table_schema(*table_names)
     connection = ActiveRecord::Base.connection
     ActiveRecord::SchemaDumper.ignore_tables = connection.data_sources - table_names
-    stream = StringIO.new
-    ActiveRecord::SchemaDumper.dump(connection, stream).string
+    output, = capture_io do
+      ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection_pool)
+    end
+    output
   end
 end

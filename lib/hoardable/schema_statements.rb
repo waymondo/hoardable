@@ -4,7 +4,7 @@ module Hoardable
   module SchemaStatements
     def table_options(table_name)
       options = super || {}
-      if inherited_table_names = parent_table_names(table_name)
+      if !options[:options] && (inherited_table_names = parent_table_names(table_name))
         options[:options] = "INHERITS (#{inherited_table_names.join(", ")})"
       end
       options
