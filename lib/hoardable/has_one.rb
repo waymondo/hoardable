@@ -9,13 +9,13 @@ module Hoardable
       def has_one(*args)
         options = args.extract_options!
         hoardable = options.delete(:hoardable)
-        association = super(*args, **options)
         name = args.first
-        return unless hoardable || association[name.to_s].options[:class_name].match?(/RichText$/)
+        association = super(*args, **options).symbolize_keys[name]
+        return unless hoardable || (association.options[:class_name].match?(/RichText$/))
 
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
-            reflection = _reflections['#{name}']
+            reflection = _reflections.symbolize_keys[:#{name}]
             return super if reflection.klass.name.match?(/^ActionText/)
             return super unless (timestamp = hoardable_client.has_one_at_timestamp)
 

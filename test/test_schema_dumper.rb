@@ -32,7 +32,11 @@ class TestSchemaDumper < ActiveSupport::TestCase
   private def dump_table_schema(*table_names)
     connection = ActiveRecord::Base.connection
     ActiveRecord::SchemaDumper.ignore_tables = connection.data_sources - table_names
-    stream = StringIO.new
-    ActiveRecord::SchemaDumper.dump(connection, stream).string
+    if ActiveRecord.version >= Gem::Version.new("7.2.1")
+      output, = capture_io { ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection_pool) }
+      output
+    else
+      ActiveRecord::SchemaDumper.dump(connection, StringIO.new).string
+    end
   end
 end

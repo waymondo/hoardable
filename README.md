@@ -496,6 +496,14 @@ Instead of storing the previous versions or changes in a separate table, it stor
 proprietary JSON format directly on the database row of the record itself. If does not support soft
 deletion.
 
+## Testing
+
+Hoardable is tested against a matrix of Ruby 3 versions and Rails 7 & 8. To run tests locally, run:
+
+```
+rake
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/waymondo/hoardable.
