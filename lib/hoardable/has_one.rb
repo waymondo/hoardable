@@ -10,8 +10,10 @@ module Hoardable
         options = args.extract_options!
         hoardable = options.delete(:hoardable)
         name = args.first
-        association = super(*args, **options)[name]
-        return unless hoardable || (association&.options[:class_name].match?(/RichText$/))
+        has_one_options = super(*args, **options)[name]&.options
+        unless hoardable || (has_one_options && has_one_options[:class_name].match?(/RichText$/))
+          return
+        end
 
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{name}
