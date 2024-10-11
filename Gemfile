@@ -6,7 +6,7 @@ gem "debug"
 if (rails_version = ENV["RAILS_VERSION"])
   gem "rails", "~> #{rails_version}"
 else
-  gem "rails", "7.0.8.4"
+  gem "rails"
 end
 gem "syntax_tree"
 gem "typeprof"

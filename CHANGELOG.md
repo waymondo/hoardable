@@ -1,3 +1,7 @@
+## 0.16.0
+
+- Rails 8 support introduced
+
 ## 0.15.0
 
 - *Breaking Change* - Support for Ruby 2.7 and Rails 6.1 is dropped
