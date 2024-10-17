@@ -235,6 +235,21 @@ version.changes # => { "title"=> ["Title", "New Title"] }
 version.hoardable_operation # => "update"
 ```
 
+### Overriding the temporal range
+
+When calculating the temporal range for a given version, the default upper bound is `Time.now.utc`.
+
+You can, however, use the `Hoardable.on` class method to specify a custom upper bound for the time range. This allows
+you to specify the datetime that a particular change should be recorded at by passing a block:
+
+```ruby
+Hoardable.on(2.weeks.ago) do
+  post.destroy!
+end
+```
+
+Note: If the provided datetime pre-dates the calculated lower bound then an `InvalidTemporalUpperBoundError` will be raised.
+
 ### Model Callbacks
 
 Sometimes you might want to do something with a version after it gets inserted to the database. You

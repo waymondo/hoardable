@@ -93,7 +93,14 @@ module Hoardable
     end
 
     def initialize_temporal_range
-      ((previous_temporal_tsrange_end || hoardable_source_epoch)..Time.now.utc)
+      upper_bound = Hoardable.instance_variable_get("@on") || Time.now.utc
+      lower_bound = (previous_temporal_tsrange_end || hoardable_source_epoch)
+
+      if upper_bound < lower_bound
+        raise InvalidTemporalUpperBoundError.new(upper_bound, lower_bound)
+      end
+
+      (lower_bound..upper_bound)
     end
 
     def initialize_hoardable_data
