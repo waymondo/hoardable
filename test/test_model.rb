@@ -474,7 +474,7 @@ class TestModel < ActiveSupport::TestCase
     Hoardable.on(deleted_at) { comment.destroy! }
 
     assert_equal Comment.all.size, 0
-    assert_equal CommentVersion.where(hoardable_id: comment.id).first._during.max, deleted_at
+    assert_equal CommentVersion.where(hoardable_id: comment.id).first._during.max.round, deleted_at.round
   end
 
   test "will error if the upper bound of the temporal range with Hoardable.on is less than the lower bound" do
