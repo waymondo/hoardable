@@ -81,6 +81,16 @@ module Hoardable
       @at = nil
     end
 
+    # Allows calling code to set the upper bound for the temporal range for recorded audits.
+    #
+    # @param datetime [DateTime] the datetime to temporally record audits at
+    def on(datetime)
+      @on = datetime
+      yield
+    ensure
+      @on = nil
+    end
+
     # @!visibility private
     def logger
       @logger ||= ActiveSupport::TaggedLogging.new(Logger.new($stdout))
