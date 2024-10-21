@@ -29,7 +29,7 @@ module Hoardable
   class InvalidTemporalUpperBoundError < Error
     def initialize(upper, lower)
       super(<<~LOG)
-          'The supplied value to `Hoardable.on` (#{upper}) is before the calculated lower bound (#{lower}).
+          'The supplied value to `Hoardable.travel_to` (#{upper}) is before the calculated lower bound (#{lower}).
           You must provide a datetime > the lower bound.
         LOG
     end

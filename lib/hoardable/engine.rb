@@ -84,11 +84,11 @@ module Hoardable
     # Allows calling code to set the upper bound for the temporal range for recorded audits.
     #
     # @param datetime [DateTime] the datetime to temporally record audits at
-    def on(datetime)
-      @on = datetime
+    def travel_to(datetime)
+      @travel_to = datetime
       yield
     ensure
-      @on = nil
+      @travel_to = nil
     end
 
     # @!visibility private

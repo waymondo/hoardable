@@ -464,14 +464,14 @@ class TestModel < ActiveSupport::TestCase
     end
   end
 
-  test "can influence the upper bound of the temporal range with Hoardable.on" do
+  test "can influence the upper bound of the temporal range with Hoardable.travel_to" do
     created_at = Time.now.utc - 10 * 86_400 # 10 days ago
     deleted_at = Time.now.utc - 5 * 86_400 # 5 days ago
 
     comment =
       post.comments.create!(body: "Comment 1", created_at: created_at, updated_at: created_at)
 
-    Hoardable.on(deleted_at) { comment.destroy! }
+    Hoardable.travel_to(deleted_at) { comment.destroy! }
 
     temporal_range = CommentVersion.where(hoardable_id: comment.id).first._during
 
@@ -479,14 +479,14 @@ class TestModel < ActiveSupport::TestCase
     assert_equal temporal_range.max.round, deleted_at.round
   end
 
-  test "will error if the upper bound of the temporal range with Hoardable.on is less than the lower bound" do
+  test "will error if the upper bound of the temporal range with Hoardable.travel_to is less than the lower bound" do
     created_at = Time.now.utc - 10 * 86_400 # 10 days ago
     deleted_at = Time.now.utc - 12 * 86_400 # 12 days ago
 
     comment =
       post.comments.create!(body: "Comment 1", created_at: created_at, updated_at: created_at)
 
-    Hoardable.on(deleted_at) do
+    Hoardable.travel_to(deleted_at) do
       assert_raises(Hoardable::InvalidTemporalUpperBoundError) { comment.destroy! }
     end
 

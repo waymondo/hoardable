@@ -239,11 +239,11 @@ version.hoardable_operation # => "update"
 
 When calculating the temporal range for a given version, the default upper bound is `Time.now.utc`.
 
-You can, however, use the `Hoardable.on` class method to specify a custom upper bound for the time range. This allows
+You can, however, use the `Hoardable.travel_to` class method to specify a custom upper bound for the time range. This allows
 you to specify the datetime that a particular change should be recorded at by passing a block:
 
 ```ruby
-Hoardable.on(2.weeks.ago) do
+Hoardable.travel_to(2.weeks.ago) do
   post.destroy!
 end
 ```
