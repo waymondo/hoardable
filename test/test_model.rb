@@ -464,6 +464,35 @@ class TestModel < ActiveSupport::TestCase
     end
   end
 
+  test "can influence the upper bound of the temporal range with Hoardable.travel_to" do
+    created_at = Time.now.utc - 10 * 86_400 # 10 days ago
+    deleted_at = Time.now.utc - 5 * 86_400 # 5 days ago
+
+    comment =
+      post.comments.create!(body: "Comment 1", created_at: created_at, updated_at: created_at)
+
+    Hoardable.travel_to(deleted_at) { comment.destroy! }
+
+    temporal_range = CommentVersion.where(hoardable_id: comment.id).first._during
+
+    assert_equal Comment.all.size, 0
+    assert_equal temporal_range.max.round, deleted_at.round
+  end
+
+  test "will error if the upper bound of the temporal range with Hoardable.travel_to is less than the lower bound" do
+    created_at = Time.now.utc - 10 * 86_400 # 10 days ago
+    deleted_at = Time.now.utc - 12 * 86_400 # 12 days ago
+
+    comment =
+      post.comments.create!(body: "Comment 1", created_at: created_at, updated_at: created_at)
+
+    Hoardable.travel_to(deleted_at) do
+      assert_raises(Hoardable::InvalidTemporalUpperBoundError) { comment.destroy! }
+    end
+
+    assert_equal Comment.all.size, 1
+  end
+
   test "cannot save a hoardable source record that is actually a version" do
     post
     datetime = DateTime.now

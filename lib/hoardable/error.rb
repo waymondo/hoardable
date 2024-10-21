@@ -24,4 +24,14 @@ module Hoardable
         LOG
     end
   end
+
+  # An error to be raised when the provided temporal upper bound is before the calcualated lower bound.
+  class InvalidTemporalUpperBoundError < Error
+    def initialize(upper, lower)
+      super(<<~LOG)
+          'The supplied value to `Hoardable.travel_to` (#{upper}) is before the calculated lower bound (#{lower}).
+          You must provide a datetime > the lower bound.
+        LOG
+    end
+  end
 end
