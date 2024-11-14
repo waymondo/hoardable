@@ -25,7 +25,7 @@ module Hoardable
 
     def create_functions
       Dir
-        .glob(File.join(__dir__, "functions", "*.sql"))
+        .glob(File.join(__dir__, "install_functions", "*.sql"))
         .each do |file_path|
           file_name = file_path.match(%r{([^/]+)\.sql})[1]
           template file_path, "db/functions/#{file_name}_v01.sql"

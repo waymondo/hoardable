@@ -13,7 +13,7 @@ class MigrationGeneratorTest < Rails::Generators::TestCase
       assert_match(/create_table\(\n(\s)*:post_versions/, migration)
       assert_match(/:hoardable_id, :bigint/, migration)
       assert_match(/create_trigger :posts_set_hoardable_id, on: :posts/, migration)
-      name = "hoardable_set_hoardable_source_id_from_id"
+      name = "hoardable_set_hoardable_id_from_id"
       assert_file(
         "db/functions/#{name}_v01.sql",
         /CREATE OR REPLACE FUNCTION #{name}\(\) RETURNS trigger/

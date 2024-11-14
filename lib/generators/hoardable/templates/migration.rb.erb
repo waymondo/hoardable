@@ -6,7 +6,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
     add_index :<%= table_name %>, :hoardable_id
     create_table(
       :<%= singularized_table_name %>_versions,
-      id: false, 
+      id: false,
       options: 'INHERITS (<%= table_name %>)',
     ) do |t|
       t.jsonb :_data
@@ -25,6 +25,7 @@ class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Mi
       :<%= singularized_table_name %>_versions_prevent_update,
       on: :<%= singularized_table_name %>_versions
     )
+    create_function :<%= function_name %>
     create_trigger :<%= table_name %>_set_hoardable_id, on: :<%= table_name %>
     create_trigger :<%= table_name %>_prevent_update_hoardable_id, on: :<%= table_name %>
     change_column_null :<%= table_name %>, :hoardable_id, false
