@@ -4,7 +4,6 @@ class InstallHoardable < ActiveRecord::Migration[<%= ActiveRecord::Migration.cur
   def change
     <% if postgres_version < 13 %>enable_extension :pgcrypto
     <% end %>create_function :hoardable_prevent_update_id
-    create_function :hoardable_source_set_id
     create_function :hoardable_version_prevent_update
     create_enum :hoardable_operation, %w[update delete insert]
   end

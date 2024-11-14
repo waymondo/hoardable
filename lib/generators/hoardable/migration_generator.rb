@@ -36,6 +36,21 @@ module Hoardable
       end
     end
 
+    def maybe_create_function
+      function_name = "hoardable_set_hoardable_source_id_from_#{primary_key}"
+      write_path = "db/functions/#{function_name}_v01.sql"
+      function_template = ERB.new(<<~SQL).result(binding)
+        CREATE OR REPLACE FUNCTION <%= function_name %>() RETURNS trigger
+          LANGUAGE plpgsql AS
+        $$
+        BEGIN
+          NEW.hoardable_id = NEW.<%= primary_key %>;
+          RETURN NEW;
+        END;$$;
+      SQL
+      create_file write_path, function_template
+    end
+
     no_tasks do
       def table_name
         class_name.singularize.constantize.table_name
