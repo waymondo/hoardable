@@ -37,10 +37,7 @@ module Hoardable
     end
 
     def create_function
-      template(
-        "../functions/set_hoardable_id.sql",
-        "db/functions/#{function_name}_v01.sql"
-      )
+      template("../functions/set_hoardable_id.sql", "db/functions/#{function_name}_v01.sql")
     end
 
     no_tasks do
