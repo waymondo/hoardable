@@ -111,7 +111,7 @@ module Hoardable
     initializer "hoardable.schema_statements" do
       ActiveSupport.on_load(:active_record_postgresqladapter) do
         # We need to control the table dumping order of tables, so revert these to just +super+
-        Fx::SchemaDumper::Trigger.module_eval("def tables(streams); super; end")
+        Fx::SchemaDumper.module_eval("def tables(streams); super; end")
 
         ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaDumper.prepend(SchemaDumper)
         ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaStatements.prepend(SchemaStatements)
