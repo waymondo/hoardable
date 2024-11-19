@@ -36,7 +36,15 @@ module Hoardable
       end
     end
 
+    def create_function
+      template("../functions/set_hoardable_id.sql", "db/functions/#{function_name}_v01.sql")
+    end
+
     no_tasks do
+      def function_name
+        "hoardable_set_hoardable_id_from_#{primary_key}"
+      end
+
       def table_name
         class_name.singularize.constantize.table_name
       rescue StandardError

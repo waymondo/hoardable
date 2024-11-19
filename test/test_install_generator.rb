@@ -14,9 +14,5 @@ class TestInstallGenerator < Rails::Generators::TestCase
       assert_match(/create_enum :hoardable_operation, %w\[update delete insert\]/, migration)
       assert_no_match(/enable_extension :pgcrypto/, migration)
     end
-    assert_file(
-      "db/functions/hoardable_source_set_id_v01.sql",
-      /CREATE OR REPLACE FUNCTION hoardable_source_set_id\(\) RETURNS trigger/
-    )
   end
 end

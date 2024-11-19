@@ -1,3 +1,7 @@
+## 0.17.0
+
+- Much improved performance of setting `hoardable_id` for versions.
+
 ## 0.16.0
 
 - Rails 8 support introduced
