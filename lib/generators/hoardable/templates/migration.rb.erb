@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Create<%= class_name.singularize.delete(':') %>Versions < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+class Create<%= singularized_table_name.classify %>Versions < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
     add_column :<%= table_name %>, :hoardable_id, :<%= foreign_key_type %>
     add_index :<%= table_name %>, :hoardable_id
