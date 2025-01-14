@@ -26,18 +26,18 @@ module Hoardable
     class_methods do
       def has_many(*args, &block)
         options = args.extract_options!
-        options[:extend] = Array(options[:extend]).push(HasManyExtension) if options.delete(
-          :hoardable
-        )
+        hoardable_option = options.delete(:hoardable)
+        options[:extend] = Array(options[:extend]).push(HasManyExtension) if hoardable_option
+
         super(*args, **options, &block)
 
         # This hack is needed to force Rails to not use any existing method cache so that the
         # {HasManyExtension} scope is always used.
-        class_eval <<-RUBY, __FILE__, __LINE__ + 1
-          def #{args.first}
-            super.extending
-          end
-        RUBY
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1 if hoardable_option or args.first == :versions
+            def #{args.first}
+              super.extending
+            end
+          RUBY
       end
     end
   end
