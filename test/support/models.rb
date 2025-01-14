@@ -97,6 +97,14 @@ class Book < ActiveRecord::Base
   belongs_to :library
 end
 
+class Masterpiece < Book
+  include Hoardable::Model
+
+  def title
+    "#{super}!"
+  end
+end
+
 class Tag < ActiveRecord::Base
   include Hoardable::Model
   self.primary_key = "primary_id"

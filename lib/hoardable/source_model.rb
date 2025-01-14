@@ -44,16 +44,20 @@ module Hoardable
       end
 
       after_commit { hoardable_client.unset_hoardable_version_and_event_uuid }
+    end
 
-      # Returns all +versions+ in ascending order of their temporal timeframes.
-      has_many(
-        :versions,
-        -> { order("UPPER(_during) ASC") },
-        dependent: nil,
-        class_name: version_class.to_s,
-        inverse_of: :hoardable_source,
-        foreign_key: :hoardable_id
-      )
+    def self.included(base)
+      base.class_eval do
+        # Returns all +versions+ in ascending order of their temporal timeframes.
+        has_many(
+          :versions,
+          -> { order("UPPER(_during) ASC") },
+          dependent: nil,
+          class_name: version_class.to_s,
+          inverse_of: :hoardable_source,
+          foreign_key: :hoardable_id
+        )
+      end
     end
 
     # Returns a boolean of whether the record is actually a trashed +version+ cast as an instance of the

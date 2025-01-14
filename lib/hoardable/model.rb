@@ -50,12 +50,14 @@ module Hoardable
       define_model_callbacks :versioned, only: :after
       define_model_callbacks :reverted, only: :after
       define_model_callbacks :untrashed, only: :after
+    end
 
+    def self.included(base)
       TracePoint
         .new(:end) do |trace|
-          next unless self == trace.self
+          next unless base == trace.self
 
-          full_version_class_name = "#{name}#{VERSION_CLASS_SUFFIX}"
+          full_version_class_name = "#{base.name}#{VERSION_CLASS_SUFFIX}"
           if (namespace_match = full_version_class_name.match(/(.*)::(.*)/))
             object_namespace = namespace_match[1].constantize
             version_class_name = namespace_match[2]
@@ -64,10 +66,10 @@ module Hoardable
             version_class_name = full_version_class_name
           end
           unless Object.const_defined?(full_version_class_name)
-            object_namespace.const_set(version_class_name, Class.new(self) { include VersionModel })
+            object_namespace.const_set(version_class_name, Class.new(base) { include VersionModel })
           end
-          include SourceModel
-          REGISTRY.add(self)
+          base.class_eval { include SourceModel }
+          REGISTRY.add(base)
 
           trace.disable
         end

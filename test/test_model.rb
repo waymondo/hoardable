@@ -680,7 +680,7 @@ class TestModel < ActiveSupport::TestCase
     assert_raises(StandardError) { post.content.versions }
   end
 
-  test "applys ONLY clause on joined relationship" do
+  test "applies ONLY clause on joined relationship" do
     assert_equal(
       "SELECT \"users\".* FROM ONLY users INNER JOIN ONLY \"posts\" ON \"posts\".\"user_id\" = \"users\".\"id\"",
       User.joins(:posts).to_sql
@@ -693,10 +693,40 @@ class TestModel < ActiveSupport::TestCase
     assert_empty User.joins(:posts)
   end
 
-  test "applys ONLY clause on joined relationship with aliased name" do
+  test "applies ONLY clause on joined relationship with aliased name" do
     assert_equal(
       "SELECT \"users\".* FROM \"users\" INNER JOIN ONLY \"profiles\" \"bio\" ON \"bio\".\"user_id\" = \"users\".\"id\" WHERE \"bio\".\"id\" = 999",
       UserWithTrashedPosts.joins(:bio).where(bio: { id: 999 }).to_sql
     )
+  end
+
+  test "can version and revert an STI model" do
+    library = Library.create!(name: "Library")
+    masterpiece = Masterpiece.create!(title: "Masterpiece 1", library: library)
+    assert_equal "Masterpiece 1!", masterpiece.title
+    masterpiece.update!(title: "Masterpiece 2")
+    masterpiece_version = masterpiece.versions.first
+    assert_equal "Masterpiece 1!", masterpiece_version.title
+
+    masterpiece_version.revert!
+    assert_equal "Masterpiece 1!", masterpiece_version.title
+  end
+
+  test "doesn’t mix versions of base and inheriting records" do
+    library = Library.create!(name: "Library")
+    book = Book.create!(title: "Boo", library: library)
+    masterpiece = Masterpiece.create!(title: "Masterpiec", library: library)
+    book.update!(title: "Book")
+
+    assert_equal 1, BookVersion.count
+    assert_equal 0, MasterpieceVersion.count
+    assert_equal 1, book.versions.count
+    assert_equal 0, masterpiece.versions.count
+
+    masterpiece.update!(title: "Masterpiece")
+    assert_equal 1, BookVersion.count
+    assert_equal 1, MasterpieceVersion.count
+    assert_equal 1, book.versions.count
+    assert_equal 1, masterpiece.versions.count
   end
 end
