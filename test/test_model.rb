@@ -412,14 +412,18 @@ class TestModel < ActiveSupport::TestCase
     update_post
     datetime = Time.now
     post.destroy!
-    assert_equal Post.all.size, 0
-    assert_equal Comment.all.size, 0
+    assert_equal Post.count, 0
+    assert_equal Comment.count, 0
+    assert_equal post.comments.count, 0
     post_id = post.id
     Hoardable.at(datetime) do
+      assert_equal Post.count, 1
       assert_equal Post.all.size, 1
+      assert_equal Comment.count, 1
       assert_equal Comment.all.size, 1
       post = Post.find(post_id)
       assert comment.post
+      assert_equal post.comments.count, 1
       assert_equal post.comments.size, 1
     end
   end
@@ -542,8 +546,11 @@ class TestModel < ActiveSupport::TestCase
       post = Post.find(post_id)
       assert_equal post.comments.pluck("body"), ["Comment"]
       comment = post.comments.first
+      assert_equal 2, Like.count
       assert_equal 2, Like.all.size
+      assert_equal 2, comment.likes.count
       assert_equal 2, comment.likes.size
+      assert_equal 2, post.likes.count
       assert_equal 2, post.likes.size
     end
   end
