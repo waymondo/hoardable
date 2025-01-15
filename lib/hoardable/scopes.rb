@@ -9,13 +9,20 @@ module Hoardable
     included do
       # By default {Hoardable} only returns instances of the parent table, and not the +versions+ in
       # the inherited table. This can be bypassed by using the {.include_versions} scope or wrapping
-      # the code in a `Hoardable.at(datetime)` block.
+      # the code in a `Hoardable.at(datetime)` block. When this is a version class that is an STI
+      # model, also scope to them.
       default_scope do
-        if (hoardable_at = Hoardable.instance_variable_get("@at"))
-          at(hoardable_at)
-        else
-          exclude_versions
-        end
+        scope =
+          (
+            if (hoardable_at = Hoardable.instance_variable_get("@at"))
+              at(hoardable_at)
+            else
+              exclude_versions
+            end
+          )
+        next scope unless klass == version_class && "type".in?(column_names)
+
+        scope.where(type: superclass.sti_name)
       end
 
       # @!scope class

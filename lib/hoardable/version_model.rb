@@ -24,6 +24,9 @@ module Hoardable
         class_name: superclass.model_name
       )
 
+      # disable STI on versions tables
+      self.inheritance_column = :_
+
       self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?

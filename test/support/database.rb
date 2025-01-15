@@ -31,6 +31,7 @@ ActiveRecord::Schema.define do
 
   create_table :books, if_not_exists: true, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
     t.string :title, null: false
+    t.string :type, null: false, default: "Book"
     t.uuid :library_id, null: false, index: true
     t.timestamps
   end

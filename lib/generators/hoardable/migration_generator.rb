@@ -45,21 +45,24 @@ module Hoardable
         "hoardable_set_hoardable_id_from_#{primary_key}"
       end
 
+      def klass
+        @klass ||= class_name.singularize.constantize
+      end
+
       def table_name
-        class_name.singularize.constantize.table_name
+        klass.table_name
       rescue StandardError
         super
       end
 
       def foreign_key_type
-        options[:foreign_key_type] ||
-          class_name.singularize.constantize.columns.find { |col| col.name == primary_key }.sql_type
+        options[:foreign_key_type] || klass.columns.find { |col| col.name == primary_key }.sql_type
       rescue StandardError
         "bigint"
       end
 
       def primary_key
-        options[:primary_key] || class_name.singularize.constantize.primary_key
+        options[:primary_key] || klass.primary_key
       rescue StandardError
         "id"
       end
