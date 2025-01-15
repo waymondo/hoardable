@@ -332,8 +332,8 @@ Model-level configuration overrides global configuration.
 Hoardable works for [Single Table
 Inheritance](https://guides.rubyonrails.org/association_basics.html#single-table-inheritance-sti). You
 will need to include `Hoardable::Model` in each child model you'd like to version, as that is what
-generates the model's version class. The migration generator does not need to be run as the versions
-will be stored in the same table.
+generates the model's version class. The migration generator only needs to be run for the parent
+model, as the versions will similarly be stored in a single table.
 
 ## Relationships
 
