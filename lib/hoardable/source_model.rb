@@ -40,7 +40,7 @@ module Hoardable
       end
 
       before_destroy(if: HOARDABLE_CALLBACKS_ENABLED, unless: HOARDABLE_SAVE_TRASH) do
-        versions.delete_all
+        versions.extending.delete_all
       end
 
       after_commit { hoardable_client.unset_hoardable_version_and_event_uuid }

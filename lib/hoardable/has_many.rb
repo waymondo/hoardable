@@ -26,16 +26,21 @@ module Hoardable
     class_methods do
       def has_many(*args, &block)
         options = args.extract_options!
-        options[:extend] = Array(options[:extend]).push(HasManyExtension) if options.delete(
-          :hoardable
-        )
+        hoardable_option = options.delete(:hoardable)
+        options[:extend] = Array(options[:extend]).push(HasManyExtension) if hoardable_option
+
         super(*args, **options, &block)
+        return unless hoardable_option
 
         # This hack is needed to force Rails to not use any existing method cache so that the
-        # {HasManyExtension} scope is always used.
+        # {HasManyExtension} scope is always used when using {Hoardable.at}.
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{args.first}
-            super.extending
+            if Hoardable.instance_variable_get("@at")
+              super.extending
+            else
+              super
+            end
           end
         RUBY
       end
