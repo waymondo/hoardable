@@ -4,6 +4,7 @@ ENV["RAILS_ENV"] ||= "test"
 
 require "bundler/setup"
 require "debug"
+require "logger"
 require "rails"
 require "minitest/autorun"
 
