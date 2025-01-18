@@ -736,4 +736,18 @@ class TestModel < ActiveSupport::TestCase
     assert_equal 1, book.versions.count
     assert_equal 1, masterpiece.versions.count
   end
+
+  test "applies ONLY when performing update_all on Hoardable model" do
+    tag = Tag.create!(name: "Library")
+    tag.destroy!
+    Tag.version_class.trashed.find_sole_by(hoardable_id: tag.id).untrash!
+
+    assert_equal(Tag.count, 1)
+    assert_equal(Tag.version_class.count, 2)
+
+    assert_equal(
+      Tag.update_all(name: "New Name"),
+      1
+    )
+  end
 end
