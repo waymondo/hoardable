@@ -745,9 +745,6 @@ class TestModel < ActiveSupport::TestCase
     assert_equal(Tag.count, 1)
     assert_equal(Tag.version_class.count, 2)
 
-    assert_equal(
-      Tag.update_all(name: "New Name"),
-      1
-    )
+    assert_equal(Tag.update_all(name: "New Name"), 1)
   end
 end
