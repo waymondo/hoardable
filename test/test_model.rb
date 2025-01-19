@@ -740,11 +740,15 @@ class TestModel < ActiveSupport::TestCase
   test "applies ONLY when performing update_all on Hoardable model" do
     tag = Tag.create!(name: "Library")
     tag.destroy!
-    Tag.version_class.trashed.find_sole_by(hoardable_id: tag.id).untrash!
+    trashed_tag = Tag.version_class.trashed.find_sole_by(hoardable_id: tag.id)
 
-    assert_equal(Tag.count, 1)
-    assert_equal(Tag.version_class.count, 2)
+    trashed_tag.untrash!
 
-    assert_equal(Tag.update_all(name: "New Name"), 1)
+    assert_equal(1, Tag.count)
+    assert_equal(2, Tag.version_class.count)
+    assert_equal(1, Tag.update_all(name: "New name"))
+
+    assert_equal("New name", tag.reload.name)
+    assert_equal("Library", trashed_tag.name)
   end
 end
