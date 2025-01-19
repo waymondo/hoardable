@@ -1,3 +1,15 @@
+## 0.18.2
+
+- Fix for using `update_all` with Hoardable records.
+
+## 0.18.1
+
+- Support for STI models.
+
+## 0.18.0
+
+- Improved compatibilty with using `ActiveRecord` relationship caching when not using `Hoardable.at`.
+
 ## 0.17.0
 
 - Much improved performance of setting `hoardable_id` for versions.
