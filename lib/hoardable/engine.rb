@@ -45,7 +45,7 @@ module Hoardable
   class << self
     CONFIG_KEYS.each do |key|
       define_method(key) do
-        local_config = Thread.current[:config] || @config
+        local_config = Thread.current[:hoardable_config] || @config
         local_config[key]
       end
 
@@ -54,7 +54,7 @@ module Hoardable
 
     DATA_KEYS.each do |key|
       define_method(key) do
-        local_context = Thread.current[:context] || @context
+        local_context = Thread.current[:hoardable_context] || @context
         local_context[key]
       end
 
@@ -67,12 +67,12 @@ module Hoardable
     # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
       thread = Thread.current
-      thread[:config] = @config.merge(hash.slice(*CONFIG_KEYS))
-      thread[:context] = @context.merge(hash.slice(*DATA_KEYS))
+      thread[:hoardable_config] = @config.merge(hash.slice(*CONFIG_KEYS))
+      thread[:hoardable_context] = @context.merge(hash.slice(*DATA_KEYS))
       yield
     ensure
-      thread[:config] = nil
-      thread[:context] = nil
+      thread[:hoardable_config] = nil
+      thread[:hoardable_context] = nil
     end
 
     # Allows performing a query for record states at a certain time. Returned {SourceModel}
@@ -81,10 +81,10 @@ module Hoardable
     # @param datetime [DateTime, Time] the datetime or time to temporally query records at
     def at(datetime)
       thread = Thread.current
-      thread[:at] = datetime
+      thread[:hoardable_at] = datetime
       yield
     ensure
-      thread[:at] = nil
+      thread[:hoardable_at] = nil
     end
 
     # Allows calling code to set the upper bound for the temporal range for recorded audits.
@@ -92,10 +92,10 @@ module Hoardable
     # @param datetime [DateTime] the datetime to temporally record versions at
     def travel_to(datetime)
       thread = Thread.current
-      thread[:travel_to] = datetime
+      thread[:hoardable_travel_to] = datetime
       yield
     ensure
-      thread[:travel_to] = nil
+      thread[:hoardable_travel_to] = nil
     end
 
     # @!visibility private
