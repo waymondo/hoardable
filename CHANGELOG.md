@@ -1,3 +1,7 @@
+## 0.19.0
+
+- Ensure that stateful Hoardable class methods `with`, `travel_to` and `at` are thread-safe.
+
 ## 0.18.2
 
 - Fix for using `update_all` with Hoardable records.

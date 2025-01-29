@@ -44,13 +44,19 @@ module Hoardable
 
   class << self
     CONFIG_KEYS.each do |key|
-      define_method(key) { @config[key] }
+      define_method(key) do
+        local_config = Thread.current[:hoardable_config] || @config
+        local_config[key]
+      end
 
       define_method("#{key}=") { |value| @config[key] = value }
     end
 
     DATA_KEYS.each do |key|
-      define_method(key) { @context[key] }
+      define_method(key) do
+        local_context = Thread.current[:hoardable_context] || @context
+        local_context[key]
+      end
 
       define_method("#{key}=") { |value| @context[key] = value }
     end
@@ -60,14 +66,13 @@ module Hoardable
     #
     # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
-      current_config = @config
-      current_context = @context
-      @config = current_config.merge(hash.slice(*CONFIG_KEYS))
-      @context = current_context.merge(hash.slice(*DATA_KEYS))
+      thread = Thread.current
+      thread[:hoardable_config] = @config.merge(hash.slice(*CONFIG_KEYS))
+      thread[:hoardable_context] = @context.merge(hash.slice(*DATA_KEYS))
       yield
     ensure
-      @config = current_config
-      @context = current_context
+      thread[:hoardable_config] = nil
+      thread[:hoardable_context] = nil
     end
 
     # Allows performing a query for record states at a certain time. Returned {SourceModel}
@@ -75,20 +80,22 @@ module Hoardable
     #
     # @param datetime [DateTime, Time] the datetime or time to temporally query records at
     def at(datetime)
-      @at = datetime
+      thread = Thread.current
+      thread[:hoardable_at] = datetime
       yield
     ensure
-      @at = nil
+      thread[:hoardable_at] = nil
     end
 
     # Allows calling code to set the upper bound for the temporal range for recorded audits.
     #
     # @param datetime [DateTime] the datetime to temporally record versions at
     def travel_to(datetime)
-      @travel_to = datetime
+      thread = Thread.current
+      thread[:hoardable_travel_to] = datetime
       yield
     ensure
-      @travel_to = nil
+      thread[:hoardable_travel_to] = nil
     end
 
     # @!visibility private
