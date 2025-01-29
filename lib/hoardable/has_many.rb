@@ -14,7 +14,7 @@ module Hoardable
 
       private def hoardable_scope
         if Thread.current[:at]
-             (hoardable_id = @association.owner.hoardable_id)
+          (hoardable_id = @association.owner.hoardable_id)
           @association.scope.rewhere(@association.reflection.foreign_key => hoardable_id)
         else
           @association.scope
