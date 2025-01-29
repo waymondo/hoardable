@@ -44,13 +44,19 @@ module Hoardable
 
   class << self
     CONFIG_KEYS.each do |key|
-      define_method(key) { @config[key] }
+      define_method(key) do
+        local_config = Thread.current[:config] || @config
+        local_config[key]
+      end
 
       define_method("#{key}=") { |value| @config[key] = value }
     end
 
     DATA_KEYS.each do |key|
-      define_method(key) { @context[key] }
+      define_method(key) do
+        local_context = Thread.current[:context] || @context
+        local_context[key]
+      end
 
       define_method("#{key}=") { |value| @context[key] = value }
     end
@@ -60,14 +66,13 @@ module Hoardable
     #
     # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
-      current_config = @config
-      current_context = @context
-      @config = current_config.merge(hash.slice(*CONFIG_KEYS))
-      @context = current_context.merge(hash.slice(*DATA_KEYS))
+      thread = Thread.current
+      thread[:config] = @config.merge(hash.slice(*CONFIG_KEYS))
+      thread[:context] = @context.merge(hash.slice(*DATA_KEYS))
       yield
     ensure
-      @config = current_config
-      @context = current_context
+      thread[:config] = nil
+      thread[:context] = nil
     end
 
     # Allows performing a query for record states at a certain time. Returned {SourceModel}
