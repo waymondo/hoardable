@@ -80,20 +80,22 @@ module Hoardable
     #
     # @param datetime [DateTime, Time] the datetime or time to temporally query records at
     def at(datetime)
-      @at = datetime
+      thread = Thread.current
+      thread[:at] = datetime
       yield
     ensure
-      @at = nil
+      thread[:at] = nil
     end
 
     # Allows calling code to set the upper bound for the temporal range for recorded audits.
     #
     # @param datetime [DateTime] the datetime to temporally record versions at
     def travel_to(datetime)
-      @travel_to = datetime
+      thread = Thread.current
+      thread[:travel_to] = datetime
       yield
     ensure
-      @travel_to = nil
+      thread[:travel_to] = nil
     end
 
     # @!visibility private

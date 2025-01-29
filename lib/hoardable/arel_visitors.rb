@@ -46,7 +46,7 @@ module Hoardable
         hoardable_maybe_add_only(left, collector)
       else
         return unless left.instance_variable_get("@klass").in?(Hoardable::REGISTRY)
-        return if Hoardable.instance_variable_get("@at")
+        return if Thread.current[:at]
 
         collector << "ONLY "
       end

@@ -56,7 +56,7 @@ module Hoardable
     end
 
     def has_one_at_timestamp
-      Hoardable.instance_variable_get("@at") || source_record.updated_at
+      Thread.current[:at] || source_record.updated_at
     rescue NameError
       raise(UpdatedAtColumnMissingError, source_record.class.table_name)
     end
@@ -93,7 +93,7 @@ module Hoardable
     end
 
     def initialize_temporal_range
-      upper_bound = Hoardable.instance_variable_get("@travel_to") || Time.now.utc
+      upper_bound = Thread.current[:travel_to] || Time.now.utc
       lower_bound = (previous_temporal_tsrange_end || hoardable_source_epoch)
 
       if upper_bound < lower_bound
