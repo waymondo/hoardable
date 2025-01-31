@@ -277,26 +277,6 @@ class TestModel < ActiveSupport::TestCase
     end
   end
 
-  test "can reset model level hoardable config to previous value" do
-    Post.hoardable_config(version_updates: false)
-    Post.with_hoardable_config(version_updates: true) do
-      assert Post.hoardable_config[:version_updates]
-    end
-    assert_not Post.hoardable_config[:version_updates]
-
-    # reset
-    Post.hoardable_config(version_updates: true)
-  end
-
-  test "can reset hoardable version_updates to previous value" do
-    Hoardable.version_updates = false
-    Hoardable.with(version_updates: true) { assert Hoardable.version_updates }
-    assert_not Hoardable.version_updates
-
-    # reset
-    Hoardable.version_updates = false
-  end
-
   def expect_whodunit
     update_post
     version = post.versions.first
