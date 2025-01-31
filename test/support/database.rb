@@ -133,6 +133,12 @@ def run_install_migration
   "InstallHoardable".constantize.migrate(:up)
 end
 
+def reset_db
+  ActiveRecord::Base.connection.tables.each do |table|
+    ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
+  end
+end
+
 run_install_migration
 generate_versions_table("Post")
 generate_versions_table("User")

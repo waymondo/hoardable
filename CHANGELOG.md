@@ -1,3 +1,7 @@
+## 0.19.1
+
+- Thread-safety support added for `with_hoardable_config`.
+
 ## 0.19.0
 
 - Ensure that stateful Hoardable class methods `with`, `travel_to` and `at` are thread-safe.
