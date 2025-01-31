@@ -9,9 +9,6 @@ module Hoardable
     extend ActiveSupport::Concern
 
     class_methods do
-      # @!visibility private
-      attr_reader :_hoardable_config
-
       # If called with a hash, this will set the model-level +Hoardable+ configuration variables. If
       # called without an argument it will return the computed +Hoardable+ configuration considering
       # both model-level and global values.
@@ -21,11 +18,20 @@ module Hoardable
       # @return [Hash]
       def hoardable_config(hash = nil)
         if hash
-          @_hoardable_config = hash.slice(*CONFIG_KEYS)
+          Thread.current[hoardable_config_key] = hash.slice(*CONFIG_KEYS)
         else
-          @_hoardable_config ||= {}
+          Thread.current[hoardable_config_key] ||= {}
           CONFIG_KEYS.to_h do |key|
-            [key, @_hoardable_config.key?(key) ? @_hoardable_config[key] : Hoardable.send(key)]
+            [
+              key,
+              (
+                if Thread.current[hoardable_config_key].key?(key)
+                  Thread.current[hoardable_config_key][key]
+                else
+                  Hoardable.send(key)
+                end
+              )
+            ]
           end
         end
       end
@@ -36,11 +42,14 @@ module Hoardable
       # @param hash [Hash] The +Hoardable+ configuration for the model. Keys must be present in
       #   {CONFIG_KEYS}
       def with_hoardable_config(hash)
-        current_config = @_hoardable_config
-        @_hoardable_config = hash.slice(*CONFIG_KEYS)
+        Thread.current[hoardable_config_key] = hoardable_config.merge(hash.slice(*CONFIG_KEYS))
         yield
       ensure
-        @_hoardable_config = current_config
+        Thread.current[hoardable_config_key] = nil
+      end
+
+      private def hoardable_config_key
+        "hoardable_#{name}_config".to_sym
       end
     end
 

@@ -4,9 +4,7 @@ require "helper"
 
 class TestModel < ActiveSupport::TestCase
   setup do
-    ActiveRecord::Base.connection.tables.each do |table|
-      ActiveRecord::Base.connection.execute("TRUNCATE #{table} RESTART IDENTITY CASCADE")
-    end
+    reset_db
   end
 
   private def user
