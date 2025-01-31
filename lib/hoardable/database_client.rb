@@ -28,9 +28,7 @@ module Hoardable
     end
 
     def find_or_initialize_hoardable_event_uuid
-      Thread.current[:hoardable_event_uuid] ||= (
-        ActiveRecord::Base.connection.query("SELECT gen_random_uuid();")[0][0]
-      )
+      Thread.current[:hoardable_event_uuid] ||= SecureRandom.uuid
     end
 
     def initialize_version_attributes(operation)

@@ -6,7 +6,7 @@ module Hoardable
 
   # Symbols for use with setting contextual data, when creating versions. See
   # {file:README.md#tracking-contextual-data README} for more.
-  DATA_KEYS = %i[meta whodunit event_uuid].freeze
+  DATA_KEYS = %i[meta whodunit].freeze
 
   # Symbols for use with setting {Hoardable} configuration. See {file:README.md#configuration
   # README} for more.
