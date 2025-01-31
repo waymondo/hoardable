@@ -42,10 +42,11 @@ module Hoardable
       # @param hash [Hash] The +Hoardable+ configuration for the model. Keys must be present in
       #   {CONFIG_KEYS}
       def with_hoardable_config(hash)
-        Thread.current[hoardable_config_key] = hoardable_config.merge(hash.slice(*CONFIG_KEYS))
+        current_config = hoardable_config
+        Thread.current[hoardable_config_key] = current_config.merge(hash.slice(*CONFIG_KEYS))
         yield
       ensure
-        Thread.current[hoardable_config_key] = nil
+        Thread.current[hoardable_config_key] = current_config
       end
 
       private def hoardable_config_key
