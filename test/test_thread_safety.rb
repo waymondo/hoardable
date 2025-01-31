@@ -3,9 +3,7 @@ require "helper"
 class TestThreadSafety < ActiveSupport::TestCase
   private attr_reader :threads_count
 
-  setup do
-    @threads_count = 5
-  end
+  setup { @threads_count = 5 }
 
   test "whodunnit respects thread-safety" do
     threads =

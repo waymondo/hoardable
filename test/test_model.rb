@@ -3,9 +3,7 @@
 require "helper"
 
 class TestModel < ActiveSupport::TestCase
-  setup do
-    reset_db
-  end
+  setup { reset_db }
 
   private def user
     @user ||= User.create!(name: "Justin")
