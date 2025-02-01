@@ -280,6 +280,10 @@ class TestModel < ActiveSupport::TestCase
   test "can reset model level hoardable config to previous value" do
     UnversionedPost.with_hoardable_config(version_updates: true) do
       assert UnversionedPost.hoardable_config[:version_updates]
+      UnversionedPost.with_hoardable_config(version_updates: false) do
+        assert_not UnversionedPost.hoardable_config[:version_updates]
+      end
+      assert UnversionedPost.hoardable_config[:version_updates]
     end
     assert_not UnversionedPost.hoardable_config[:version_updates]
   end
