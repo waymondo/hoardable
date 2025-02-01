@@ -18,16 +18,14 @@ module Hoardable
       # @return [Hash]
       def hoardable_config(hash = nil)
         if hash
-          @_hoardable_config = hash.slice(*CONFIG_KEYS)
+          Thread.current[hoardable_current_config_key] = hash.slice(*CONFIG_KEYS)
         else
           CONFIG_KEYS.to_h do |key|
             [
               key,
               (
-                if hoardable_thread_config.key?(key)
-                  hoardable_thread_config[key]
-                elsif _hoardable_config.key?(key)
-                  _hoardable_config[key]
+                if hoardable_current_config.key?(key)
+                  hoardable_current_config[key]
                 else
                   Hoardable.send(key)
                 end
@@ -43,24 +41,20 @@ module Hoardable
       # @param hash [Hash] The +Hoardable+ configuration for the model. Keys must be present in
       #   {CONFIG_KEYS}
       def with_hoardable_config(hash)
-        current_thread_config = hoardable_thread_config
-        Thread.current[hoardable_config_key] = _hoardable_config.merge(
-          current_thread_config
-        ).merge(hash.slice(*CONFIG_KEYS))
+        current_thread_config = hoardable_current_config
+        Thread.current[hoardable_current_config_key] = current_thread_config.merge(
+          hash.slice(*CONFIG_KEYS)
+        )
         yield
       ensure
-        Thread.current[hoardable_config_key] = current_thread_config
+        Thread.current[hoardable_current_config_key] = current_thread_config
       end
 
-      private def hoardable_thread_config
-        Thread.current[hoardable_config_key] ||= {}
+      private def hoardable_current_config
+        Thread.current[hoardable_current_config_key] ||= {}
       end
 
-      private def _hoardable_config
-        @_hoardable_config ||= {}
-      end
-
-      private def hoardable_config_key
+      private def hoardable_current_config_key
         "hoardable_#{name}_config".to_sym
       end
     end

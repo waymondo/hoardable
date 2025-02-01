@@ -39,26 +39,17 @@ module Hoardable
   SUPPORTS_ENCRYPTED_ACTION_TEXT = ActiveRecord.version >= ::Gem::Version.new("7.0.4")
   private_constant :SUPPORTS_ENCRYPTED_ACTION_TEXT
 
-  @context = {}
-  @config = CONFIG_KEYS.to_h { |key| [key, true] }
-
   class << self
     CONFIG_KEYS.each do |key|
-      define_method(key) do
-        local_config = Thread.current[:hoardable_config] || @config
-        local_config[key]
-      end
+      define_method(key) { hoardable_current_config[key] }
 
-      define_method("#{key}=") { |value| @config[key] = value }
+      define_method("#{key}=") { |value| hoardable_current_config[key] = value }
     end
 
     DATA_KEYS.each do |key|
-      define_method(key) do
-        local_context = Thread.current[:hoardable_context] || @context
-        local_context[key]
-      end
+      define_method(key) { hoardable_current_context[key] }
 
-      define_method("#{key}=") { |value| @context[key] = value }
+      define_method("#{key}=") { |value| hoardable_current_context[key] = value }
     end
 
     # This is a general use method for setting {file:README.md#tracking-contextual-data Contextual
@@ -66,13 +57,22 @@ module Hoardable
     #
     # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
-      thread = Thread.current
-      thread[:hoardable_config] = @config.merge(hash.slice(*CONFIG_KEYS))
-      thread[:hoardable_context] = @context.merge(hash.slice(*DATA_KEYS))
+      current_config = hoardable_current_config
+      current_context = hoardable_current_context
+      Thread.current[:hoardable_config] = current_config.merge(hash.slice(*CONFIG_KEYS))
+      Thread.current[:hoardable_context] = current_context.merge(hash.slice(*DATA_KEYS))
       yield
     ensure
-      thread[:hoardable_config] = nil
-      thread[:hoardable_context] = nil
+      Thread.current[:hoardable_config] = current_config
+      Thread.current[:hoardable_context] = current_context
+    end
+
+    private def hoardable_current_config
+      Thread.current[:hoardable_config] ||= CONFIG_KEYS.to_h { |key| [key, true] }
+    end
+
+    private def hoardable_current_context
+      Thread.current[:hoardable_context] ||= {}
     end
 
     # Allows performing a query for record states at a certain time. Returned {SourceModel}
