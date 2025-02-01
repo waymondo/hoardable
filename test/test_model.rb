@@ -277,6 +277,30 @@ class TestModel < ActiveSupport::TestCase
     end
   end
 
+  test "can reset model level hoardable config to previous value" do
+    UnversionedPost.with_hoardable_config(version_updates: true) do
+      assert UnversionedPost.hoardable_config[:version_updates]
+      UnversionedPost.with_hoardable_config(version_updates: false) do
+        assert_not UnversionedPost.hoardable_config[:version_updates]
+      end
+      assert UnversionedPost.hoardable_config[:version_updates]
+    end
+    assert_not UnversionedPost.hoardable_config[:version_updates]
+  end
+
+  test "can nest and restore hoardable config" do
+    Hoardable.with(enabled: false) do
+      assert_not Hoardable.enabled
+      Hoardable.with(enabled: true) do
+        assert Hoardable.enabled
+        Hoardable.with(enabled: false) { assert_not Hoardable.enabled }
+        assert Hoardable.enabled
+      end
+      assert_not Hoardable.enabled
+    end
+    assert Hoardable.enabled
+  end
+
   def expect_whodunit
     update_post
     version = post.versions.first
@@ -367,10 +391,14 @@ class TestModel < ActiveSupport::TestCase
   end
 
   test "creates a version class with a foreign key type that matches the primary key" do
-    assert_equal Post.version_class.columns.find { |col| col.name == "hoardable_id" }.sql_type,
-                 "bigint"
-    assert_equal Book.version_class.columns.find { |col| col.name == "hoardable_id" }.sql_type,
-                 "uuid"
+    assert_equal(
+      Post.version_class.columns.find { |col| col.name == "hoardable_id" }.sql_type,
+      "bigint"
+    )
+    assert_equal(
+      Book.version_class.columns.find { |col| col.name == "hoardable_id" }.sql_type,
+      "uuid"
+    )
   end
 
   test "can make versions of resources with UUID primary keys" do

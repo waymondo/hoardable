@@ -25,6 +25,13 @@ module Hoardable
   end
 end
 
+class UnversionedPost < ::ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = "posts"
+  belongs_to :user
+  hoardable_config version_updates: false
+end
+
 class UnversionablePost < ActiveRecord::Base
   include Hoardable::Model
   self.table_name = "posts"
