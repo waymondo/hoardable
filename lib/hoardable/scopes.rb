@@ -20,9 +20,9 @@ module Hoardable
               exclude_versions
             end
           )
-        next scope unless klass == version_class && "type".in?(column_names)
+        next scope unless klass == version_class && inheritance_column.in?(column_names)
 
-        scope.where(type: superclass.sti_name)
+        scope.where(inheritance_column => superclass.sti_name)
       end
 
       # @!scope class

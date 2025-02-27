@@ -1,3 +1,7 @@
+## 0.19.2
+
+- Consult `inheritance_column` when constructing default scope
+
 ## 0.19.1
 
 - Thread-safety support added for `with_hoardable_config`.
