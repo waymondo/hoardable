@@ -1,0 +1,17 @@
+volumes:
+  postgres-data:
+    driver: local
+services:
+  postgres:
+    image: postgres:17
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data:cached
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "postgres", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+    environment:
+      POSTGRES_PASSWORD: postgres
+  

@@ -518,13 +518,23 @@ Instead of storing the previous versions or changes in a separate table, it stor
 proprietary JSON format directly on the database row of the record itself. If does not support soft
 deletion.
 
-## Testing
+## CI Testing
 
-Hoardable is tested against a matrix of Ruby 3 versions and Rails 7 & 8. To run tests locally, run:
+Hoardable is tested against a matrix of Ruby 3 versions and Rails 7 & 8.
 
-```
-rake
-```
+## Development and Local Testing
+
+Run postgres on port 5432, a docker-compose file is provided as a quick way to achieve this: `docker-compose up`
+
+Create the database with: 
+
+`createdb -h localhost -U postgres hoardable` Change PG user name if desired
+
+Run tests with:
+
+`rake test` # default username / password for postgres is `postgres` / `postgres` but this can be changed via env variables:
+
+POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres rake test
 
 ## Contributing
 
