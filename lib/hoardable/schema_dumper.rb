@@ -10,6 +10,7 @@ module Hoardable
       super
       dump_inherited_tables(stream)
       empty_line(stream)
+      functions(stream)
       triggers(stream)
     end
 
