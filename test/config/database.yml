@@ -3,8 +3,8 @@ default: &default
   database: 'hoardable'
   host: 'localhost'
   port: null
-  username: <%= ENV.fetch('POSTGRES_USER', 'postgres') %>
-  password: <%= ENV.fetch('POSTGRES_PASSWORD', 'postgres') %>
+  username: <%= ENV.fetch('POSTGRES_USER', nil) %>
+  password: <%= ENV.fetch('POSTGRES_PASSWORD', nil) %>
 
 test:
   <<: *default
