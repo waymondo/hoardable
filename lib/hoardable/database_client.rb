@@ -28,7 +28,8 @@ module Hoardable
     end
 
     def find_or_initialize_hoardable_event_uuid
-      Thread.current[:hoardable_event_uuid] ||= SecureRandom.uuid
+      Thread.current[:hoardable_event_uuid] ||= Thread.current[:contextual_event_uuid] ||
+        SecureRandom.uuid
     end
 
     def initialize_version_attributes(operation)
@@ -114,7 +115,6 @@ module Hoardable
     def unset_hoardable_version_and_event_uuid
       source_record.instance_variable_set(:@hoardable_version, nil)
       return if source_record.class.connection.transaction_open?
-      return unless Thread.current[:contextual_event_uuid].nil?
 
       Thread.current[:hoardable_event_uuid] = nil
     end

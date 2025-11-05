@@ -9,9 +9,9 @@ module Hoardable
   class CreatedAtColumnMissingError < Error
     def initialize(source_table_name)
       super(<<~LOG)
-          '#{source_table_name}' does not have a 'created_at' column, so the start of the first
-          version’s temporal period cannot be known. Add a 'created_at' column to '#{source_table_name}'.
-        LOG
+        '#{source_table_name}' does not have a 'created_at' column, so the start of the first
+        version’s temporal period cannot be known. Add a 'created_at' column to '#{source_table_name}'.
+      LOG
     end
   end
 
@@ -19,9 +19,9 @@ module Hoardable
   class UpdatedAtColumnMissingError < Error
     def initialize(source_table_name)
       super(<<~LOG)
-          '#{source_table_name}' does not have an 'updated_at' column, so Hoardable cannot look up
-          associated record versions with it. Add an 'updated_at' column to '#{source_table_name}'.
-        LOG
+        '#{source_table_name}' does not have an 'updated_at' column, so Hoardable cannot look up
+        associated record versions with it. Add an 'updated_at' column to '#{source_table_name}'.
+      LOG
     end
   end
 
@@ -29,9 +29,18 @@ module Hoardable
   class InvalidTemporalUpperBoundError < Error
     def initialize(upper, lower)
       super(<<~LOG)
-          'The supplied value to `Hoardable.travel_to` (#{upper}) is before the calculated lower bound (#{lower}).
-          You must provide a datetime > the lower bound.
-        LOG
+        'The supplied value to `Hoardable.travel_to` (#{upper}) is before the calculated lower bound (#{lower}).
+        You must provide a datetime > the lower bound.
+      LOG
+    end
+  end
+
+  # An error to be raised when an invalid (non-UUID) value is provided as an event_uuid
+  class InvalidEventUUID < Error
+    def initialize(value)
+      super(<<~LOG)
+        'The supplied 'event_uuid' value must be a valid UUID'
+      LOG
     end
   end
 end

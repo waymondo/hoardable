@@ -63,11 +63,12 @@ module Hoardable
       thread = Thread.current
       current_thread_config = thread[:hoardable_config]
       current_thread_context = thread[:hoardable_context]
-      current_thread_event_uuid = thread[:hoardable_event_uuid]
-      contextual_event_uuid = hash[:event_uuid]
 
-      unless contextual_event_uuid.nil?
-        thread[:hoardable_event_uuid] = contextual_event_uuid
+      if hash.include?(:event_uuid)
+        contextual_event_uuid = hash[:event_uuid]
+        unless valid_event_uuid?(contextual_event_uuid)
+          raise InvalidEventUUID, contextual_event_uuid
+        end
         thread[:contextual_event_uuid] = contextual_event_uuid
       end
 
@@ -77,12 +78,15 @@ module Hoardable
     ensure
       thread[:hoardable_config] = current_thread_config
       thread[:hoardable_context] = current_thread_context
-      thread[:hoardable_event_uuid] = current_thread_event_uuid
       thread[:contextual_event_uuid] = nil
     end
 
     private def hoardable_config
       @config.merge(Thread.current[:hoardable_config] ||= {})
+    end
+
+    private def valid_event_uuid?(value)
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.match?(value.to_s.downcase)
     end
 
     private def hoardable_context

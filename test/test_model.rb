@@ -384,6 +384,14 @@ class TestModel < ActiveSupport::TestCase
     end
   end
 
+  test "raises an exception when provided an invalid event_uuid via with" do
+    event_uuid = "my magic unique value"
+
+    assert_raises(Hoardable::InvalidEventUUID) do
+      Hoardable.with(event_uuid: event_uuid) { update_post }
+    end
+  end
+
   test "recursively creates trashed versions with shared event_uuid" do
     update_post
     trashed_post = create_comments_and_destroy_post
