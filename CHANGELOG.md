@@ -1,3 +1,7 @@
+## 0.19.2
+
+- Support providing `event_uuid` in `with`.
+
 ## 0.19.1
 
 - Thread-safety support added for `with_hoardable_config`.

@@ -13,7 +13,7 @@ class TestModel < ActiveSupport::TestCase
     @post ||= Post.create!(title: "Headline", user: user)
   end
 
-  private def update_post(attributes = { title: "New Headline", status: :live })
+  private def update_post(attributes = {title: "New Headline", status: :live})
     post.update!(attributes)
     assert_equal post.status.to_sym, attributes[:status]
     assert_equal post.title, attributes[:title]
@@ -69,12 +69,12 @@ class TestModel < ActiveSupport::TestCase
   end
 
   test "works with serialized attributes" do
-    user = User.create!(name: "Joe Schmoe", preferences: { "alerts" => "on" })
-    user.update!(preferences: { "alerts" => "off" })
-    assert_equal user.versions.last.preferences, { "alerts" => "on" }
+    user = User.create!(name: "Joe Schmoe", preferences: {"alerts" => "on"})
+    user.update!(preferences: {"alerts" => "off"})
+    assert_equal user.versions.last.preferences, {"alerts" => "on"}
     user.destroy!
     user.versions.last.untrash!
-    assert_equal user.reload.preferences, { "alerts" => "off" }
+    assert_equal user.reload.preferences, {"alerts" => "off"}
   end
 
   test "can assign hoardable_id when primary key is different" do
@@ -319,8 +319,18 @@ class TestModel < ActiveSupport::TestCase
     Current.user = nil
   end
 
+  test "tracks event_uuid when provided via with" do
+    event_uuid = SecureRandom.uuid
+
+    Hoardable.with(event_uuid:) do
+      update_post
+      version = post.versions.first
+      assert_equal version.event_uuid, event_uuid
+    end
+  end
+
   test "tracks meta" do
-    meta = { "foo" => "bar" }
+    meta = {"foo" => "bar"}
     Hoardable.with(meta: meta) do
       update_post
       version = post.versions.first
@@ -368,6 +378,16 @@ class TestModel < ActiveSupport::TestCase
     PostVersion.trashed.find_by(hoardable_id: post.id)
   end
 
+  test "tracks correct event_uuid when provided via with" do
+    event_uuid = SecureRandom.uuid
+
+    Hoardable.with(event_uuid:) do
+      update_post
+      version = post.versions.first
+      assert_equal version.event_uuid, event_uuid
+    end
+  end
+
   test "recursively creates trashed versions with shared event_uuid" do
     update_post
     trashed_post = create_comments_and_destroy_post
@@ -380,7 +400,7 @@ class TestModel < ActiveSupport::TestCase
     )
   end
 
-  test "can recursively untrash verisons with shared event_uuid" do
+  test "can recursively untrash versions with shared event_uuid" do
     trashed_post = create_comments_and_destroy_post
     assert_equal CommentVersion.trashed.where(post_id: post.id).size, 2
     assert_equal trashed_post.comments.size, 0
@@ -727,7 +747,7 @@ class TestModel < ActiveSupport::TestCase
   test "applies ONLY clause on joined relationship with aliased name" do
     assert_equal(
       "SELECT \"users\".* FROM \"users\" INNER JOIN ONLY \"profiles\" \"bio\" ON \"bio\".\"user_id\" = \"users\".\"id\" WHERE \"bio\".\"id\" = 999",
-      UserWithTrashedPosts.joins(:bio).where(bio: { id: 999 }).to_sql
+      UserWithTrashedPosts.joins(:bio).where(bio: {id: 999}).to_sql
     )
   end
 
