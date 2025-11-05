@@ -319,16 +319,6 @@ class TestModel < ActiveSupport::TestCase
     Current.user = nil
   end
 
-  test "tracks event_uuid when provided via with" do
-    event_uuid = SecureRandom.uuid
-
-    Hoardable.with(event_uuid:) do
-      update_post
-      version = post.versions.first
-      assert_equal version.event_uuid, event_uuid
-    end
-  end
-
   test "tracks meta" do
     meta = { "foo" => "bar" }
     Hoardable.with(meta: meta) do
@@ -384,7 +374,7 @@ class TestModel < ActiveSupport::TestCase
     Hoardable.with(event_uuid:) do
       update_post
       version = post.versions.first
-      assert_equal version.event_uuid, event_uuid
+      assert_equal version.hoardable_event_uuid, event_uuid
     end
   end
 
