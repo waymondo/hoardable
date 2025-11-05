@@ -13,7 +13,7 @@ class TestModel < ActiveSupport::TestCase
     @post ||= Post.create!(title: "Headline", user: user)
   end
 
-  private def update_post(attributes = {title: "New Headline", status: :live})
+  private def update_post(attributes = { title: "New Headline", status: :live })
     post.update!(attributes)
     assert_equal post.status.to_sym, attributes[:status]
     assert_equal post.title, attributes[:title]
@@ -69,12 +69,12 @@ class TestModel < ActiveSupport::TestCase
   end
 
   test "works with serialized attributes" do
-    user = User.create!(name: "Joe Schmoe", preferences: {"alerts" => "on"})
-    user.update!(preferences: {"alerts" => "off"})
-    assert_equal user.versions.last.preferences, {"alerts" => "on"}
+    user = User.create!(name: "Joe Schmoe", preferences: { "alerts" => "on" })
+    user.update!(preferences: { "alerts" => "off" })
+    assert_equal user.versions.last.preferences, { "alerts" => "on" }
     user.destroy!
     user.versions.last.untrash!
-    assert_equal user.reload.preferences, {"alerts" => "off"}
+    assert_equal user.reload.preferences, { "alerts" => "off" }
   end
 
   test "can assign hoardable_id when primary key is different" do
@@ -330,7 +330,7 @@ class TestModel < ActiveSupport::TestCase
   end
 
   test "tracks meta" do
-    meta = {"foo" => "bar"}
+    meta = { "foo" => "bar" }
     Hoardable.with(meta: meta) do
       update_post
       version = post.versions.first
@@ -747,7 +747,7 @@ class TestModel < ActiveSupport::TestCase
   test "applies ONLY clause on joined relationship with aliased name" do
     assert_equal(
       "SELECT \"users\".* FROM \"users\" INNER JOIN ONLY \"profiles\" \"bio\" ON \"bio\".\"user_id\" = \"users\".\"id\" WHERE \"bio\".\"id\" = 999",
-      UserWithTrashedPosts.joins(:bio).where(bio: {id: 999}).to_sql
+      UserWithTrashedPosts.joins(:bio).where(bio: { id: 999 }).to_sql
     )
   end
 
