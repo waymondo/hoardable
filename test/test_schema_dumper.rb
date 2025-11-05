@@ -29,6 +29,11 @@ class TestSchemaDumper < ActiveSupport::TestCase
     assert post_versions_trigger_index > post_versions_index
   end
 
+  test "it dumps functions" do
+    output = dump_table_schema
+    assert_match(/create_function :hoardable_set_hoardable_id_from_primary_id/, output)
+  end
+
   private def dump_table_schema(*table_names)
     connection = ActiveRecord::Base.connection
     ActiveRecord::SchemaDumper.ignore_tables = connection.data_sources - table_names

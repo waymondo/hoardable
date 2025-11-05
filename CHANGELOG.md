@@ -1,6 +1,10 @@
-## 0.19.2
+## 0.19.3
 
 - Support providing `event_uuid` in `with`.
+
+## 0.19.2
+
+- Consult `inheritance_column` when constructing default scope
 
 ## 0.19.1
 
