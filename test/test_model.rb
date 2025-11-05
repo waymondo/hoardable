@@ -371,7 +371,7 @@ class TestModel < ActiveSupport::TestCase
   test "tracks correct event_uuid when provided via with" do
     event_uuid = SecureRandom.uuid
 
-    Hoardable.with(event_uuid:) do
+    Hoardable.with(event_uuid: event_uuid) do
       update_post
       version = post.versions.first
       assert_equal version.hoardable_event_uuid, event_uuid
