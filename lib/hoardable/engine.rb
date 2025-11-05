@@ -66,7 +66,10 @@ module Hoardable
       current_thread_event_uuid = thread[:hoardable_event_uuid]
       contextual_event_uuid = hash[:event_uuid]
 
-      thread[:hoardable_event_uuid] = contextual_event_uuid unless contextual_event_uuid.nil?
+      unless contextual_event_uuid.nil?
+        thread[:hoardable_event_uuid] = contextual_event_uuid
+        thread[:contextual_event_uuid] = contextual_event_uuid
+      end
 
       thread[:hoardable_config] = hoardable_config.merge(hash.slice(*CONFIG_KEYS))
       thread[:hoardable_context] = hoardable_context.merge(hash.slice(*DATA_KEYS))
@@ -75,6 +78,7 @@ module Hoardable
       thread[:hoardable_config] = current_thread_config
       thread[:hoardable_context] = current_thread_context
       thread[:hoardable_event_uuid] = current_thread_event_uuid
+      thread[:contextual_event_uuid] = nil
     end
 
     private def hoardable_config

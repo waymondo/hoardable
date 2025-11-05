@@ -19,7 +19,7 @@ module Hoardable
           returning: source_primary_key.to_sym
         )
       version_id = version[0][source_primary_key]
-      source_record.instance_variable_set("@hoardable_version", version_class.find(version_id))
+      source_record.instance_variable_set(:@hoardable_version, version_class.find(version_id))
       source_record.run_callbacks(:versioned, &block)
     end
 
@@ -92,7 +92,7 @@ module Hoardable
 
     def initialize_temporal_range
       upper_bound = Thread.current[:hoardable_travel_to] || Time.now.utc
-      lower_bound = (previous_temporal_tsrange_end || hoardable_source_epoch)
+      lower_bound = previous_temporal_tsrange_end || hoardable_source_epoch
 
       if upper_bound < lower_bound
         raise InvalidTemporalUpperBoundError.new(upper_bound, lower_bound)
@@ -112,8 +112,9 @@ module Hoardable
     end
 
     def unset_hoardable_version_and_event_uuid
-      source_record.instance_variable_set("@hoardable_version", nil)
+      source_record.instance_variable_set(:@hoardable_version, nil)
       return if source_record.class.connection.transaction_open?
+      return unless Thread.current[:contextual_event_uuid].nil?
 
       Thread.current[:hoardable_event_uuid] = nil
     end

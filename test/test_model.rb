@@ -373,8 +373,14 @@ class TestModel < ActiveSupport::TestCase
 
     Hoardable.with(event_uuid: event_uuid) do
       update_post
-      version = post.versions.first
-      assert_equal version.hoardable_event_uuid, event_uuid
+      first_version = post.versions.first
+      assert_equal first_version.hoardable_event_uuid, event_uuid
+
+      update_post(title: "Another headline", status: :live)
+      second_version = post.versions.last
+      assert_equal second_version.hoardable_event_uuid, event_uuid
+
+      assert_not_equal(first_version.id, second_version.id)
     end
   end
 
