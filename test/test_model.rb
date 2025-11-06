@@ -368,6 +368,30 @@ class TestModel < ActiveSupport::TestCase
     PostVersion.trashed.find_by(hoardable_id: post.id)
   end
 
+  test "tracks correct event_uuid when provided via with" do
+    event_uuid = SecureRandom.uuid
+
+    Hoardable.with(event_uuid: event_uuid) do
+      update_post
+      first_version = post.versions.first
+      assert_equal first_version.hoardable_event_uuid, event_uuid
+
+      update_post(title: "Another headline", status: :live)
+      second_version = post.versions.last
+      assert_equal second_version.hoardable_event_uuid, event_uuid
+
+      assert_not_equal(first_version.id, second_version.id)
+    end
+  end
+
+  test "raises an exception when provided an invalid event_uuid via with" do
+    event_uuid = "my magic unique value"
+
+    assert_raises(Hoardable::InvalidEventUUID) do
+      Hoardable.with(event_uuid: event_uuid) { update_post }
+    end
+  end
+
   test "recursively creates trashed versions with shared event_uuid" do
     update_post
     trashed_post = create_comments_and_destroy_post
@@ -380,7 +404,7 @@ class TestModel < ActiveSupport::TestCase
     )
   end
 
-  test "can recursively untrash verisons with shared event_uuid" do
+  test "can recursively untrash versions with shared event_uuid" do
     trashed_post = create_comments_and_destroy_post
     assert_equal CommentVersion.trashed.where(post_id: post.id).size, 2
     assert_equal trashed_post.comments.size, 0

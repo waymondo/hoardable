@@ -46,13 +46,13 @@ module Hoardable
     CONFIG_KEYS.each do |key|
       define_method(key) { hoardable_config[key] }
 
-      define_method("#{key}=") { |value| @config[key] = value }
+      define_method(:"#{key}=") { |value| @config[key] = value }
     end
 
     DATA_KEYS.each do |key|
       define_method(key) { hoardable_context[key] }
 
-      define_method("#{key}=") { |value| @context[key] = value }
+      define_method(:"#{key}=") { |value| @context[key] = value }
     end
 
     # This is a general use method for setting {file:README.md#tracking-contextual-data Contextual
@@ -63,16 +63,30 @@ module Hoardable
       thread = Thread.current
       current_thread_config = thread[:hoardable_config]
       current_thread_context = thread[:hoardable_context]
+
+      if hash.include?(:event_uuid)
+        contextual_event_uuid = hash[:event_uuid]
+        unless valid_event_uuid?(contextual_event_uuid)
+          raise InvalidEventUUID, contextual_event_uuid
+        end
+        thread[:contextual_event_uuid] = contextual_event_uuid
+      end
+
       thread[:hoardable_config] = hoardable_config.merge(hash.slice(*CONFIG_KEYS))
       thread[:hoardable_context] = hoardable_context.merge(hash.slice(*DATA_KEYS))
       yield
     ensure
       thread[:hoardable_config] = current_thread_config
       thread[:hoardable_context] = current_thread_context
+      thread[:contextual_event_uuid] = nil
     end
 
     private def hoardable_config
       @config.merge(Thread.current[:hoardable_config] ||= {})
+    end
+
+    private def valid_event_uuid?(value)
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.match?(value.to_s.downcase)
     end
 
     private def hoardable_context
@@ -122,7 +136,7 @@ module Hoardable
     initializer "hoardable.schema_statements" do
       ActiveSupport.on_load(:active_record_postgresqladapter) do
         # We need to control the table dumping order of tables, so revert these to just +super+
-        Fx::SchemaDumper.module_eval("def tables(streams); super; end")
+        Fx::SchemaDumper.module_eval("def tables(streams); super; end", __FILE__, __LINE__)
 
         ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaDumper.prepend(SchemaDumper)
         ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaStatements.prepend(SchemaStatements)
