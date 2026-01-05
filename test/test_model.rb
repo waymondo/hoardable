@@ -799,4 +799,8 @@ class TestModel < ActiveSupport::TestCase
     assert_equal("New name", tag.reload.name)
     assert_equal("Library", trashed_tag.name)
   end
+
+  test "when using a custom version table name, it is respected" do
+    assert_equal(PostWithCustomVersionTable.version_class.table_name, "custom_post_versions")
+  end
 end

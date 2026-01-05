@@ -9,6 +9,9 @@ module Hoardable
     extend ActiveSupport::Concern
 
     class_methods do
+      # Allows setting a custom table name for the +version+ model.
+      attr_accessor :version_table_name
+
       # If called with a hash, this will set the model-level +Hoardable+ configuration variables. If
       # called without an argument it will return the computed +Hoardable+ configuration considering
       # both model-level and global values.
@@ -43,7 +46,7 @@ module Hoardable
       end
 
       private def hoardable_current_config_key
-        "hoardable_#{name}_config".to_sym
+        :"hoardable_#{name}_config"
       end
     end
 
