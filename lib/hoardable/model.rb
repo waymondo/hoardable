@@ -24,9 +24,7 @@ module Hoardable
           @_hoardable_config = hash.slice(*CONFIG_KEYS)
         else
           fiber_key = hoardable_current_config_key
-          CONFIG_KEYS.to_h do |key|
-            [key, _hoardable_config(fiber_key).fetch(key) { Hoardable.send(key) }]
-          end
+          CONFIG_KEYS.to_h { |key| [key, _hoardable_config(fiber_key).fetch(key) { Hoardable.send(key) }] }
         end
       end
 
