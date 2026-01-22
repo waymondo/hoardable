@@ -31,21 +31,7 @@ jobs:
           - "3.3"
           - "3.4"
         rails:
-          - "7.0.8.4"
-          - "7.1.4"
-          - "7.2.1"
           - "8.0.1"
-        include:
-          - rails: "7.0.8.4"
-            ruby: "3.0"
-          - rails: "7.0.8.4"
-            ruby: "3.1"
-          - rails: "7.1.4"
-            ruby: "3.0"
-          - rails: "7.1.4"
-            ruby: "3.1"
-          - rails: "7.2.1"
-            ruby: "3.1"
 
     steps:
       - uses: actions/checkout@v4
