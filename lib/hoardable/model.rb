@@ -23,7 +23,8 @@ module Hoardable
         if hash
           @_hoardable_config = hash.slice(*CONFIG_KEYS)
         else
-          CONFIG_KEYS.to_h { |key| [key, _hoardable_config.fetch(key) { Hoardable.send(key) }] }
+          fiber_key = hoardable_current_config_key
+          CONFIG_KEYS.to_h { |key| [key, _hoardable_config(fiber_key).fetch(key) { Hoardable.send(key) }] }
         end
       end
 
@@ -33,16 +34,19 @@ module Hoardable
       # @param hash [Hash] The +Hoardable+ configuration for the model. Keys must be present in
       #   {CONFIG_KEYS}
       def with_hoardable_config(hash)
-        thread = Thread.current
-        current_thread_config = thread[hoardable_current_config_key]
-        thread[hoardable_current_config_key] = _hoardable_config.merge(hash.slice(*CONFIG_KEYS))
+        key = hoardable_current_config_key
+        current_fiber_config = Fiber[key]
+        Fiber[key] = _hoardable_config(key).merge(hash.slice(*CONFIG_KEYS))
         yield
       ensure
-        thread[hoardable_current_config_key] = current_thread_config
+        Fiber[key] = current_fiber_config
       end
 
-      private def _hoardable_config
-        (@_hoardable_config ||= {}).merge(Thread.current[hoardable_current_config_key] ||= {})
+      private def _hoardable_config(key = nil)
+        key ||= hoardable_current_config_key
+        fiber_config = Fiber[key]
+        fiber_config = Fiber[key] = {} if fiber_config.nil?
+        (@_hoardable_config ||= {}).merge(fiber_config)
       end
 
       private def hoardable_current_config_key
