@@ -28,8 +28,11 @@ module Hoardable
     end
 
     def find_or_initialize_hoardable_event_uuid
-      Thread.current[:hoardable_event_uuid] ||= Thread.current[:contextual_event_uuid] ||
-        SecureRandom.uuid
+      contextual_event_uuid = Thread.current[:contextual_event_uuid]
+
+      return contextual_event_uuid unless contextual_event_uuid.nil?
+
+      Thread.current[:hoardable_event_uuid] ||= SecureRandom.uuid
     end
 
     def initialize_version_attributes(operation)
