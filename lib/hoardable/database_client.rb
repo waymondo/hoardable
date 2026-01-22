@@ -28,8 +28,7 @@ module Hoardable
     end
 
     def find_or_initialize_hoardable_event_uuid
-      Fiber[:hoardable_event_uuid] ||= Fiber[:contextual_event_uuid] ||
-        SecureRandom.uuid
+      Fiber[:hoardable_event_uuid] ||= Fiber[:contextual_event_uuid] || SecureRandom.uuid
     end
 
     def initialize_version_attributes(operation)
