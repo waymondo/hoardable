@@ -12,7 +12,7 @@ module Hoardable
 
     delegate :version_class, to: :source_record
 
-    def insert_hoardable_version(operation, &)
+    def insert_hoardable_version(operation, &block)
       version =
         version_class.insert(
           initialize_version_attributes(operation),
@@ -20,7 +20,7 @@ module Hoardable
         )
       version_id = version[0][source_primary_key]
       source_record.instance_variable_set(:@hoardable_version, version_class.find(version_id))
-      source_record.run_callbacks(:versioned, &)
+      source_record.run_callbacks(:versioned, &block)
     end
 
     def source_primary_key
@@ -28,7 +28,7 @@ module Hoardable
     end
 
     def find_or_initialize_hoardable_event_uuid
-      Fiber[:hoardable_event_uuid] ||= Fiber[:contextual_event_uuid] ||
+      Thread.current[:hoardable_event_uuid] ||= Thread.current[:contextual_event_uuid] ||
         SecureRandom.uuid
     end
 
@@ -55,7 +55,7 @@ module Hoardable
     end
 
     def has_one_at_timestamp
-      Fiber[:hoardable_at] || source_record.updated_at
+      Thread.current[:hoardable_at] || source_record.updated_at
     rescue NameError
       raise(UpdatedAtColumnMissingError, source_record.class.table_name)
     end
@@ -92,7 +92,7 @@ module Hoardable
     end
 
     def initialize_temporal_range
-      upper_bound = Fiber[:hoardable_travel_to] || Time.now.utc
+      upper_bound = Thread.current[:hoardable_travel_to] || Time.now.utc
       lower_bound = previous_temporal_tsrange_end || hoardable_source_epoch
 
       if upper_bound < lower_bound
@@ -116,7 +116,7 @@ module Hoardable
       source_record.instance_variable_set(:@hoardable_version, nil)
       return if source_record.class.connection.transaction_open?
 
-      Fiber[:hoardable_event_uuid] = nil
+      Thread.current[:hoardable_event_uuid] = nil
     end
 
     def previous_temporal_tsrange_end

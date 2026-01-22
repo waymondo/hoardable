@@ -45,8 +45,8 @@ module Hoardable
       if left.is_a?(Arel::Nodes::TableAlias)
         hoardable_maybe_add_only(left, collector)
       else
-        return unless left.instance_variable_get(:@klass).in?(Hoardable::REGISTRY)
-        return if Fiber[:hoardable_at]
+        return unless left.instance_variable_get("@klass").in?(Hoardable::REGISTRY)
+        return if Thread.current[:hoardable_at]
 
         collector << "ONLY "
       end

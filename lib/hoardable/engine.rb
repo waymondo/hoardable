@@ -60,28 +60,29 @@ module Hoardable
     #
     # @param hash [Hash] config and contextual data to set within a block
     def with(hash)
-      current_fiber_config = Fiber[:hoardable_config]
-      current_fiber_context = Fiber[:hoardable_context]
+      thread = Thread.current
+      current_thread_config = thread[:hoardable_config]
+      current_thread_context = thread[:hoardable_context]
 
       if hash.include?(:event_uuid)
         contextual_event_uuid = hash[:event_uuid]
         unless valid_event_uuid?(contextual_event_uuid)
           raise InvalidEventUUID, contextual_event_uuid
         end
-        Fiber[:contextual_event_uuid] = contextual_event_uuid
+        thread[:contextual_event_uuid] = contextual_event_uuid
       end
 
-      Fiber[:hoardable_config] = hoardable_config.merge(hash.slice(*CONFIG_KEYS))
-      Fiber[:hoardable_context] = hoardable_context.merge(hash.slice(*DATA_KEYS))
+      thread[:hoardable_config] = hoardable_config.merge(hash.slice(*CONFIG_KEYS))
+      thread[:hoardable_context] = hoardable_context.merge(hash.slice(*DATA_KEYS))
       yield
     ensure
-      Fiber[:hoardable_config] = current_fiber_config
-      Fiber[:hoardable_context] = current_fiber_context
-      Fiber[:contextual_event_uuid] = nil
+      thread[:hoardable_config] = current_thread_config
+      thread[:hoardable_context] = current_thread_context
+      thread[:contextual_event_uuid] = nil
     end
 
     private def hoardable_config
-      @config.merge(Fiber[:hoardable_config] ||= {})
+      @config.merge(Thread.current[:hoardable_config] ||= {})
     end
 
     private def valid_event_uuid?(value)
@@ -89,7 +90,7 @@ module Hoardable
     end
 
     private def hoardable_context
-      @context.merge(Fiber[:hoardable_context] ||= {})
+      @context.merge(Thread.current[:hoardable_context] ||= {})
     end
 
     # Allows performing a query for record states at a certain time. Returned {SourceModel}
@@ -97,20 +98,22 @@ module Hoardable
     #
     # @param datetime [DateTime, Time] the datetime or time to temporally query records at
     def at(datetime)
-      Fiber[:hoardable_at] = datetime
+      thread = Thread.current
+      thread[:hoardable_at] = datetime
       yield
     ensure
-      Fiber[:hoardable_at] = nil
+      thread[:hoardable_at] = nil
     end
 
     # Allows calling code to set the upper bound for the temporal range for recorded audits.
     #
     # @param datetime [DateTime] the datetime to temporally record versions at
     def travel_to(datetime)
-      Fiber[:hoardable_travel_to] = datetime
+      thread = Thread.current
+      thread[:hoardable_travel_to] = datetime
       yield
     ensure
-      Fiber[:hoardable_travel_to] = nil
+      thread[:hoardable_travel_to] = nil
     end
 
     # @!visibility private

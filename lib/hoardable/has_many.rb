@@ -13,7 +13,7 @@ module Hoardable
       end
 
       private def hoardable_scope
-        if Fiber[:hoardable_at]
+        if Thread.current[:hoardable_at]
           (hoardable_id = @association.owner.hoardable_id)
           @association.scope.rewhere(@association.reflection.foreign_key => hoardable_id)
         else
@@ -36,7 +36,7 @@ module Hoardable
         # {HasManyExtension} scope is always used when using {Hoardable.at}.
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{args.first}
-            if Fiber[:hoardable_at]
+            if Thread.current[:hoardable_at]
               super.extending
             else
               super

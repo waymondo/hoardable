@@ -14,7 +14,7 @@ module Hoardable
       default_scope do
         scope =
           (
-            if (hoardable_at = Fiber[:hoardable_at])
+            if (hoardable_at = Thread.current[:hoardable_at])
               at(hoardable_at)
             else
               exclude_versions
