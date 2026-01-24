@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - autopublish
     paths:
       - "lib/hoardable/version.rb"
 
@@ -17,7 +18,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3"
+          ruby-version: "4.0"
           bundler-cache: true
 
       - name: Check if version is already published
