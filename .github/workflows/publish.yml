@@ -1,0 +1,42 @@
+name: Publish to RubyGems
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "lib/hoardable/version.rb"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: Check if version is already published
+        id: version_check
+        run: |
+          VERSION=$(ruby -r ./lib/hoardable/version -e "puts Hoardable::VERSION")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gem info hoardable --remote --exact | grep -q "$VERSION"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build gem
+        if: steps.version_check.outputs.exists == 'false'
+        run: gem build hoardable.gemspec
+
+      - name: Publish to RubyGems
+        if: steps.version_check.outputs.exists == 'false'
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: gem push hoardable-${{ steps.version_check.outputs.version }}.gem

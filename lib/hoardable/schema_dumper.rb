@@ -9,7 +9,7 @@ module Hoardable
     def tables(stream)
       super
       dump_inherited_tables(stream)
-      empty_line(stream)
+      stream.puts
       functions(stream)
       triggers(stream)
     end
