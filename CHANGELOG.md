@@ -1,4 +1,4 @@
-## 0.19.4
+## 0.19.5
 
 - Autopublish new versions from GitHub action
 
