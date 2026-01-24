@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - main
-      - autopublish
+    paths:
+      - "lib/hoardable/version.rb"
 
 jobs:
   publish:
