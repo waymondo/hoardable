@@ -30,8 +30,11 @@ jobs:
         ruby:
           - "3.3"
           - "3.4"
+          - "4.0"
         rails:
-          - "8.0.1"
+          - "7.2.3"
+          - "8.0.4"
+          - "8.1.2"
 
     steps:
       - uses: actions/checkout@v4
