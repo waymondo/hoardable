@@ -520,7 +520,7 @@ deletion.
 
 ## Testing
 
-Hoardable is tested against a matrix of Ruby 3 versions and Rails 7 & 8. To run tests locally, run:
+Hoardable is tested against a matrix of Ruby 3 & 4 and Rails 7 & 8. To run tests locally, run:
 
 ```
 rake

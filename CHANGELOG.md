@@ -1,3 +1,7 @@
+## 0.19.5
+
+- Autopublish new versions from GitHub action
+
 ## 0.19.3
 
 - Support providing `event_uuid` in `with`.
@@ -58,4 +62,3 @@
 - *Breaking Change* - Support for Ruby 2.6 is dropped
 - Adjusts the migration and install generators to use the `fx` gem so that Rails 7+ can use `schema.rb`
   instead of `structure.sql`
-
