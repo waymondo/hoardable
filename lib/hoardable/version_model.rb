@@ -27,12 +27,13 @@ module Hoardable
       # disable STI on versions tables
       self.inheritance_column = :_
 
-      self.table_name = "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
+      self.table_name =
+        superclass.version_table_name || "#{table_name.singularize}#{VERSION_TABLE_SUFFIX}"
 
       alias_method :readonly?, :persisted?
 
       %i[operation event_uuid during].each do |symbol|
-        define_method("hoardable_#{symbol}") { public_send("_#{symbol}") }
+        define_method(:"hoardable_#{symbol}") { public_send(:"_#{symbol}") }
       end
 
       # @!scope class
@@ -105,7 +106,7 @@ module Hoardable
       transaction do
         insert_untrashed_source.tap do |untrashed|
           untrashed
-            .send("hoardable_client")
+            .send(:hoardable_client)
             .insert_hoardable_version("insert") do
               untrashed.instance_variable_set(:@hoardable_version, self)
               untrashed.run_callbacks(:untrashed)
@@ -114,7 +115,7 @@ module Hoardable
       end
     end
 
-    DATA_KEYS.each { |key| define_method("hoardable_#{key}") { _data&.dig(key.to_s) } }
+    DATA_KEYS.each { |key| define_method(:"hoardable_#{key}") { _data&.dig(key.to_s) } }
 
     # Returns the +ActiveRecord+
     # {https://api.rubyonrails.org/classes/ActiveModel/Dirty.html#method-i-changes changes} that

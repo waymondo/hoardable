@@ -62,6 +62,13 @@ class PostWithUnhoardableRichText < ActiveRecord::Base
   has_rich_text :content
 end
 
+class PostWithCustomVersionTable < ActiveRecord::Base
+  include Hoardable::Model
+  self.table_name = "posts"
+  self.version_table_name = "custom_post_versions"
+  belongs_to :user
+end
+
 class User < ActiveRecord::Base
   include Hoardable::Model
   has_many :posts, hoardable: true
